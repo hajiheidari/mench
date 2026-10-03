@@ -1,5 +1,16 @@
 import { createApp } from "./app.js";
-const app = createApp();
+import { Database } from "./database.js";
+const url =
+  process.env.DATABASE_URL ??
+  (process.env.NODE_ENV === "production"
+    ? undefined
+    : "postgres://mench:local-development-only@127.0.0.1:5432/mench");
+if (process.env.NODE_ENV === "production" && !url)
+  throw new Error("DATABASE_URL required in production");
+const database = url ? new Database(url) : undefined;
+if (database) await database.migrate();
+const app = createApp(undefined, 100, database);
+if (database) app.addHook("onClose", async () => database.close());
 try {
   await app.listen({ port: Number(process.env.PORT ?? 3001), host: "0.0.0.0" });
 } catch (error) {

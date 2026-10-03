@@ -5,6 +5,20 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: mench
+          POSTGRES_PASSWORD: local-development-only
+          POSTGRES_DB: mench
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mench -d mench"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://mench:local-development-only@127.0.0.1:5432/mench
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/node_modules/.cache/ms-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -12,6 +26,8 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
       - run: npm run build:mobile
         env:
           CI: "1"

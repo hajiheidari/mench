@@ -1,6 +1,9 @@
 export const messages = {
   fa: {
     brand: "منچ",
+    registered: "حساب ساخته شد؛ اکنون وارد شوید",
+    deleteAccount: "حذف حساب",
+    deleteConfirm: "حساب و نشست‌ها برای همیشه حذف شوند؟",
     tagline: "چهار رنگ، یک بازی دوستانه",
     language: "English",
     practice: "تمرین روی یک دستگاه",
@@ -56,6 +59,9 @@ export const messages = {
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
       REQUEST_FAILED: "دوباره تلاش کنید",
+      INVALID_CREDENTIALS: "ایمیل یا گذرواژه صحیح نیست",
+      ACCOUNT_UNAVAILABLE: "این حساب قابل ثبت نیست",
+      INVALID_INPUT: "اطلاعات واردشده را بررسی کنید",
       CONNECTION_FAILED: "اتصال به سرور برقرار نشد",
       ROOM_NOT_FOUND: "اتاق پیدا نشد",
       ROOM_FULL: "اتاق پر است",
@@ -70,6 +76,9 @@ export const messages = {
   },
   en: {
     brand: "Mench",
+    registered: "Account created. You can now sign in.",
+    deleteAccount: "Delete account",
+    deleteConfirm: "Permanently delete your account and sessions?",
     tagline: "Four colors. One friendly game.",
     language: "فارسی",
     practice: "Play on one device",
@@ -125,6 +134,9 @@ export const messages = {
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {
       REQUEST_FAILED: "Please try again",
+      INVALID_CREDENTIALS: "Invalid email or password",
+      ACCOUNT_UNAVAILABLE: "Account cannot be registered",
+      INVALID_INPUT: "Please check your input",
       CONNECTION_FAILED: "Could not connect to server",
       ROOM_NOT_FOUND: "Room not found",
       ROOM_FULL: "Room is full",

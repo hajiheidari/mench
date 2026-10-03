@@ -1,6 +1,14 @@
 # Project status
 
-M1–M5 acceptance: PASS. Current work: M6 accounts and profiles.
-M1: deterministic engine, 25 tests, >97% engine statement/branch coverage. M2: 100000-roll report and WebCrypto verification. M3: full local browser match and responsive four-player board.
-M4/M5: complete two/four-client authoritative games over real WebSockets; every dice proof checked, forged/duplicate/stale intents rejected, default spam budget tested, 2/10/30s disconnect simulation, live reconnect/session replacement. Three Chromium E2E tests passed including browser invite, start, verified dice and reload restoration. Full quality/build checks passed.
-Current limitations: rooms/queue are in-memory across server restarts; no accounts yet. Expo dependency security findings and native signing requirements remain. Next: PostgreSQL identity/persistence, then private-room acceptance and matchmaking.
+M1–M8 acceptance: PASS. Current work: M9 shared mobile client and PWA.
+
+- M1: pure deterministic engine, 25 engine tests, >97% statement/branch coverage.
+- M2: 100000-roll distribution report, commitment/client nonce design and browser verification.
+- M3: full local Chromium match and mobile viewport board.
+- M4/M5: full real-WebSocket 2/4-player matches, proof verification, idempotency, strict intents, grace periods, reconnect and session replacement.
+- M6: PostgreSQL identity migrations, hashed passwords, revocable sessions, public/self profiles and deletion. Three actual DB integration tests passed; default no-DB test run explicitly skips these, never counts them as passes.
+- M7: guest/registered browser invitation links, waiting lobby, copy invite, start, proof history, refresh restoration. Browser acceptance passed.
+- M8: bounded quick-match queue, cancel/disconnect cleanup and automatic authoritative 2-player start. Real-client queue/cancel test passed.
+  Four Chromium E2E tests passed including account reload/logout/deletion, online invitation/verification/reload, full local match and responsive four-player setup. Full lint/typecheck/build checks passed. Remote CI has not run.
+  Known limits: in-memory matches across server restart; email verification/recovery and OAuth deferred; Expo audit findings remain. Shared profile is persistent; rankings/economy/statistics not yet implemented.
+  Current external constraints: Linux has no Xcode or Android SDK. Mobile JS/UI work can continue; native signed builds need platform tooling/signing and are not claimed complete. No publication or spending authorized.

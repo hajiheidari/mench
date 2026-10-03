@@ -1,8 +1,14 @@
 import Fastify from "fastify";
 import rateLimit from "@fastify/rate-limit";
 import { attachRealtime } from "./realtime";
+import { registerAuth } from "./auth";
+import type { Database } from "./database";
 import { Rooms } from "./rooms";
-export function createApp(rooms = new Rooms(), commandBudget = 100) {
+export function createApp(
+  rooms = new Rooms(),
+  commandBudget = 100,
+  database?: Database,
+) {
   const app = Fastify({
     logger: {
       redact: [
@@ -16,6 +22,7 @@ export function createApp(rooms = new Rooms(), commandBudget = 100) {
   });
   app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   app.get("/health", async () => ({ status: "ok", protocolVersion: 1 }));
-  attachRealtime(app, rooms, commandBudget);
+  if (database) registerAuth(app, database);
+  attachRealtime(app, rooms, commandBudget, database);
   return app;
 }

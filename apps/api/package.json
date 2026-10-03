@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
-    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --external:fastify --external:socket.io --external:pg --external:@fastify/rate-limit --outfile=dist/main.js"
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --external:fastify --external:socket.io --external:@fastify/cookie --external:pg --external:@fastify/rate-limit --outfile=dist/main.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
+    "@fastify/cors": "11.3.0",
     "@fastify/rate-limit": "11.2.0",
     "@mench/fair-dice": "0.0.0",
     "@mench/game-engine": "0.0.0",

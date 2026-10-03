@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Locale } from "@mench/shared-types";
 import { messages } from "./messages";
+import { Account } from "./Account";
 import { Online } from "./Online";
 import { Practice } from "./Practice";
 import "./style.css";
@@ -46,8 +47,20 @@ function App() {
         >
           {t.online}
         </button>
+        <button
+          className={mode === "account" ? "active" : ""}
+          onClick={() => setMode("account")}
+        >
+          {t.signIn}
+        </button>
       </nav>
-      {mode === "practice" ? <Practice t={t} /> : <Online t={t} />}
+      {mode === "practice" ? (
+        <Practice t={t} />
+      ) : mode === "online" ? (
+        <Online t={t} />
+      ) : (
+        <Account t={t} />
+      )}
       <footer>
         {t.rules} · {t.practice}
       </footer>
