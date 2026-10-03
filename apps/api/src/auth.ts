@@ -98,7 +98,8 @@ export async function resolveAccount(
 export function registerAuth(app: FastifyInstance, db: Database) {
   app.register(cookie);
   const allowed = (
-    process.env.ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173"
+    process.env.ALLOWED_ORIGINS ??
+    "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3200,http://127.0.0.1:4173"
   ).split(",");
   const token = (req: FastifyRequest) =>
     req.headers.authorization?.startsWith("Bearer ")

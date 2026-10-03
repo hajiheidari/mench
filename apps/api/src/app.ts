@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { attachRealtime } from "./realtime";
 import { registerAuth } from "./auth";
@@ -19,6 +20,13 @@ export function createApp(
       ],
     },
     bodyLimit: 16384,
+  });
+  app.register(cors, {
+    origin: (
+      process.env.ALLOWED_ORIGINS ??
+      "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3200,http://127.0.0.1:4173"
+    ).split(","),
+    credentials: true,
   });
   app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   app.get("/health", async () => ({ status: "ok", protocolVersion: 1 }));

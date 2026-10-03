@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
-    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --external:fastify --external:socket.io --external:@fastify/cookie --external:pg --external:@fastify/rate-limit --outfile=dist/main.js"
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --external:fastify --external:socket.io --external:@fastify/cors --external:@fastify/cookie --external:pg --external:@fastify/rate-limit --outfile=dist/main.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",

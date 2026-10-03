@@ -8,3 +8,5 @@ coverage/
 *.log
 test-results/
 playwright-report/
+apps/mobile/android/
+apps/mobile/ios/

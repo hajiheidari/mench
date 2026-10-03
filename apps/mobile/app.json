@@ -5,11 +5,15 @@
     "version": "0.0.1",
     "orientation": "portrait",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mench.game"
     },
-    "android": {},
+    "android": {
+      "package": "com.mench.game"
+    },
     "web": {
       "bundler": "metro"
-    }
+    },
+    "plugins": ["expo-secure-store"]
   }
 }

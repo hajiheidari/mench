@@ -61,7 +61,8 @@ export function attachRealtime(
   database?: Database,
 ) {
   const allowed = (
-    process.env.ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173"
+    process.env.ALLOWED_ORIGINS ??
+    "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3200,http://127.0.0.1:4173"
   ).split(",");
   const io = new Server(app.server, {
     maxHttpBufferSize: 16384,

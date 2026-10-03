@@ -331,3 +331,9 @@ footer {
     transition: none !important;
   }
 }
+
+.pawn::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
