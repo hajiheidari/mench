@@ -3,61 +3,331 @@
 }
 body {
   margin: 0;
-  background: #edf2ee;
-  color: #122e36;
+  background: #f1f3ed;
+  color: #203e38;
   font-family: Tahoma, Arial, sans-serif;
 }
-main {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 28px;
-  text-align: center;
+button,
+select,
+input {
+  font: inherit;
 }
 button {
-  position: absolute;
-  inset-block-start: 24px;
-  inset-inline-end: 24px;
-  border: 1px solid #b6c7c0;
-  border-radius: 24px;
-  padding: 12px 22px;
-  background: transparent;
-  color: inherit;
   cursor: pointer;
+  transition:
+    transform 0.15s,
+    background 0.15s;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #ab7923;
+  outline-offset: 3px;
+}
+main {
+  max-width: 1120px;
+  margin: auto;
+  padding: 24px 32px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
 h1 {
-  font-size: clamp(30px, 7vw, 60px);
-  margin: 14px 0;
+  font-size: 34px;
+  margin: 0;
+  letter-spacing: -1px;
 }
-p {
+.brand-dot {
+  color: #cc7157;
+  margin-inline-start: 12px;
+}
+header p {
+  font-size: 13px;
+  color: #6b7c73;
+  margin: 8px 0;
+}
+.language {
+  border: 1px solid #c5d2c7;
+  padding: 10px 22px;
+  border-radius: 30px;
+  background: transparent;
+  color: #203e38;
+}
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+  align-items: start;
+}
+.board {
+  position: relative;
+  aspect-ratio: 1;
+  max-width: 650px;
+  margin: auto;
+  border-radius: 24px;
+  box-shadow: 0 18px 45px #24423912;
+  overflow: hidden;
+}
+.board svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.pawn {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 4.2%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid #fffdf4;
+  color: white;
+  font-size: clamp(9px, 1.2vw, 14px);
+  font-weight: bold;
+  padding: 0;
+  box-shadow: 0 2px 3px #233f3544;
+  z-index: 2;
+}
+.pawn:disabled {
+  opacity: 1;
+}
+.pawn.legal {
+  outline: 3px solid #243e33;
+  outline-offset: 2px;
+  animation: pulse 1.3s ease-in-out infinite;
+  z-index: 3;
+}
+.pawn.finished {
+  width: 2.8%;
+  font-size: 8px;
+}
+.panel {
+  background: #fffdf8;
+  border: 1px solid #e1e7dc;
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.eyebrow {
+  font-size: 11px;
+  color: #7d8c7c;
+  letter-spacing: 1px;
+}
+h2 {
+  font-size: 19px;
+  margin: 0;
+}
+.dice {
+  width: 76px;
+  height: 76px;
+  border: 1px solid #d8e2d5;
+  border-radius: 20px;
+  background: #f0f4e9;
+  font-size: 42px;
+  display: grid;
+  place-items: center;
+  margin: 8px auto;
+  box-shadow: 0 6px 0 #dde5d5;
+}
+.primary,
+.secondary {
+  border-radius: 14px;
+  padding: 14px 20px;
+  border: 0;
+}
+.primary {
+  background: #235e4f;
+  color: #fff;
+}
+.secondary {
+  background: #ecf0e5;
+  color: #345747;
+}
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid #edf0e5;
+  padding-top: 18px;
+}
+.players > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.players small {
+  margin-inline-start: auto;
+  color: #718276;
+  font-size: 10px;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #61746a;
+}
+input,
+select {
+  padding: 11px;
+  background: white;
+  border: 1px solid #d8e0d2;
+  border-radius: 10px;
+  color: #28473b;
+  min-width: 0;
+}
+.fine,
+.board-hint {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #758576;
+}
+.board-hint {
+  text-align: center;
+}
+.fine {
+  margin: 0;
+}
+.panel p[role="status"] {
+  font-size: 12px;
+  margin: 0;
+}
+footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 11px;
+  color: #8a978a;
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.tabs button {
+  border: 0;
+  border-radius: 20px;
+  padding: 10px 24px;
+  background: #e4eadf;
+  color: #46614f;
+}
+.tabs button.active {
+  background: #203e38;
+  color: white;
+}
+.lobby {
+  max-width: 540px;
+  margin: 40px auto;
+}
+.lobby .panel {
+  gap: 18px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.actions > * {
+  flex: 1;
+}
+.room-code {
+  font-size: 30px;
+  letter-spacing: 5px;
+  direction: ltr;
+  text-align: center;
+}
+.connection {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.history {
+  margin-top: 16px;
+  border-top: 1px solid #dde5d6;
+  padding-top: 12px;
+  font-size: 11px;
+}
+.history summary {
+  cursor: pointer;
+}
+.history-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #edf0e5;
+  word-break: break-word;
+}
+.error {
+  color: #a63c34;
+  font-size: 12px;
   line-height: 1.8;
 }
-.stage {
+.notification {
+  padding: 12px;
+  background: #e2e9d8;
+  border-radius: 12px;
   font-size: 12px;
-  letter-spacing: 1px;
-  color: #49675d;
 }
-.mark {
-  display: grid;
-  grid-template-columns: repeat(2, 38px);
-  gap: 10px;
-  transform: rotate(-12deg);
-  margin-bottom: 40px;
+.timer {
+  font-variant-numeric: tabular-nums;
+  color: #71816b;
+  font-size: 12px;
 }
-.mark i {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #da785c;
+@keyframes pulse {
+  50% {
+    outline-color: #d1ad4f;
+  }
 }
-.mark i:nth-child(2) {
-  background: #dfb953;
+@media (max-width: 760px) {
+  main {
+    padding: 18px 14px;
+  }
+  header {
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 28px;
+  }
+  .game-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .panel {
+    padding: 20px;
+  }
+  .pawn {
+    font-size: 10px;
+  }
+  .dice {
+    margin: 0 auto;
+  }
+  .players {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .players > div {
+    flex: 1 1 40%;
+  }
+  .language {
+    padding: 9px 14px;
+  }
 }
-.mark i:nth-child(3) {
-  background: #488977;
-}
-.mark i:nth-child(4) {
-  background: #568ca2;
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

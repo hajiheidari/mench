@@ -2,31 +2,37 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Locale } from "@mench/shared-types";
 import { messages } from "./messages";
+import { Practice } from "./Practice";
 import "./style.css";
 function App() {
   const [locale, setLocale] = useState<Locale>("fa");
   const t = messages[locale];
   return (
     <main dir={locale === "fa" ? "rtl" : "ltr"} lang={locale}>
-      <button
-        onClick={() => {
-          const next = locale === "fa" ? "en" : "fa";
-          setLocale(next);
-          document.documentElement.lang = next;
-          document.documentElement.dir = next === "fa" ? "rtl" : "ltr";
-        }}
-      >
-        {t.language}
-      </button>
-      <div className="mark" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-      <p className="stage">{t.stage}</p>
-      <h1>{t.title}</h1>
-      <p>{t.subtitle}</p>
+      <header>
+        <div>
+          <h1>
+            {t.brand}
+            <span className="brand-dot">✦</span>
+          </h1>
+          <p>{t.tagline}</p>
+        </div>
+        <button
+          className="language"
+          onClick={() => {
+            const next = locale === "fa" ? "en" : "fa";
+            setLocale(next);
+            document.documentElement.lang = next;
+            document.documentElement.dir = next === "fa" ? "rtl" : "ltr";
+          }}
+        >
+          {t.language}
+        </button>
+      </header>
+      <Practice t={t} />
+      <footer>
+        {t.rules} · {t.practice}
+      </footer>
     </main>
   );
 }

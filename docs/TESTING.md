@@ -15,3 +15,5 @@ The cloud proxy hostname is resolved on the host but not in Docker DNS. For this
 M1: 25 engine tests passed, including full 2/3/4-player simulations. v8 coverage: 97.84% statements, 97.97% branches, 100% functions, 98.79% lines. Command: npm test -- packages/game-engine --coverage --coverage.include=packages/game-engine/src/index.ts.
 
 M2: five tests passed; 100000-roll reproducible simulation and browser WebCrypto/server interoperability executed. Proof verification requires the independently observed commitment and client nonce; changing a nonce can coincidentally preserve the dice face, so checking the face alone is insufficient. Full lint/typecheck/tests/build passed.
+
+M3: npm run test:e2e passed both real Chromium tests: full local two-player match and 4-player setup at 390px viewport. Playwright uses preinstalled /usr/bin/chromium when available; otherwise install with PLAYWRIGHT_BROWSERS_PATH=$PWD/node_modules/.cache/ms-playwright npx playwright install chromium.
