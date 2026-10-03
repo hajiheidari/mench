@@ -52,6 +52,21 @@ export const messages = {
     authHint: "گذرواژه حداقل ۱۲ نویسه",
     install: "نصب بازی",
     bot: "تمرین با ربات",
+    unwitnessed:
+      "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
+    errors: {
+      REQUEST_FAILED: "دوباره تلاش کنید",
+      CONNECTION_FAILED: "اتصال به سرور برقرار نشد",
+      ROOM_NOT_FOUND: "اتاق پیدا نشد",
+      ROOM_FULL: "اتاق پر است",
+      INVALID_SESSION: "نشست معتبر نیست",
+      STALE_VERSION: "وضعیت بازی به‌روز شد؛ دوباره تلاش کنید",
+      NOT_YOUR_TURN: "نوبت شما نیست",
+      SESSION_REPLACED: "این نشست در دستگاه دیگری باز شد",
+      WAITING_FOR_PLAYERS: "همهٔ بازیکن‌ها باید متصل باشند",
+      RATE_LIMITED: "کمی صبر کنید",
+      INVALID_COMMAND: "ورودی معتبر نیست",
+    } as Record<string, string>,
   },
   en: {
     brand: "Mench",
@@ -106,6 +121,21 @@ export const messages = {
     authHint: "Password: at least 12 characters",
     install: "Install game",
     bot: "Practice with bot",
+    unwitnessed:
+      "You did not observe this commitment before the roll; commitment timing cannot be verified.",
+    errors: {
+      REQUEST_FAILED: "Please try again",
+      CONNECTION_FAILED: "Could not connect to server",
+      ROOM_NOT_FOUND: "Room not found",
+      ROOM_FULL: "Room is full",
+      INVALID_SESSION: "Session expired",
+      STALE_VERSION: "Game state changed; try again",
+      NOT_YOUR_TURN: "It is not your turn",
+      SESSION_REPLACED: "Session opened on another device",
+      WAITING_FOR_PLAYERS: "All players must be connected",
+      RATE_LIMITED: "Please wait briefly",
+      INVALID_COMMAND: "Invalid input",
+    } as Record<string, string>,
   },
 };
 export type Messages = typeof messages.en;
