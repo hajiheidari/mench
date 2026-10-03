@@ -231,3 +231,40 @@ test("default WebSocket rate limiter blocks spam", async () => {
     await app.close();
   }
 });
+
+test("matchmaking pairs unique clients and starts an authoritative match; cancel removes queue entry", async () => {
+  const app = createApp();
+  try {
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    const a = app.server.address();
+    if (!a || typeof a === "string") throw Error();
+    const url = `http://127.0.0.1:${a.port}`;
+    const first = await connect(url);
+    const second = await connect(url);
+    expect(await command(first, { type: "queue", name: "Alpha" })).toEqual({
+      ok: true,
+      room: null,
+      queued: true,
+    });
+    expect(await command(first, { type: "cancelQueue" })).toEqual({
+      ok: true,
+      room: null,
+      queued: false,
+    });
+    const matched = new Promise<Reply>((resolve) =>
+      first.once(EVENTS.MATCHED, resolve),
+    );
+    await command(first, { type: "queue", name: "Alpha" });
+    const theirs = await command(second, { type: "queue", name: "Beta" });
+    const mine = await matched;
+    const room = roomOf(theirs);
+    expect(roomOf(mine).code).toBe(room.code);
+    expect(room.state!.players).toHaveLength(2);
+    expect(room.state!.phase).toBe("roll");
+    expect(room.players.map((p) => p.name)).toEqual(["Alpha", "Beta"]);
+    first.disconnect();
+    second.disconnect();
+  } finally {
+    await app.close();
+  }
+});

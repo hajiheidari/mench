@@ -14,6 +14,7 @@ import {
 } from "@mench/fair-dice";
 import type { PublicRoom, Reply } from "@mench/game-protocol";
 interface Member {
+  accountId: string | null;
   id: string;
   name: string;
   tokenHash: string;
@@ -41,6 +42,7 @@ const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 export class RoomError extends Error {}
 export class Rooms {
+  readonly identities = new Map<string, string>();
   readonly rooms = new Map<string, Room>();
   readonly sessions = new Map<string, { room: Room; member: Member }>();
   constructor(
@@ -68,8 +70,12 @@ export class Rooms {
   }
   private add(room: Room, socketId: string, name: string): Reply {
     if (this.sessions.has(socketId)) throw new RoomError("ALREADY_JOINED");
+    const accountId = this.identities.get(socketId) ?? null;
+    if (accountId && room.members.some((m) => m.accountId === accountId))
+      throw new RoomError("ALREADY_JOINED");
     const token = randomBytes(32).toString("hex");
     const member: Member = {
+      accountId,
       id: randomUUID(),
       name,
       tokenHash: tokenHash(token),

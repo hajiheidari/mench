@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { EVENTS, type Reply } from "@mench/game-protocol";
+import type { Database } from "./database";
+import { resolveAccount } from "./auth";
 import { Rooms } from "./rooms";
 const name = z
   .string()
@@ -56,6 +58,7 @@ export function attachRealtime(
   app: FastifyInstance,
   rooms = new Rooms(),
   commandBudget = 100,
+  database?: Database,
 ) {
   const allowed = (
     process.env.ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173"
@@ -71,6 +74,22 @@ export function attachRealtime(
         !req.headers.origin || allowed.includes(req.headers.origin),
       ),
   });
+  if (database)
+    io.use(async (socket, next) => {
+      try {
+        const header = socket.handshake.headers.authorization;
+        const raw = header?.startsWith("Bearer ")
+          ? header.slice(7)
+          : socket.handshake.headers.cookie?.match(
+              /(?:^|;\s*)mench_session=([a-f0-9]{64})(?:;|$)/,
+            )?.[1];
+        const account = await resolveAccount(database, raw);
+        if (account) rooms.identities.set(socket.id, account.id);
+        next();
+      } catch {
+        next(new Error("AUTH_UNAVAILABLE"));
+      }
+    });
   const queue = new Map<string, string>();
   const broadcast = (room: ReturnType<Rooms["public"]>) =>
     io.to(room.code).emit(EVENTS.SNAPSHOT, room);
@@ -176,8 +195,11 @@ export function attachRealtime(
             if (!other.ok || !other.room) throw new Error("MATCH_ERROR");
             const theirs = io.sockets.sockets.get(opponent)!;
             theirs.join(other.room.code);
-            theirs.emit("v1:matched", other);
+
             result = rooms.join(socket.id, payload.name, other.room.code);
+            const started = rooms.start(opponent);
+            theirs.emit(EVENTS.MATCHED, { ...other, room: started });
+            if (result.ok) result = { ...result, room: started };
             break;
           }
         }
@@ -201,6 +223,7 @@ export function attachRealtime(
     });
     socket.on("disconnect", () => {
       queue.delete(socket.id);
+      rooms.identities.delete(socket.id);
       const snapshot = rooms.disconnect(socket.id);
       if (snapshot) broadcast(snapshot);
     });

@@ -5,6 +5,7 @@ export const EVENTS = {
   COMMAND: "v1:command",
   SNAPSHOT: "v1:snapshot",
   REPLACED: "v1:replaced",
+  MATCHED: "v1:matched",
 } as const;
 export interface PublicPlayer {
   id: string;
