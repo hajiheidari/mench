@@ -6,6 +6,10 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc --outDir dist"
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@mench/game-engine": "0.0.0",
+    "@mench/fair-dice": "0.0.0"
   }
 }

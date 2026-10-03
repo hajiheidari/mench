@@ -17,3 +17,5 @@ M1: 25 engine tests passed, including full 2/3/4-player simulations. v8 coverage
 M2: five tests passed; 100000-roll reproducible simulation and browser WebCrypto/server interoperability executed. Proof verification requires the independently observed commitment and client nonce; changing a nonce can coincidentally preserve the dice face, so checking the face alone is insufficient. Full lint/typecheck/tests/build passed.
 
 M3: npm run test:e2e passed both real Chromium tests: full local two-player match and 4-player setup at 390px viewport. Playwright uses preinstalled /usr/bin/chromium when available; otherwise install with PLAYWRIGHT_BROWSERS_PATH=$PWD/node_modules/.cache/ms-playwright npx playwright install chromium.
+
+M4/M5: real Socket.IO 2/4-client full games, proof verification, forged intent rejection, duplicate replay, live reconnect/session eviction and default rate-limit test passed. Fake clock 2/10/30s disconnect and 45s grace tested. E2E: invite link, online start, proof verification and reload restoration passed. Vitest config explicitly includes source tests to avoid accidentally counting generated dist tests.

@@ -1,0 +1,283 @@
+import { randomBytes, randomUUID, createHash } from "node:crypto";
+import {
+  applyAction,
+  createGame,
+  currentPlayer,
+  type GameState,
+} from "@mench/game-engine";
+import {
+  commitment,
+  reveal,
+  secureSeed,
+  type DiceContext,
+  type DiceProof,
+} from "@mench/fair-dice";
+import type { PublicRoom, Reply } from "@mench/game-protocol";
+interface Member {
+  id: string;
+  name: string;
+  tokenHash: string;
+  socketId: string | null;
+  disconnectedAt: number | null;
+  replies: Map<string, Reply>;
+}
+interface Pending {
+  seed: string;
+  context: DiceContext;
+  hash: string;
+}
+export interface Room {
+  code: string;
+  hostId: string;
+  capacity: number;
+  members: Member[];
+  state: GameState | null;
+  pending: Pending | null;
+  proofs: DiceProof[];
+  deadline: number | null;
+  createdAt: number;
+}
+const tokenHash = (token: string) =>
+  createHash("sha256").update(token).digest("hex");
+export class RoomError extends Error {}
+export class Rooms {
+  readonly rooms = new Map<string, Room>();
+  readonly sessions = new Map<string, { room: Room; member: Member }>();
+  constructor(
+    readonly now = () => Date.now(),
+    readonly turnMs = 30000,
+    readonly graceMs = 45000,
+  ) {}
+  public(room: Room): PublicRoom {
+    return {
+      code: room.code,
+      hostId: room.hostId,
+      capacity: room.capacity,
+      players: room.members.map((m) => ({
+        id: m.id,
+        name: m.name,
+        connected: m.socketId !== null,
+      })),
+      state: room.state ? structuredClone(room.state) : null,
+      deadline: room.deadline,
+      commitment: room.pending
+        ? { hash: room.pending.hash, context: room.pending.context }
+        : null,
+      proofs: structuredClone(room.proofs),
+    };
+  }
+  private add(room: Room, socketId: string, name: string): Reply {
+    if (this.sessions.has(socketId)) throw new RoomError("ALREADY_JOINED");
+    const token = randomBytes(32).toString("hex");
+    const member: Member = {
+      id: randomUUID(),
+      name,
+      tokenHash: tokenHash(token),
+      socketId,
+      disconnectedAt: null,
+      replies: new Map(),
+    };
+    room.members.push(member);
+    if (!room.hostId) room.hostId = member.id;
+    this.sessions.set(socketId, { room, member });
+    return { ok: true, room: this.public(room), playerId: member.id, token };
+  }
+  create(socketId: string, name: string, capacity: number): Reply {
+    if (this.rooms.size >= 1000) throw new RoomError("SERVER_FULL");
+    if (this.sessions.has(socketId)) throw new RoomError("ALREADY_JOINED");
+    let code: string;
+    do {
+      code = randomBytes(5).toString("hex").toUpperCase();
+    } while (this.rooms.has(code));
+    const room: Room = {
+      code,
+      hostId: "",
+      capacity,
+      members: [],
+      state: null,
+      pending: null,
+      proofs: [],
+      deadline: null,
+      createdAt: this.now(),
+    };
+    this.rooms.set(code, room);
+    return this.add(room, socketId, name);
+  }
+  join(socketId: string, name: string, code: string): Reply {
+    const room = this.rooms.get(code);
+    if (!room) throw new RoomError("ROOM_NOT_FOUND");
+    if (room.state) throw new RoomError("ALREADY_STARTED");
+    if (room.members.length >= room.capacity) throw new RoomError("ROOM_FULL");
+    return this.add(room, socketId, name);
+  }
+  resume(
+    socketId: string,
+    code: string,
+    token: string,
+  ): { reply: Reply; replaced: string | null } {
+    const room = this.rooms.get(code);
+    const member = room?.members.find((m) => m.tokenHash === tokenHash(token));
+    if (!room || !member) throw new RoomError("INVALID_SESSION");
+    if (
+      this.sessions.has(socketId) &&
+      this.sessions.get(socketId)?.member !== member
+    )
+      throw new RoomError("ALREADY_JOINED");
+    const replaced = member.socketId;
+    if (replaced) this.sessions.delete(replaced);
+    member.socketId = socketId;
+    member.disconnectedAt = null;
+    this.sessions.set(socketId, { room, member });
+    if (room.state && room.state.phase !== "finished")
+      room.state = applyAction(room.state, {
+        type: "connection",
+        playerId: member.id,
+        connected: true,
+      });
+    return {
+      reply: { ok: true, room: this.public(room), playerId: member.id },
+      replaced: replaced !== socketId ? replaced : null,
+    };
+  }
+  session(socketId: string) {
+    const s = this.sessions.get(socketId);
+    if (!s) throw new RoomError("NOT_JOINED");
+    return s;
+  }
+  private prepare(room: Room): void {
+    if (!room.state || room.state.phase === "finished") {
+      room.pending = null;
+      room.deadline = null;
+      return;
+    }
+    room.deadline = this.now() + this.turnMs;
+    if (room.state.phase === "roll") {
+      const context: DiceContext = {
+        gameId: room.code,
+        roll: room.proofs.length,
+        playerId: currentPlayer(room.state).id,
+        version: room.state.version,
+      };
+      const seed = secureSeed();
+      room.pending = { seed, context, hash: commitment(seed, context) };
+    } else room.pending = null;
+  }
+  start(socketId: string): PublicRoom {
+    const { room, member } = this.session(socketId);
+    if (member.id !== room.hostId) throw new RoomError("HOST_ONLY");
+    if (room.state) throw new RoomError("ALREADY_STARTED");
+    if (
+      room.members.length !== room.capacity ||
+      room.members.some((m) => !m.socketId)
+    )
+      throw new RoomError("WAITING_FOR_PLAYERS");
+    room.state = createGame(room.members.map((m) => m.id));
+    this.prepare(room);
+    return this.public(room);
+  }
+  roll(socketId: string, nonce: string, expectedVersion: number): PublicRoom {
+    const { room, member } = this.session(socketId);
+    if (!room.state || !room.pending) throw new RoomError("NOT_ROLL_PHASE");
+    if (room.state.version !== expectedVersion)
+      throw new RoomError("STALE_VERSION");
+    if (currentPlayer(room.state).id !== member.id)
+      throw new RoomError("NOT_YOUR_TURN");
+    const proof = reveal(room.pending.seed, room.pending.context, nonce);
+    room.state = applyAction(room.state, {
+      type: "roll",
+      playerId: member.id,
+      value: proof.value,
+    });
+    room.proofs.push(proof);
+    this.prepare(room);
+    return this.public(room);
+  }
+  move(socketId: string, pawn: number, expectedVersion: number): PublicRoom {
+    const { room, member } = this.session(socketId);
+    if (!room.state) throw new RoomError("NOT_STARTED");
+    if (room.state.version !== expectedVersion)
+      throw new RoomError("STALE_VERSION");
+    room.state = applyAction(room.state, {
+      type: "move",
+      playerId: member.id,
+      pawn,
+    });
+    this.prepare(room);
+    return this.public(room);
+  }
+  disconnect(socketId: string): PublicRoom | null {
+    const s = this.sessions.get(socketId);
+    if (!s) return null;
+    this.sessions.delete(socketId);
+    const { room, member } = s;
+    if (member.socketId !== socketId) return null;
+    member.socketId = null;
+    member.disconnectedAt = this.now();
+    if (room.state && room.state.phase !== "finished") {
+      room.state = applyAction(room.state, {
+        type: "connection",
+        playerId: member.id,
+        connected: false,
+      });
+      if (currentPlayer(room.state).id === member.id)
+        room.deadline = Math.max(room.deadline ?? 0, this.now() + this.graceMs);
+    }
+    return this.public(room);
+  }
+  leave(socketId: string): PublicRoom | null {
+    const { room, member } = this.session(socketId);
+    if (room.state) {
+      member.tokenHash = secureSeed();
+      return this.disconnect(socketId);
+    }
+    this.sessions.delete(socketId);
+    room.members = room.members.filter((m) => m.id !== member.id);
+    if (!room.members.length) {
+      this.rooms.delete(room.code);
+      return null;
+    }
+    if (room.hostId === member.id) room.hostId = room.members[0]!.id;
+    return this.public(room);
+  }
+  tick(): PublicRoom[] {
+    const changed: PublicRoom[] = [];
+    for (const room of this.rooms.values()) {
+      if (
+        this.now() - room.createdAt > 24 * 3600000 ||
+        (!room.state &&
+          this.now() - room.createdAt > 3600000 &&
+          room.members.every((m) => !m.socketId))
+      ) {
+        for (const m of room.members)
+          if (m.socketId) this.sessions.delete(m.socketId);
+        this.rooms.delete(room.code);
+        continue;
+      }
+      if (
+        room.state &&
+        room.state.phase !== "finished" &&
+        room.deadline !== null &&
+        this.now() >= room.deadline
+      ) {
+        room.state = applyAction(room.state, {
+          type: "timeout",
+          playerId: currentPlayer(room.state).id,
+        });
+        this.prepare(room);
+        const active = room.members.find(
+          (m) => m.id === currentPlayer(room.state!).id,
+        );
+        if (
+          active?.disconnectedAt !== null &&
+          active?.disconnectedAt !== undefined
+        )
+          room.deadline = Math.max(
+            room.deadline ?? 0,
+            active.disconnectedAt + this.graceMs,
+          );
+        changed.push(this.public(room));
+      }
+    }
+    return changed;
+  }
+}

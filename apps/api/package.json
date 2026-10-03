@@ -6,12 +6,21 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json"
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --external:fastify --external:socket.io --external:pg --external:@fastify/rate-limit --outfile=dist/main.js"
   },
   "dependencies": {
-    "fastify": "5.12.5"
+    "@fastify/cookie": "11.1.2",
+    "@fastify/rate-limit": "11.2.0",
+    "@mench/fair-dice": "0.0.0",
+    "@mench/game-engine": "0.0.0",
+    "@mench/game-protocol": "0.0.0",
+    "fastify": "5.12.5",
+    "pg": "8.23.1",
+    "socket.io": "4.8.4",
+    "zod": "3.25.76"
   },
   "devDependencies": {
+    "esbuild": "0.27.4",
     "tsx": "^4.20.0"
   }
 }
