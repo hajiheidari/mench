@@ -9,13 +9,18 @@
     "export": "expo export --platform all"
   },
   "dependencies": {
-    "expo": "57.0.26",
-    "react": "19.2.3",
-    "react-native": "0.86.3",
-    "react-dom": "19.2.3",
-    "react-native-web": "~0.21.0",
     "@expo/metro-runtime": "~57.0.16",
     "@mench/game-engine": "0.0.0",
-    "@mench/game-protocol": "0.0.0"
+    "@mench/game-protocol": "0.0.0",
+    "expo": "57.0.26",
+    "expo-crypto": "57.0.3",
+    "expo-secure-store": "57.0.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "~0.21.0",
+    "socket.io-client": "4.8.4",
+    "@mench/game-client": "0.0.0",
+    "@mench/fair-dice": "0.0.0"
   }
 }

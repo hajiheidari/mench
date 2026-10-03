@@ -1,3 +1,4 @@
+import { verifyProof as portableVerify } from "./portable";
 import { createHash } from "node:crypto";
 import { expect, test } from "vitest";
 import {
@@ -63,3 +64,15 @@ test("100000 reproducible rolls show approximate uniform distribution", () => {
   expect(chi).toBeLessThan(30);
   console.log(JSON.stringify({ rolls: 100000, counts, chiSquare: chi }));
 }, 15000);
+
+test("portable native verifier agrees with server and rejects altered context", () => {
+  const p = reveal(seed, context, nonce);
+  expect(portableVerify(p, p.commitment, nonce)).toBe(true);
+  expect(
+    portableVerify(
+      { ...p, context: { ...context, roll: 99 } },
+      p.commitment,
+      nonce,
+    ),
+  ).toBe(false);
+});

@@ -16,7 +16,8 @@
     "react-dom": "19.2.3",
     "socket.io-client": "4.8.4",
     "@mench/game-protocol": "0.0.0",
-    "@mench/fair-dice": "0.0.0"
+    "@mench/fair-dice": "0.0.0",
+    "@mench/game-client": "0.0.0"
   },
   "devDependencies": {
     "vite": "8.3.2"
