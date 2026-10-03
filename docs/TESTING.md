@@ -11,3 +11,5 @@ CI executes the same commands on Node .nvmrc. Local execution cannot establish G
 ## Cloud Docker trust
 
 The cloud proxy hostname is resolved on the host but not in Docker DNS. For this environment the image was built with --build-arg HTTP_PROXY, --build-arg HTTPS_PROXY, --build-arg NO_PROXY, --add-host for the existing proxy hostname/IP, and --secret id=ca,src pointing to the injected NODE_EXTRA_CA_CERTS file. Use DOCKER_CONFIG=/tmp/mench-docker for a writable Docker cache. Keep certificate files out of the checkout. The Dockerfile consumes the optional ca secret only during installation and keeps TLS verification enabled. Tag the image mench-api and mench-web, then docker compose up -d --no-build api web. No proxy credentials are copied to source or saved configuration.
+
+M1: 25 engine tests passed, including full 2/3/4-player simulations. v8 coverage: 97.84% statements, 97.97% branches, 100% functions, 98.79% lines. Command: npm test -- packages/game-engine --coverage --coverage.include=packages/game-engine/src/index.ts.

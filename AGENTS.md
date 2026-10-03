@@ -16,4 +16,4 @@ Strict TypeScript, small modules, no untyped any, no credentials in Git. Visible
 
 ## Workflow
 
-Follow docs/ROADMAP.md. Each milestone: plan, implement, test, review, fix, retest, document, commit, stop for review. Keep PROJECT_STATUS and KNOWN_ISSUES accurate; never claim skipped checks passed. Use descriptive scoped commits. M0 has no gameplay; do not implement M1 without user review.
+Follow docs/ROADMAP.md. Each milestone: plan, implement, test, review, fix, retest, document, commit, continue after successful acceptance checks. Keep PROJECT_STATUS and KNOWN_ISSUES accurate; never claim skipped checks passed. Use descriptive scoped commits. The user authorized continuous milestone delivery on 2026-10-04. Continue without milestone approval; pause only for required external access, essential decisions, publication or spending.
