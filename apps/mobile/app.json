@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Mench",
+    "slug": "mench",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
