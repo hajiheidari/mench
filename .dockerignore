@@ -5,3 +5,5 @@ node_modules
 **/.expo
 .env
 .env.*
+apps/mobile/android
+apps/mobile/ios
