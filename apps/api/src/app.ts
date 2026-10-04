@@ -29,8 +29,13 @@ export function createApp(
     credentials: true,
   });
   app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
-  app.get("/health", async () => ({ status: "ok", protocolVersion: 1 }));
+  if (database) app.addHook("onClose", async () => database.close());
   if (database) registerAuth(app, database);
-  attachRealtime(app, rooms, commandBudget, database);
+  const realtime = attachRealtime(app, rooms, commandBudget, database);
+  app.get("/health", async (_req, reply) =>
+    realtime.isHealthy()
+      ? { status: "ok", protocolVersion: 1 }
+      : reply.code(503).send({ status: "unavailable", protocolVersion: 1 }),
+  );
   return app;
 }

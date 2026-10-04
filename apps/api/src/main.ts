@@ -10,7 +10,6 @@ if (process.env.NODE_ENV === "production" && !url)
 const database = url ? new Database(url) : undefined;
 if (database) await database.migrate();
 const app = createApp(undefined, 100, database);
-if (database) app.addHook("onClose", async () => database.close());
 try {
   await app.listen({ port: Number(process.env.PORT ?? 3001), host: "0.0.0.0" });
 } catch (error) {

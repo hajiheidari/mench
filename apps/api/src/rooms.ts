@@ -20,7 +20,7 @@ interface Member {
   tokenHash: string;
   socketId: string | null;
   disconnectedAt: number | null;
-  replies: Map<string, Reply>;
+  replies: Map<string, { payload: string; reply: Reply; proofCount: number }>;
 }
 interface Pending {
   seed: string;
@@ -38,6 +38,10 @@ export interface Room {
   deadline: number | null;
   createdAt: number;
 }
+export interface RoomSnapshot extends Omit<Room, "members"> {
+  storageVersion: 1;
+  members: Omit<Member, "replies">[];
+}
 const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 export class RoomError extends Error {}
@@ -50,6 +54,51 @@ export class Rooms {
     readonly turnMs = 30000,
     readonly graceMs = 45000,
   ) {}
+  exportRoom(room: Room): RoomSnapshot {
+    return structuredClone({
+      ...room,
+      storageVersion: 1,
+      members: room.members.map(({ replies, ...member }) => {
+        void replies;
+        return member;
+      }),
+    });
+  }
+  exportAll(): RoomSnapshot[] {
+    return [...this.rooms.values()].map((room) => this.exportRoom(room));
+  }
+  restore(snapshots: RoomSnapshot[], afterRestart: boolean): void {
+    this.rooms.clear();
+    this.sessions.clear();
+    for (const snapshot of snapshots) {
+      if (snapshot.storageVersion !== 1)
+        throw new RoomError("UNKNOWN_STORAGE_VERSION");
+      if (this.now() - snapshot.createdAt > 24 * 3600000) continue;
+      const room: Room = {
+        ...structuredClone(snapshot),
+        members: snapshot.members.map((m) => ({
+          ...structuredClone(m),
+          replies: new Map(),
+        })),
+      };
+      for (const member of room.members) {
+        if (afterRestart) {
+          member.socketId = null;
+          member.disconnectedAt = this.now();
+          if (room.state && room.state.phase !== "finished")
+            room.state = applyAction(room.state, {
+              type: "connection",
+              playerId: member.id,
+              connected: false,
+            });
+        } else if (member.socketId)
+          this.sessions.set(member.socketId, { room, member });
+      }
+      if (afterRestart && room.state && room.state.phase !== "finished")
+        room.deadline = this.now() + this.graceMs;
+      this.rooms.set(room.code, room);
+    }
+  }
   public(room: Room): PublicRoom {
     return {
       code: room.code,

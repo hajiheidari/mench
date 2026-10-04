@@ -91,149 +91,304 @@ export function attachRealtime(
         next(new Error("AUTH_UNAVAILABLE"));
       }
     });
+
   const queue = new Map<string, string>();
+  let healthy = true;
+  let tail = Promise.resolve();
+  let pendingJobs = 0;
+  const enqueue = (job: () => Promise<void>) => {
+    if (pendingJobs >= 2000) return Promise.reject(new Error("SERVER_BUSY"));
+    pendingJobs++;
+    const next = tail.then(job).finally(() => {
+      pendingJobs--;
+    });
+    tail = next.catch((error) => {
+      app.log.error({
+        event: "room_actor_failure",
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    });
+    return next;
+  };
+  if (database)
+    app.addHook("onReady", async () =>
+      rooms.restore(await database.loadRooms(), true),
+    );
   const broadcast = (room: ReturnType<Rooms["public"]>) =>
     io.to(room.code).emit(EVENTS.SNAPSHOT, room);
+  const persist = async (
+    code: string,
+    kind: string,
+    data: Record<string, unknown>,
+    requestId?: string,
+  ) => {
+    if (!database) return;
+    const room = rooms.rooms.get(code);
+    await database.saveRoom(code, room ? rooms.exportRoom(room) : null, {
+      kind,
+      data,
+      ...(requestId ? { requestId } : {}),
+    });
+  };
   io.on("connection", (socket) => {
     let requests = 0;
     let window = Date.now();
     socket.on(EVENTS.COMMAND, (input: unknown, ack: unknown) => {
       if (typeof ack !== "function") return;
-      const reply = (r: Reply) => ack(r);
       if (Date.now() - window > 10000) {
         window = Date.now();
         requests = 0;
       }
       if (++requests > commandBudget) {
-        reply({ ok: false, error: "RATE_LIMITED" });
+        ack({ ok: false, error: "RATE_LIMITED" });
         return;
       }
       const parsed = schema.safeParse(input);
       if (!parsed.success) {
-        reply({ ok: false, error: "INVALID_COMMAND" });
+        ack({ ok: false, error: "INVALID_COMMAND" });
         return;
       }
-      const { requestId, payload } = parsed.data;
-      const session = rooms.sessions.get(socket.id);
-      const cached = session?.member.replies.get(requestId);
-      if (cached) {
-        reply(cached);
-        return;
-      }
-      try {
-        let result: Reply;
-        switch (payload.type) {
-          case "create":
-            result = rooms.create(socket.id, payload.name, payload.capacity);
-            break;
-          case "join":
-            result = rooms.join(socket.id, payload.name, payload.code);
-            break;
-          case "resume": {
-            const resumed = rooms.resume(
-              socket.id,
-              payload.code,
-              payload.token,
-            );
-            result = resumed.reply;
-            if (resumed.replaced) {
-              io.sockets.sockets.get(resumed.replaced)?.emit(EVENTS.REPLACED);
-              io.sockets.sockets.get(resumed.replaced)?.disconnect(true);
-            }
-            break;
+      void enqueue(async () => {
+        if (!socket.connected) {
+          return;
+        }
+        if (!healthy) {
+          ack({ ok: false, error: "PERSISTENCE_UNAVAILABLE" });
+          return;
+        }
+        const { requestId, payload } = parsed.data;
+        const fingerprint = JSON.stringify(payload);
+        const session = rooms.sessions.get(socket.id);
+        const cached = session?.member.replies.get(requestId);
+        if (cached) {
+          if (cached.payload !== fingerprint) {
+            ack({ ok: false, error: "REQUEST_ID_REUSED" });
+            return;
           }
-          case "start":
-            result = { ok: true, room: rooms.start(socket.id) };
-            break;
-          case "roll":
-            result = {
-              ok: true,
-              room: rooms.roll(
-                socket.id,
-                payload.nonce,
-                payload.expectedVersion,
-              ),
-            };
-            break;
-          case "move":
-            result = {
-              ok: true,
-              room: rooms.move(
-                socket.id,
-                payload.pawn,
-                payload.expectedVersion,
-              ),
-            };
-            break;
-          case "leave": {
-            queue.delete(socket.id);
-            const room = rooms.session(socket.id).room;
-            socket.leave(room.code);
-            const snapshot = rooms.leave(socket.id);
-            if (snapshot) broadcast(snapshot);
-            result = { ok: true, room: null };
-            break;
-          }
-          case "cancelQueue":
-            queue.delete(socket.id);
-            result = { ok: true, room: null, queued: false };
-            break;
-          case "queue": {
-            if (rooms.sessions.has(socket.id))
-              throw new Error("ALREADY_JOINED");
-            const opponent = [...queue.keys()].find(
-              (id) => id !== socket.id && io.sockets.sockets.has(id),
+          const result = structuredClone(cached.reply);
+          if (result.ok && result.room)
+            result.room.proofs = structuredClone(
+              session!.room.proofs.slice(0, cached.proofCount),
             );
-            if (!opponent) {
-              if (queue.size >= 1000) throw new Error("QUEUE_FULL");
-              queue.set(socket.id, payload.name);
-              result = { ok: true, room: null, queued: true };
+          ack(result);
+          return;
+        }
+        const backup = database ? rooms.exportAll() : null;
+        let code = session?.room.code;
+        const effects: (() => void)[] = [];
+        let writing = false;
+        try {
+          let result: Reply;
+          switch (payload.type) {
+            case "create":
+              result = rooms.create(socket.id, payload.name, payload.capacity);
+              break;
+            case "join":
+              result = rooms.join(socket.id, payload.name, payload.code);
+              break;
+            case "resume": {
+              const resumed = rooms.resume(
+                socket.id,
+                payload.code,
+                payload.token,
+              );
+              result = resumed.reply;
+              if (resumed.replaced)
+                effects.push(() => {
+                  io.sockets.sockets
+                    .get(resumed.replaced!)
+                    ?.emit(EVENTS.REPLACED);
+                  io.sockets.sockets.get(resumed.replaced!)?.disconnect(true);
+                });
               break;
             }
-            const otherName = queue.get(opponent)!;
-            queue.delete(opponent);
-            const other = rooms.create(opponent, otherName, 2);
-            if (!other.ok || !other.room) throw new Error("MATCH_ERROR");
-            const theirs = io.sockets.sockets.get(opponent)!;
-            theirs.join(other.room.code);
-
-            result = rooms.join(socket.id, payload.name, other.room.code);
-            const started = rooms.start(opponent);
-            theirs.emit(EVENTS.MATCHED, { ...other, room: started });
-            if (result.ok) result = { ...result, room: started };
-            break;
+            case "start":
+              result = { ok: true, room: rooms.start(socket.id) };
+              break;
+            case "roll":
+              result = {
+                ok: true,
+                room: rooms.roll(
+                  socket.id,
+                  payload.nonce,
+                  payload.expectedVersion,
+                ),
+              };
+              break;
+            case "move":
+              result = {
+                ok: true,
+                room: rooms.move(
+                  socket.id,
+                  payload.pawn,
+                  payload.expectedVersion,
+                ),
+              };
+              break;
+            case "leave": {
+              queue.delete(socket.id);
+              const oldRoom = rooms.session(socket.id).room;
+              code = oldRoom.code;
+              const snapshot = rooms.leave(socket.id);
+              effects.push(() => {
+                socket.leave(oldRoom.code);
+                if (snapshot) broadcast(snapshot);
+              });
+              result = { ok: true, room: null };
+              break;
+            }
+            case "cancelQueue":
+              queue.delete(socket.id);
+              result = { ok: true, room: null, queued: false };
+              break;
+            case "queue": {
+              if (rooms.sessions.has(socket.id))
+                throw new Error("ALREADY_JOINED");
+              const opponent = [...queue.keys()].find(
+                (id) => id !== socket.id && io.sockets.sockets.has(id),
+              );
+              if (!opponent) {
+                if (queue.size >= 1000) throw new Error("QUEUE_FULL");
+                queue.set(socket.id, payload.name);
+                result = { ok: true, room: null, queued: true };
+                break;
+              }
+              const otherName = queue.get(opponent)!;
+              queue.delete(opponent);
+              const other = rooms.create(opponent, otherName, 2);
+              if (!other.ok || !other.room) throw new Error("MATCH_ERROR");
+              const theirs = io.sockets.sockets.get(opponent)!;
+              result = rooms.join(socket.id, payload.name, other.room.code);
+              const started = rooms.start(opponent);
+              effects.push(() => {
+                theirs.join(started.code);
+                theirs.emit(EVENTS.MATCHED, { ...other, room: started });
+              });
+              if (result.ok) result = { ...result, room: started };
+              break;
+            }
           }
-        }
-        const active = rooms.sessions.get(socket.id);
-        if (active) {
-          active.member.replies.set(requestId, result);
-          if (active.member.replies.size > 1000)
-            active.member.replies.delete(
-              active.member.replies.keys().next().value!,
+          const active = rooms.sessions.get(socket.id);
+          code = active?.room.code ?? code;
+          if (code) {
+            writing = true;
+            await persist(
+              code,
+              payload.type,
+              {
+                playerId: active?.member.id ?? session?.member.id,
+                ...(payload.type === "roll"
+                  ? { proof: active?.room.proofs.at(-1) }
+                  : payload.type === "move"
+                    ? { pawn: payload.pawn }
+                    : {}),
+                version: active?.room.state?.version ?? null,
+              },
+              requestId,
             );
-          socket.join(active.room.code);
+            writing = false;
+          }
+          if (active) {
+            const compact = structuredClone(result);
+            let proofCount = 0;
+            if (compact.ok && compact.room) {
+              proofCount = compact.room.proofs.length;
+              compact.room.proofs = [];
+            }
+            active.member.replies.set(requestId, {
+              payload: fingerprint,
+              reply: compact,
+              proofCount,
+            });
+            if (active.member.replies.size > 128)
+              active.member.replies.delete(
+                active.member.replies.keys().next().value!,
+              );
+            socket.join(active.room.code);
+          }
+          effects.forEach((effect) => effect());
+          ack(result);
+          if (result.ok && result.room) broadcast(result.room);
+          app.log.info({
+            event: payload.type === "roll" ? "dice_rolled" : "room_command",
+            kind: payload.type,
+            code,
+            version: active?.room.state?.version ?? null,
+          });
+        } catch (error) {
+          if (backup) rooms.restore(backup, false);
+          if (writing) {
+            healthy = false;
+            app.log.error({ event: "room_persistence_failed" });
+            ack({ ok: false, error: "PERSISTENCE_UNAVAILABLE" });
+          } else
+            ack({
+              ok: false,
+              error: error instanceof Error ? error.message : "REQUEST_FAILED",
+            });
         }
-        reply(result);
-        if (result.ok && result.room) broadcast(result.room);
-      } catch (error) {
-        reply({
-          ok: false,
-          error: error instanceof Error ? error.message : "REQUEST_FAILED",
-        });
-      }
+      }).catch(() => ack({ ok: false, error: "SERVER_BUSY" }));
     });
     socket.on("disconnect", () => {
       queue.delete(socket.id);
       rooms.identities.delete(socket.id);
-      const snapshot = rooms.disconnect(socket.id);
-      if (snapshot) broadcast(snapshot);
+      void enqueue(async () => {
+        const snapshot = rooms.disconnect(socket.id);
+        if (snapshot) {
+          try {
+            if (healthy)
+              await persist(snapshot.code, "disconnect", {
+                version: snapshot.state?.version ?? null,
+              });
+          } catch {
+            healthy = false;
+            app.log.error({ event: "room_persistence_failed" });
+          }
+          if (healthy) broadcast(snapshot);
+        }
+      }).catch(() => {
+        healthy = false;
+        app.log.error({ event: "room_disconnect_queue_failed" });
+      });
     });
   });
-  const timer = setInterval(() => rooms.tick().forEach(broadcast), 500);
+  let tickPending = false;
+  const timer = setInterval(() => {
+    if (tickPending || !healthy) return;
+    tickPending = true;
+    void enqueue(async () => {
+      try {
+        const previousCodes = [...rooms.rooms.keys()];
+        const snapshots = rooms.tick();
+        for (const code of previousCodes)
+          if (!rooms.rooms.has(code)) await persist(code, "expired", {});
+        for (const snapshot of snapshots) {
+          await persist(snapshot.code, "timeout", {
+            version: snapshot.state?.version ?? null,
+          });
+          broadcast(snapshot);
+        }
+      } catch {
+        healthy = false;
+        app.log.error({ event: "room_persistence_failed" });
+      } finally {
+        tickPending = false;
+      }
+    }).catch(() => {
+      tickPending = false;
+    });
+  }, 500);
   timer.unref();
+  app.addHook("preClose", async () => {
+    clearInterval(timer);
+    io.disconnectSockets(true);
+    io.engine.close();
+    await tail;
+  });
   app.addHook("onClose", async () => {
     clearInterval(timer);
     await new Promise<void>((resolve) => io.close(() => resolve()));
+    await tail;
   });
-  return { io, rooms };
+  return { io, rooms, isHealthy: () => healthy };
 }

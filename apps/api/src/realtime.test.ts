@@ -268,3 +268,38 @@ test("matchmaking pairs unique clients and starts an authoritative match; cancel
     await app.close();
   }
 });
+
+test("reusing a request ID for different payload is rejected", async () => {
+  const app = createApp();
+  try {
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    const address = app.server.address();
+    if (!address || typeof address === "string") throw Error();
+    const client = await connect(`http://127.0.0.1:${address.port}`);
+    await command(client, { type: "create", name: "Alpha", capacity: 2 });
+    const id = randomUUID();
+    const result = await command(client, { type: "start" }, id);
+    expect(result.ok).toBe(false);
+    const joined = await command(
+      client,
+      { type: "resume", code: "FFFFFFFFFF", token: "00".repeat(32) },
+      id,
+    );
+    expect(joined.ok).toBe(false);
+    const createId = randomUUID();
+    const other = await connect(`http://127.0.0.1:${address.port}`);
+    await command(
+      other,
+      { type: "create", name: "Beta", capacity: 2 },
+      createId,
+    );
+    expect(await command(other, { type: "leave" }, createId)).toEqual({
+      ok: false,
+      error: "REQUEST_ID_REUSED",
+    });
+    client.disconnect();
+    other.disconnect();
+  } finally {
+    await app.close();
+  }
+});
