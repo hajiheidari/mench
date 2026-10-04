@@ -1,0 +1,9 @@
+# Social (M10)
+
+Authenticated users use stable public player IDs to request/accept/remove friendship, block/unblock and report abuse/cheating/spam. Web and Expo account views share typed API helpers and localization. No email-based user search or unrestricted chat. GET /api/social returns only the caller's relationships, latest 20 opponents/invites and names. Presence is exposed only to accepted friends and means an authenticated game socket is connected, not an HTTP profile visit. Refresh is explicit.
+
+User-row locks in UUID order serialize concurrent acceptance, blocking and invitation requests; block atomically removes both-direction friendships and invitations. Blocking prevents future authenticated room joins and quick-match pairing. It does not expel players from an existing match or identify guest users/new accounts. Friendship/pending requests capped at 100 per user, blocks 500, reports 10/hour plus API rate limits. Reports retain category and timestamps for future moderation; there is no automatic punitive action or unimplemented human response promise.
+
+Only an authenticated room host can invite an accepted friend to an unstarted room. Invitations expire after one hour and disappear when play starts. Normal guest invitation links still work. Beginning a match atomically records registered opponents alongside its saved state. Pending requests, friendships, blocks and invites cascade on account deletion; reports anonymize deleted identities. Production retention/erasure review and push notifications remain future work.
+
+Four PostgreSQL integration cases exercise privacy, directionality, forged fields, friend-only host invites, recent opponents, block enforcement in real Socket.IO rooms/queue, concurrent accept/block and report budgets. A Chromium test exercises two real account UIs through request, accept and block. Expo native UI is compiled/exported; device execution remains blocked as documented in MOBILE.md.

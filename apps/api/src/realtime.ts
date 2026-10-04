@@ -5,6 +5,7 @@ import { EVENTS, type Reply } from "@mench/game-protocol";
 import type { Database } from "./database";
 import { resolveAccount } from "./auth";
 import { Rooms } from "./rooms";
+import { canInteract } from "./social";
 const name = z
   .string()
   .trim()
@@ -173,7 +174,7 @@ export function attachRealtime(
           ack(result);
           return;
         }
-        const backup = database ? rooms.exportAll() : null;
+        const backup = database ? rooms.checkpoint() : null;
         let code = session?.room.code;
         const effects: (() => void)[] = [];
         let writing = false;
@@ -184,6 +185,17 @@ export function attachRealtime(
               result = rooms.create(socket.id, payload.name, payload.capacity);
               break;
             case "join":
+              if (database) {
+                const account = rooms.identities.get(socket.id);
+                const targetRoom = rooms.rooms.get(payload.code);
+                if (account && targetRoom)
+                  for (const member of targetRoom.members)
+                    if (
+                      member.accountId &&
+                      !(await canInteract(database, account, member.accountId))
+                    )
+                      throw new Error("INTERACTION_UNAVAILABLE");
+              }
               result = rooms.join(socket.id, payload.name, payload.code);
               break;
             case "resume": {
@@ -244,9 +256,22 @@ export function attachRealtime(
             case "queue": {
               if (rooms.sessions.has(socket.id))
                 throw new Error("ALREADY_JOINED");
-              const opponent = [...queue.keys()].find(
-                (id) => id !== socket.id && io.sockets.sockets.has(id),
-              );
+              let opponent: string | undefined;
+              const account = rooms.identities.get(socket.id);
+              for (const id of queue.keys()) {
+                if (id === socket.id || !io.sockets.sockets.has(id)) continue;
+                const otherAccount = rooms.identities.get(id);
+                if (
+                  account &&
+                  otherAccount &&
+                  (account === otherAccount ||
+                    (database &&
+                      !(await canInteract(database, account, otherAccount))))
+                )
+                  continue;
+                opponent = id;
+                break;
+              }
               if (!opponent) {
                 if (queue.size >= 1000) throw new Error("QUEUE_FULL");
                 queue.set(socket.id, payload.name);
@@ -316,7 +341,7 @@ export function attachRealtime(
             version: active?.room.state?.version ?? null,
           });
         } catch (error) {
-          if (backup) rooms.restore(backup, false);
+          if (backup) rooms.rollback(backup);
           if (writing) {
             healthy = false;
             app.log.error({ event: "room_persistence_failed" });

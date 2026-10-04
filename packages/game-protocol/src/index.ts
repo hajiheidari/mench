@@ -47,3 +47,21 @@ export type Reply =
       queued?: boolean;
     }
   | { ok: false; error: string };
+export interface SocialPerson {
+  id: string;
+  name: string;
+}
+export interface SocialSnapshot {
+  friends: (SocialPerson & {
+    accepted: boolean;
+    incoming: boolean;
+    online: boolean;
+  })[];
+  blocks: SocialPerson[];
+  recent: SocialPerson[];
+  invites: (SocialPerson & { code: string })[];
+}
+export type SocialIntent =
+  | { type: "request" | "accept" | "remove" | "block" | "unblock" }
+  | { type: "report"; reason: "abuse" | "cheating" | "spam" }
+  | { type: "invite"; code: string };

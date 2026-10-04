@@ -1,6 +1,6 @@
 # Project status
 
-M1–M8 acceptance: PASS. M9 web/PWA/shared Expo client verified; native delivery externally blocked. Current work: durable multiplayer and M10 social.
+M1–M8 acceptance: PASS. M9 web/PWA/shared Expo client verified; native delivery externally blocked. M10 social implemented and verified. Next: M11 ranking.
 
 - M1: pure deterministic engine, 25 engine tests, >97% statement/branch coverage.
 - M2: 100000-roll distribution report, commitment/client nonce design and browser verification.
@@ -14,3 +14,5 @@ M1–M8 acceptance: PASS. M9 web/PWA/shared Expo client verified; native deliver
   Current external constraints: PWA manifest/service worker and offline local game passed real Chromium tests. Expo browser client joined the same backend match as the desktop client and independently verified the roll. Android/iOS/web JS exports pass. Android SDK/JDK17 and verified Gradle are installed. Local compilation reaches official React Native dependency download, blocked by network HTTP 403; saved network draft needs application. Linux cannot run Xcode; iOS native build needs macOS or an approved external runner. No publication or spending authorized.
 
 Durable rooms: PostgreSQL snapshot/event transactions precede success responses; serialized commands, graceful WebSocket shutdown, reconnect recovery and failed-write freeze/503 are verified. Queue and response cache remain process-local.
+
+M10: shared typed social API, web/Expo account views, friends/presence/invites/recent opponents/block/report. Nine actual PostgreSQL tests passed (five existing + four social); five Chromium E2E tests and two platform tests passed. All three mobile JS exports pass; native binaries remain blocked.

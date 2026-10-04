@@ -20,6 +20,7 @@ import { messages, type Messages } from "@mench/localization";
 import { verifyProof } from "@mench/fair-dice/portable";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
+import { Social } from "./Social";
 function Button({
   title,
   onPress,
@@ -149,11 +150,13 @@ function Online({
   width,
   server,
   token,
+  inviteCode,
 }: {
   t: Messages;
   width: number;
   server: string;
   token: string | null;
+  inviteCode: string;
 }) {
   const ref = useRef<GameClient | null>(null);
   const [snapshot, setSnapshot] = useState<ClientState>({
@@ -165,7 +168,7 @@ function Online({
     error: "",
   });
   const [name, setName] = useState(t.guest);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(inviteCode);
   const [capacity, setCapacity] = useState(2);
   const [notice, setNotice] = useState("");
   useEffect(() => {
@@ -369,11 +372,13 @@ function Account({
   server,
   token,
   onToken,
+  onInvite,
 }: {
   t: Messages;
   server: string;
   token: string | null;
   onToken: (token: string | null) => void;
+  onInvite: (code: string) => void;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState("");
@@ -436,6 +441,10 @@ function Account({
         <>
           <Text style={styles.heading}>{profile.name}</Text>
           <Text>{profile.email}</Text>
+          <Text selectable>
+            {t.accountId}: {profile.id}
+          </Text>
+          <Social t={t} server={server} token={token} onInvite={onInvite} />
           <Button
             title={t.logout}
             disabled={busy}
@@ -471,6 +480,7 @@ function Account({
 export default function App() {
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState("practice");
+  const [inviteCode, setInviteCode] = useState("");
   const [server, setServer] = useState(
     process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3001",
   );
@@ -523,9 +533,24 @@ export default function App() {
               }}
             />
             {mode === "online" ? (
-              <Online t={t} width={boardWidth} server={server} token={token} />
+              <Online
+                t={t}
+                width={boardWidth}
+                server={server}
+                token={token}
+                inviteCode={inviteCode}
+              />
             ) : (
-              <Account t={t} server={server} token={token} onToken={setToken} />
+              <Account
+                t={t}
+                server={server}
+                token={token}
+                onToken={setToken}
+                onInvite={(code) => {
+                  setInviteCode(code);
+                  setMode("online");
+                }}
+              />
             )}
           </>
         )}

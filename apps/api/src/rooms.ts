@@ -67,6 +67,19 @@ export class Rooms {
   exportAll(): RoomSnapshot[] {
     return [...this.rooms.values()].map((room) => this.exportRoom(room));
   }
+  checkpoint(): Room[] {
+    return structuredClone([...this.rooms.values()]);
+  }
+  rollback(checkpoint: Room[]): void {
+    this.rooms.clear();
+    this.sessions.clear();
+    for (const room of checkpoint) {
+      this.rooms.set(room.code, room);
+      for (const member of room.members)
+        if (member.socketId)
+          this.sessions.set(member.socketId, { room, member });
+    }
+  }
   restore(snapshots: RoomSnapshot[], afterRestart: boolean): void {
     this.rooms.clear();
     this.sessions.clear();

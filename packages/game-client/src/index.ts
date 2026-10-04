@@ -165,3 +165,4 @@ export class GameClient {
     }
   }
 }
+export { readSocial, sendSocial } from "./social";

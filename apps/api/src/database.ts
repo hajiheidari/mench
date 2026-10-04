@@ -24,6 +24,7 @@ export class Database {
       for (const [version, file] of [
         [1, "001_identity.sql"],
         [2, "002_room_recovery.sql"],
+        [3, "003_social.sql"],
       ] as const) {
         const sql = await readFile(
           new URL("../../../infra/migrations/" + file, import.meta.url),
@@ -81,6 +82,18 @@ export class Database {
             JSON.stringify(event.data),
           ],
         );
+        if (
+          snapshot.state &&
+          (event.kind === "start" || event.kind === "queue")
+        ) {
+          const ids = snapshot.members.flatMap((member) =>
+            member.accountId ? [member.accountId] : [],
+          );
+          await client.query(
+            "INSERT INTO recent_opponents(player,opponent) SELECT a.id,b.id FROM users a CROSS JOIN users b WHERE a.id=ANY($1::uuid[]) AND b.id=ANY($1::uuid[]) AND a.id<>b.id ON CONFLICT(player,opponent) DO UPDATE SET played_at=now()",
+            [ids],
+          );
+        }
       } else
         await client.query("DELETE FROM room_snapshots WHERE code=$1", [code]);
       await client.query("COMMIT");

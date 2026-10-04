@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Messages } from "./messages";
+import { Social } from "./Social";
 interface Profile {
   id: string;
   name: string;
@@ -71,6 +72,10 @@ export function Account({ t }: { t: Messages }) {
           <>
             <p>{user.name}</p>
             <p dir="ltr">{user.email}</p>
+            <p>
+              {t.accountId}: <span dir="ltr">{user.id}</span>
+            </p>
+            <Social t={t} />
             <button
               className="secondary"
               disabled={busy}

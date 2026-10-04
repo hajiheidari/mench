@@ -337,3 +337,11 @@ footer {
   position: absolute;
   inset: -5px;
 }
+.social-person {
+  margin-block: 1rem;
+  border-block-end: 1px solid #d6dedb;
+  padding-block: 0.7rem;
+}
+.social-person small {
+  overflow-wrap: anywhere;
+}
