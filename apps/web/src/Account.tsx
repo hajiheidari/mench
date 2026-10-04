@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Messages } from "./messages";
 import { Social } from "./Social";
 import { Rankings } from "./Rankings";
+import { Wallet } from "./Wallet";
 interface Profile {
   id: string;
   name: string;
@@ -56,6 +57,7 @@ export function Account({ t }: { t: Messages }) {
         setUser((await profile.json()) as Profile);
         setPassword("");
       } else if (kind === "logout" || kind === "delete") {
+        document.documentElement.dataset.theme = "";
         setUser(null);
         setPassword("");
       } else setNotice(t.registered);
@@ -78,6 +80,7 @@ export function Account({ t }: { t: Messages }) {
             </p>
             <Social t={t} />
             <Rankings t={t} />
+            <Wallet t={t} />
             <button
               className="secondary"
               disabled={busy}

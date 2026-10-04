@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { readEconomy } from "@mench/game-client";
 import { createRoot } from "react-dom/client";
 import type { Locale } from "@mench/shared-types";
 import { messages } from "./messages";
@@ -12,6 +13,15 @@ function App() {
   const [mode, setMode] = useState(
     location.pathname.startsWith("/join/") ? "online" : "practice",
   );
+  useEffect(() => {
+    void readEconomy()
+      .then((data) => {
+        document.documentElement.dataset.theme = data.active ?? "";
+      })
+      .catch(() => {
+        document.documentElement.dataset.theme = "";
+      });
+  }, []);
   return (
     <main dir={locale === "fa" ? "rtl" : "ltr"} lang={locale}>
       <header>

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import type { RoomSnapshot } from "./rooms";
 import { eloDelta } from "./rating";
+import { rewardMatch } from "./economy";
 export class Database {
   readonly pool: pg.Pool;
   private closed = false;
@@ -27,6 +28,7 @@ export class Database {
         [2, "002_room_recovery.sql"],
         [3, "003_social.sql"],
         [4, "004_rankings.sql"],
+        [5, "005_economy.sql"],
       ] as const) {
         const sql = await readFile(
           new URL("../../../infra/migrations/" + file, import.meta.url),
@@ -154,6 +156,7 @@ export class Database {
               }
             }
           }
+          if (recorded.rowCount) await rewardMatch(client, snapshot);
         }
       } else
         await client.query("DELETE FROM room_snapshots WHERE code=$1", [code]);

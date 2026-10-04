@@ -74,3 +74,16 @@ export interface RatingSummary {
 export interface Rankings {
   players: (SocialPerson & RatingSummary)[];
 }
+export type CosmeticSku = "aurora" | "sunset";
+export interface EconomySnapshot {
+  balance: string;
+  active: CosmeticSku | null;
+  catalog: { sku: CosmeticSku; price: number }[];
+  owned: CosmeticSku[];
+  ledger: {
+    kind: "reward" | "purchase";
+    delta: string;
+    metadata: { gameId?: string; won?: boolean; sku?: CosmeticSku };
+    created_at: string;
+  }[];
+}

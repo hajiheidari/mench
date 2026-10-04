@@ -345,3 +345,19 @@ footer {
 .social-person small {
   overflow-wrap: anywhere;
 }
+html[data-theme="aurora"] body {
+  background: #e2eee9;
+}
+html[data-theme="aurora"] .board {
+  box-shadow:
+    0 0 0 5px #62a69d,
+    0 14px 30px #365f5733;
+}
+html[data-theme="sunset"] body {
+  background: #f5e6d9;
+}
+html[data-theme="sunset"] .board {
+  box-shadow:
+    0 0 0 5px #c98e67,
+    0 14px 30px #855c3f33;
+}

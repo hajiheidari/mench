@@ -15,13 +15,20 @@ import {
   currentPlayer,
   legalMoves,
 } from "@mench/game-engine";
-import { GameClient, type ClientState, type Session } from "@mench/game-client";
+import {
+  GameClient,
+  readEconomy,
+  type ClientState,
+  type Session,
+} from "@mench/game-client";
+import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
 import { verifyProof } from "@mench/fair-dice/portable";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
 import { Rankings } from "./Rankings";
+import { Wallet } from "./Wallet";
 function Button({
   title,
   onPress,
@@ -384,12 +391,14 @@ function Account({
   token,
   onToken,
   onInvite,
+  onTheme,
 }: {
   t: Messages;
   server: string;
   token: string | null;
   onToken: (token: string | null) => void;
   onInvite: (code: string) => void;
+  onTheme: (sku: CosmeticSku | null) => void;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState("");
@@ -457,6 +466,7 @@ function Account({
           </Text>
           <Social t={t} server={server} token={token} onInvite={onInvite} />
           <Rankings t={t} server={server} token={token} />
+          <Wallet t={t} server={server} token={token} onTheme={onTheme} />
           <Button
             title={t.logout}
             disabled={busy}
@@ -498,6 +508,7 @@ export default function App() {
   );
   const [draft, setDraft] = useState(server);
   const [token, setToken] = useState<string | null>(null);
+  const [theme, setTheme] = useState<CosmeticSku | null>(null);
   const [storageError, setStorageError] = useState(false);
   const { width } = useWindowDimensions();
   const boardWidth = Math.min(width - 32, 540);
@@ -507,11 +518,23 @@ export default function App() {
       .then(setToken)
       .catch(() => setStorageError(true));
   }, []);
+  useEffect(() => {
+    if (!token) {
+      setTheme(null);
+      return;
+    }
+    void readEconomy({ url: server, token })
+      .then((data) => setTheme(data.active))
+      .catch(() => setTheme(null));
+  }, [token, server]);
   return (
     <ScrollView
       contentContainerStyle={[
         styles.screen,
         { direction: locale === "fa" ? "rtl" : "ltr" },
+        theme && {
+          backgroundColor: theme === "aurora" ? "#e2eee9" : "#f5e6d9",
+        },
       ]}
     >
       <View style={{ width: boardWidth, gap: 16 }}>
@@ -558,6 +581,7 @@ export default function App() {
                 server={server}
                 token={token}
                 onToken={setToken}
+                onTheme={setTheme}
                 onInvite={(code) => {
                   setInviteCode(code);
                   setMode("online");

@@ -7,6 +7,7 @@ import type { Database } from "./database";
 import { Rooms } from "./rooms";
 import { registerSocial } from "./social";
 import { registerRankings } from "./rankings";
+import { registerEconomy } from "./economy";
 export function createApp(
   rooms = new Rooms(),
   commandBudget = 100,
@@ -35,6 +36,7 @@ export function createApp(
   if (database) registerAuth(app, database);
   if (database) registerSocial(app, database, rooms);
   if (database) registerRankings(app, database);
+  if (database) registerEconomy(app, database);
   const realtime = attachRealtime(app, rooms, commandBudget, database);
   app.get("/health", async (_req, reply) =>
     realtime.isHealthy()

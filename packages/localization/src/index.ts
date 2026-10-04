@@ -1,5 +1,17 @@
 export const messages = {
   fa: {
+    wallet: "کیف پول",
+    coins: "سکه",
+    buy: "خرید",
+    equip: "استفاده",
+    plain: "ظاهر ساده",
+    aurora: "شفق",
+    sunset: "غروب",
+    reward: "پاداش مسابقه",
+    purchase: "خرید ظاهر",
+    ledger: "گردش حساب",
+    coinHint:
+      "روزانه تا پنج مسابقهٔ آنلاین: برد ۱۰۰ و شرکت ۴۰ سکه؛ بدون شرط‌بندی یا پول واقعی",
     ranked: "مسابقهٔ رتبه‌دار",
     ranking: "رتبه‌بندی",
     rating: "امتیاز",
@@ -86,6 +98,9 @@ export const messages = {
     unwitnessed:
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
+      INSUFFICIENT_COINS: "سکه کافی نیست",
+      ALREADY_OWNED: "این ظاهر را دارید",
+      NOT_OWNED: "ابتدا این ظاهر را تهیه کنید",
       RANKED_UNAVAILABLE: "مسابقهٔ رتبه‌دار به دو حساب ثبت‌شده نیاز دارد",
       PERSISTENCE_UNAVAILABLE: "ذخیره‌سازی سرور در دسترس نیست؛ بعداً تلاش کنید",
       INTERACTION_UNAVAILABLE: "این ارتباط در دسترس نیست",
@@ -108,6 +123,18 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    wallet: "Wallet",
+    coins: "Coins",
+    buy: "Buy",
+    equip: "Use",
+    plain: "Plain theme",
+    aurora: "Aurora",
+    sunset: "Sunset",
+    reward: "Match reward",
+    purchase: "Theme purchase",
+    ledger: "Transactions",
+    coinHint:
+      "Up to five online matches daily: 100 coins for a win, 40 for participation; no stakes or real money",
     ranked: "Ranked match",
     ranking: "Rankings",
     rating: "Rating",
@@ -195,6 +222,9 @@ export const messages = {
     unwitnessed:
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {
+      INSUFFICIENT_COINS: "Not enough coins",
+      ALREADY_OWNED: "Theme already owned",
+      NOT_OWNED: "Buy this theme first",
       RANKED_UNAVAILABLE:
         "Ranked requires two registered accounts and persistent storage",
       PERSISTENCE_UNAVAILABLE: "Server storage unavailable; try later",
