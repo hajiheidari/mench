@@ -1,0 +1,14 @@
+{
+  "name": "@mench/game-bot",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@mench/game-engine": "0.0.0"
+  }
+}

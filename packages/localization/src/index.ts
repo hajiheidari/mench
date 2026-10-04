@@ -95,6 +95,12 @@ export const messages = {
     authHint: "گذرواژه حداقل ۱۲ نویسه",
     install: "نصب بازی",
     bot: "تمرین با ربات",
+    difficulty: "سطح ربات",
+    easy: "آسان",
+    normal: "معمولی",
+    hard: "سخت",
+    botThinking: "ربات در حال انتخاب حرکت است",
+    botHint: "شما رنگ اول هستید؛ تمرین ربات سکه یا امتیاز نمی‌دهد",
     unwitnessed:
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
@@ -219,6 +225,12 @@ export const messages = {
     authHint: "Password: at least 12 characters",
     install: "Install game",
     bot: "Practice with bot",
+    difficulty: "Bot difficulty",
+    easy: "Easy",
+    normal: "Normal",
+    hard: "Hard",
+    botThinking: "Bot is choosing a move",
+    botHint: "You play the first color; bot practice gives no coins or rating",
     unwitnessed:
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {

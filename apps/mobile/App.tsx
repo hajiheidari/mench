@@ -29,6 +29,7 @@ import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
+import { chooseMove, type Difficulty } from "@mench/game-bot";
 function Button({
   title,
   onPress,
@@ -80,6 +81,38 @@ function Practice({ t, width }: { t: Messages; width: number }) {
   const [count, setCount] = useState(2);
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
+  const [bots, setBots] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const botTurn =
+    bots && state.phase !== "finished" && currentPlayer(state).id !== "0";
+  useEffect(() => {
+    if (!botTurn) return;
+    const timer = setTimeout(() => {
+      const playerId = currentPlayer(state).id;
+      let next;
+      if (state.phase === "roll") {
+        let value: number;
+        do {
+          value = Crypto.getRandomBytes(1)[0]!;
+        } while (value >= 252);
+        value = (value % 6) + 1;
+        setLast(value);
+        next = applyAction(state, { type: "roll", playerId, value });
+      } else {
+        const pawn = chooseMove(
+          state,
+          difficulty,
+          Crypto.getRandomBytes(1)[0]!,
+        );
+        if (pawn === null) return;
+        next = applyAction(state, { type: "move", playerId, pawn });
+      }
+      setState((previous) =>
+        previous.version === state.version ? next : previous,
+      );
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [botTurn, state, difficulty]);
   return (
     <>
       <Text style={styles.heading}>
@@ -94,7 +127,7 @@ function Practice({ t, width }: { t: Messages; width: number }) {
       <Board
         state={state}
         width={width}
-        interactive
+        interactive={!botTurn}
         onMove={(pawn) =>
           setState((s) =>
             applyAction(s, {
@@ -109,7 +142,7 @@ function Practice({ t, width }: { t: Messages; width: number }) {
       <Text style={styles.dice}>{last ?? "✦"}</Text>
       <Button
         title={t.roll}
-        disabled={state.phase !== "roll"}
+        disabled={state.phase !== "roll" || botTurn}
         onPress={() => {
           let n: number;
           do {
@@ -126,10 +159,29 @@ function Practice({ t, width }: { t: Messages; width: number }) {
           );
         }}
       />
-      {state.phase === "move" && (
+      {state.phase === "move" && !botTurn && (
         <Text>
           {t.move} ({legalMoves(state).length})
         </Text>
+      )}
+      {botTurn && <Text>{t.botThinking}</Text>}
+      <Button
+        title={`${bots ? "✓ " : ""}${t.bot}`}
+        onPress={() => setBots(!bots)}
+      />
+      {bots && (
+        <>
+          <Text>{t.botHint}</Text>
+          <View style={styles.row}>
+            {(["easy", "normal", "hard"] as const).map((level) => (
+              <Button
+                key={level}
+                title={`${difficulty === level ? "✓ " : ""}${t[level]}`}
+                onPress={() => setDifficulty(level)}
+              />
+            ))}
+          </View>
+        </>
       )}
       <View style={styles.row}>
         {[2, 3, 4].map((n) => (

@@ -2,7 +2,7 @@
 
 - Web/PWA and Expo browser gameplay are playable; Android/iOS JavaScript exports pass. Native APK, simulator/device execution and store signing remain unverified. Android dependency download is blocked by HTTP 403 on repo.reactnative.dev; the network draft addition is saved but not applied. iOS requires macOS/Xcode.
 - Room ownership is single-process. PostgreSQL recovery is supported, but queue and bounded response caches are ephemeral. No multi-instance deployment or zero-downtime handover is claimed.
-- Email verification, password reset and OAuth remain absent. Bots, tournaments, moderation and production hardening are subsequent milestones.
+- Email verification, password reset and OAuth remain absent. Tournaments, moderation and production hardening are subsequent milestones.
 - npm audit previously reported 23 findings (16 high, 7 moderate) in Expo/native tooling. Compatible upstream fixes were unavailable; forced SDK downgrades are not acceptable. Reaudit before native distribution; no production-security claim.
 - GitHub Actions workflows are prepared but have not run remotely. No app is published and no paid runner/service is authorized.
 - Docker in this cloud requires host proxy DNS mapping and the injected trusted CA as a build secret. CA/proxy values are not committed. Standard local machines can use docker compose up --build.

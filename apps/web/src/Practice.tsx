@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { chooseMove, type Difficulty } from "@mench/game-bot";
 import {
   applyAction,
   createGame,
@@ -18,11 +19,37 @@ export function Practice({ t }: { t: Messages }) {
   const [count, setCount] = useState(2);
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
+  const [bots, setBots] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const botTurn =
+    bots && state.phase !== "finished" && currentPlayer(state).id !== "0";
+  useEffect(() => {
+    if (!botTurn) return;
+    const timer = setTimeout(() => {
+      const playerId = currentPlayer(state).id;
+      let next;
+      if (state.phase === "roll") {
+        const value = randomDie();
+        setLast(value);
+        next = applyAction(state, { type: "roll", playerId, value });
+      } else {
+        const entropy = crypto.getRandomValues(new Uint32Array(1))[0]!;
+        const pawn = chooseMove(state, difficulty, entropy);
+        if (pawn === null) return;
+        next = applyAction(state, { type: "move", playerId, pawn });
+      }
+      setState((previous) =>
+        previous.version === state.version ? next : previous,
+      );
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [botTurn, state, difficulty]);
   return (
     <div className="game-layout">
       <section>
         <Board
           state={state}
+          interactive={!botTurn}
           t={t}
           onMove={(pawn) =>
             setState((s) =>
@@ -63,7 +90,7 @@ export function Practice({ t }: { t: Messages }) {
         </div>
         <button
           className="primary"
-          disabled={state.phase !== "roll"}
+          disabled={state.phase !== "roll" || botTurn}
           onClick={() => {
             const value = randomDie();
             setLast(value);
@@ -78,7 +105,8 @@ export function Practice({ t }: { t: Messages }) {
         >
           {t.roll}
         </button>
-        {state.phase === "move" && <p role="status">{t.move}</p>}
+        {state.phase === "move" && !botTurn && <p role="status">{t.move}</p>}
+        {botTurn && <p role="status">{t.botThinking}</p>}
         <div className="players">
           {state.players.map((p) => (
             <div key={p.id}>
@@ -102,6 +130,33 @@ export function Practice({ t }: { t: Messages }) {
             <option value="4">{t.four}</option>
           </select>
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={bots}
+            onChange={(e) => setBots(e.target.checked)}
+          />
+          {t.bot}
+        </label>
+        {bots && (
+          <>
+            <label>
+              {t.difficulty}
+              <select
+                aria-label={t.difficulty}
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+              >
+                {(["easy", "normal", "hard"] as const).map((level) => (
+                  <option key={level} value={level}>
+                    {t[level]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="fine">{t.botHint}</p>
+          </>
+        )}
         <button
           className="secondary"
           onClick={() => {

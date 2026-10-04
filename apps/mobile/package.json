@@ -23,6 +23,7 @@
     "@mench/game-client": "0.0.0",
     "@mench/fair-dice": "0.0.0",
     "@mench/localization": "0.0.0",
-    "@mench/board-geometry": "0.0.0"
+    "@mench/board-geometry": "0.0.0",
+    "@mench/game-bot": "0.0.0"
   }
 }
