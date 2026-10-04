@@ -1,5 +1,20 @@
 export const messages = {
   fa: {
+    admin: "مدیریت",
+    recentUsers: "بازیکنان اخیر",
+    suspend: "تعلیق حساب",
+    unsuspend: "رفع تعلیق",
+    cancelTournament: "لغو تورنمنت",
+    reports: "گزارش‌ها",
+    pending: "در انتظار بررسی",
+    dismissed: "رد گزارش",
+    actioned: "اقدام انجام شد",
+    days: "روز تعلیق",
+    audit: "تاریخچهٔ مدیریت",
+    adminConfirm: "حساب انتخاب‌شده تعلیق شود و نشست‌هایش پایان یابد؟",
+    healthy: "سالم",
+    rooms: "اتاق‌ها",
+    activeGames: "مسابقه‌های فعال",
     tournament: "تورنمنت",
     createTournament: "ساخت تورنمنت",
     tournamentId: "شناسهٔ تورنمنت",
@@ -117,6 +132,7 @@ export const messages = {
     unwitnessed:
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
+      ACCOUNT_SUSPENDED: "این حساب موقتاً تعلیق شده است",
       TOURNAMENT_FULL: "تورنمنت پر است",
       TOURNAMENT_STARTED: "تورنمنت شروع شده است",
       MATCH_UNAVAILABLE: "اتاق یا مسابقهٔ تعیین‌شده آماده نیست",
@@ -146,6 +162,21 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    admin: "Administration",
+    recentUsers: "Recent players",
+    suspend: "Suspend account",
+    unsuspend: "Restore account access",
+    cancelTournament: "Cancel tournament",
+    reports: "Reports",
+    pending: "Pending review",
+    dismissed: "Dismiss report",
+    actioned: "Action taken",
+    days: "Suspension days",
+    audit: "Administrative history",
+    adminConfirm: "Suspend the selected account and end its sessions?",
+    healthy: "Healthy",
+    rooms: "Rooms",
+    activeGames: "Active matches",
     tournament: "Tournament",
     createTournament: "Create tournament",
     tournamentId: "Tournament ID",
@@ -264,6 +295,7 @@ export const messages = {
     unwitnessed:
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {
+      ACCOUNT_SUSPENDED: "Account temporarily suspended",
       TOURNAMENT_FULL: "Tournament is full",
       TOURNAMENT_STARTED: "Tournament has already started",
       MATCH_UNAVAILABLE: "Assigned match or room is not ready",

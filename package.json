@@ -23,7 +23,7 @@
     "build:mobile": "EXPO_NO_TELEMETRY=1 npm run export -w @mench/mobile",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run build",
     "test:e2e": "playwright test",
-    "test:db": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://mench:local-development-only@127.0.0.1:5432/mench} vitest run apps/api/src/database.test.ts apps/api/src/recovery.test.ts apps/api/src/social.test.ts apps/api/src/rankings.test.ts apps/api/src/economy.test.ts apps/api/src/tournaments.test.ts",
+    "test:db": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://mench:local-development-only@127.0.0.1:5432/mench} vitest run apps/api/src/database.test.ts apps/api/src/recovery.test.ts apps/api/src/social.test.ts apps/api/src/rankings.test.ts apps/api/src/economy.test.ts apps/api/src/tournaments.test.ts apps/api/src/admin.test.ts",
     "test:platforms": "playwright test --config playwright.platforms.config.ts"
   },
   "devDependencies": {

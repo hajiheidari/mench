@@ -4,6 +4,7 @@ import { Social } from "./Social";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
 import { Tournaments } from "./Tournaments";
+import { Admin } from "./Admin";
 interface Profile {
   id: string;
   name: string;
@@ -42,15 +43,8 @@ export function Account({ t }: { t: Messages }) {
         body: JSON.stringify(body),
       });
       if (!response.ok) {
-        setNotice(
-          t.errors[
-            response.status === 401
-              ? "INVALID_CREDENTIALS"
-              : response.status === 409
-                ? "ACCOUNT_UNAVAILABLE"
-                : "INVALID_INPUT"
-          ] ?? t.error,
-        );
+        const problem = (await response.json()) as { error?: string };
+        setNotice(t.errors[problem.error ?? "REQUEST_FAILED"] ?? t.error);
         return;
       }
       if (kind === "login") {
@@ -83,6 +77,7 @@ export function Account({ t }: { t: Messages }) {
             <Rankings t={t} />
             <Wallet t={t} />
             <Tournaments t={t} userId={user.id} />
+            <Admin t={t} />
             <button
               className="secondary"
               disabled={busy}

@@ -6,6 +6,7 @@ export const EVENTS = {
   SNAPSHOT: "v1:snapshot",
   REPLACED: "v1:replaced",
   MATCHED: "v1:matched",
+  AUTH_REVOKED: "v1:auth_revoked",
 } as const;
 export interface PublicPlayer {
   id: string;
@@ -103,3 +104,58 @@ export interface TournamentListing {
 export type TournamentIntent =
   | { type: "join" | "leave" | "start" | "cancel" }
   | { type: "link"; matchId: string; code: string };
+export type ModerationReason = "abuse" | "cheating" | "spam";
+export type AdminIntent =
+  | {
+      type: "suspend";
+      requestId: string;
+      userId: string;
+      days: number;
+      reason: ModerationReason;
+    }
+  | {
+      type: "unsuspend";
+      requestId: string;
+      userId: string;
+      reason: ModerationReason;
+    }
+  | {
+      type: "report";
+      requestId: string;
+      reportId: string;
+      status: "dismissed" | "actioned";
+    }
+  | {
+      type: "cancelTournament";
+      requestId: string;
+      tournamentId: string;
+      reason: ModerationReason;
+    };
+export interface AdminSummary {
+  users: { id: string; name: string; banned_until: string | null }[];
+  reports: {
+    id: string;
+    reporter: string | null;
+    subject: string | null;
+    reason: ModerationReason;
+    status: "pending" | "dismissed" | "actioned";
+    created_at: string;
+  }[];
+  ledger: {
+    wallet_id: string;
+    kind: "reward" | "purchase";
+    delta: string;
+    metadata: object;
+    created_at: string;
+  }[];
+  audit: {
+    actor_id: string | null;
+    subject_id: string | null;
+    reference_id: string | null;
+    action: AdminIntent["type"];
+    metadata: object;
+    created_at: string;
+  }[];
+  tournaments: { id: string; phase: "lobby" | "running"; capacity: number }[];
+  health: { healthy: boolean; rooms: number; activeGames: number };
+}

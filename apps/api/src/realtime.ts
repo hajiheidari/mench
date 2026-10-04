@@ -6,6 +6,8 @@ import type { Database } from "./database";
 import { resolveAccount } from "./auth";
 import { Rooms } from "./rooms";
 import { canInteract } from "./social";
+import { createHash } from "node:crypto";
+import type { SessionRevocation } from "./auth";
 const name = z
   .string()
   .trim()
@@ -83,6 +85,7 @@ export function attachRealtime(
         !req.headers.origin || allowed.includes(req.headers.origin),
       ),
   });
+  const bindings = new Map<string, { accountId: string; tokenHash: string }>();
   if (database)
     io.use(async (socket, next) => {
       try {
@@ -93,7 +96,13 @@ export function attachRealtime(
               /(?:^|;\s*)mench_session=([a-f0-9]{64})(?:;|$)/,
             )?.[1];
         const account = await resolveAccount(database, raw);
-        if (account) rooms.identities.set(socket.id, account.id);
+        if (account && raw) {
+          rooms.identities.set(socket.id, account.id);
+          bindings.set(socket.id, {
+            accountId: account.id,
+            tokenHash: createHash("sha256").update(raw).digest("hex"),
+          });
+        }
         next();
       } catch {
         next(new Error("AUTH_UNAVAILABLE"));
@@ -382,6 +391,7 @@ export function attachRealtime(
     socket.on("disconnect", () => {
       queue.delete(socket.id);
       rooms.identities.delete(socket.id);
+      bindings.delete(socket.id);
       void enqueue(async () => {
         const snapshot = rooms.disconnect(socket.id);
         if (snapshot) {
@@ -440,5 +450,16 @@ export function attachRealtime(
     await new Promise<void>((resolve) => io.close(() => resolve()));
     await tail;
   });
-  return { io, rooms, isHealthy: () => healthy };
+  const revoke = (revocation: SessionRevocation) => {
+    for (const [socketId, binding] of bindings)
+      if (
+        binding.accountId === revocation.accountId &&
+        (!revocation.tokenHash || binding.tokenHash === revocation.tokenHash)
+      ) {
+        const socket = io.sockets.sockets.get(socketId);
+        socket?.emit(EVENTS.AUTH_REVOKED);
+        socket?.disconnect(true);
+      }
+  };
+  return { io, rooms, isHealthy: () => healthy, revoke };
 }

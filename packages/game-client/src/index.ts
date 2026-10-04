@@ -76,6 +76,18 @@ export class GameClient {
       this.socket.disconnect();
       this.update({ connected: false, error: "SESSION_REPLACED" });
     });
+    this.socket.on(EVENTS.AUTH_REVOKED, () => {
+      this.session = null;
+      this.options.save(null);
+      this.socket.disconnect();
+      this.update({
+        connected: false,
+        queued: false,
+        room: null,
+        playerId: null,
+        error: "UNAUTHENTICATED",
+      });
+    });
   }
   subscribe(listener: (state: ClientState) => void): () => void {
     this.listeners.add(listener);
@@ -174,3 +186,4 @@ export {
   createTournament,
   sendTournament,
 } from "./tournaments";
+export { readAdmin, sendAdmin } from "./admin";

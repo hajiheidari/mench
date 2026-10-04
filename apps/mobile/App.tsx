@@ -30,6 +30,7 @@ import { Social } from "./Social";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
 import { Tournaments } from "./Tournaments";
+import { Admin } from "./Admin";
 import { chooseMove, type Difficulty } from "@mench/game-bot";
 function Button({
   title,
@@ -460,13 +461,21 @@ function Account({
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
+    if (!token) {
+      setProfile(null);
+      return;
+    }
     if (token)
       void fetch(`${server}/api/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(async (r) => {
           if (r.ok) setProfile((await r.json()) as Profile);
-          else onToken(null);
+          else {
+            await setStored("mench-account", null);
+            onToken(null);
+            setProfile(null);
+          }
         })
         .catch(() => setNotice(t.error));
   }, [token, server, t.error, onToken]);
@@ -489,7 +498,8 @@ function Account({
         ),
       });
       if (!response.ok) {
-        setNotice(t.error);
+        const problem = (await response.json()) as { error?: string };
+        setNotice(t.errors[problem.error ?? "REQUEST_FAILED"] ?? t.error);
         return;
       }
       if (kind === "login") {
@@ -527,6 +537,7 @@ function Account({
             token={token}
             onInvite={onInvite}
           />
+          <Admin t={t} server={server} token={token} />
           <Button
             title={t.logout}
             disabled={busy}

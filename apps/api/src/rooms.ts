@@ -218,6 +218,8 @@ export class Rooms {
     const room = this.rooms.get(code);
     const member = room?.members.find((m) => m.tokenHash === tokenHash(token));
     if (!room || !member) throw new RoomError("INVALID_SESSION");
+    if (member.accountId && this.identities.get(socketId) !== member.accountId)
+      throw new RoomError("UNAUTHENTICATED");
     if (
       this.sessions.has(socketId) &&
       this.sessions.get(socketId)?.member !== member

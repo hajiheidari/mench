@@ -31,6 +31,7 @@ export class Database {
         [4, "004_rankings.sql"],
         [5, "005_economy.sql"],
         [6, "006_tournaments.sql"],
+        [7, "007_moderation.sql"],
       ] as const) {
         const sql = await readFile(
           new URL("../../../infra/migrations/" + file, import.meta.url),

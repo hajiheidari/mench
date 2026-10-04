@@ -9,10 +9,12 @@ import { registerSocial } from "./social";
 import { registerRankings } from "./rankings";
 import { registerEconomy } from "./economy";
 import { registerTournaments } from "./tournaments";
+import { registerAdmin } from "./admin";
 export function createApp(
   rooms = new Rooms(),
   commandBudget = 100,
   database?: Database,
+  options: { adminUserIds?: readonly string[] } = {},
 ) {
   const app = Fastify({
     logger: {
@@ -34,12 +36,25 @@ export function createApp(
   });
   app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   if (database) app.addHook("onClose", async () => database.close());
-  if (database) registerAuth(app, database);
+  const realtime = attachRealtime(app, rooms, commandBudget, database);
+  if (database) registerAuth(app, database, realtime.revoke);
   if (database) registerSocial(app, database, rooms);
   if (database) registerRankings(app, database);
   if (database) registerEconomy(app, database);
   if (database) registerTournaments(app, database);
-  const realtime = attachRealtime(app, rooms, commandBudget, database);
+  if (database)
+    registerAdmin(
+      app,
+      database,
+      rooms,
+      options.adminUserIds ??
+        (process.env.ADMIN_USER_IDS ?? "")
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean),
+      realtime.revoke,
+      realtime.isHealthy,
+    );
   app.get("/health", async (_req, reply) =>
     realtime.isHealthy()
       ? { status: "ok", protocolVersion: 1 }

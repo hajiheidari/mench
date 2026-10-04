@@ -54,6 +54,10 @@ export interface Account {
   name: string;
   email: string;
 }
+export interface SessionRevocation {
+  accountId: string;
+  tokenHash?: string;
+}
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
   const hash = (await derive(password, salt, 64, {
@@ -87,7 +91,7 @@ export async function resolveAccount(
 ): Promise<Account | null> {
   if (!raw || !/^[a-f0-9]{64}$/.test(raw)) return null;
   const result = await db.pool.query<UserRow>(
-    "SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now()",
+    "SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now() AND (u.banned_until IS NULL OR u.banned_until<=now())",
     [digest(raw)],
   );
   const user = result.rows[0];
@@ -95,7 +99,11 @@ export async function resolveAccount(
     ? { id: user.id, name: user.display_name, email: user.email }
     : null;
 }
-export function registerAuth(app: FastifyInstance, db: Database) {
+export function registerAuth(
+  app: FastifyInstance,
+  db: Database,
+  revoke: (revocation: SessionRevocation) => void = () => {},
+) {
   app.register(cookie);
   const allowed = (
     process.env.ALLOWED_ORIGINS ??
@@ -157,11 +165,37 @@ export function registerAuth(app: FastifyInstance, db: Database) {
       if (!(await checkPassword(input.data.password, encoded)) || !user)
         return reply.code(401).send({ error: "INVALID_CREDENTIALS" });
       const raw = randomBytes(32).toString("hex");
-      await db.pool.query("DELETE FROM sessions WHERE expires_at <= now()");
-      await db.pool.query(
-        "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '30 days')",
-        [digest(raw), user.id],
-      );
+      const client = await db.pool.connect();
+      try {
+        await client.query("BEGIN");
+        const fresh = (
+          await client.query<{ password_hash: string; banned: boolean }>(
+            "SELECT password_hash,(banned_until>now()) AS banned FROM users WHERE id=$1 FOR UPDATE",
+            [user.id],
+          )
+        ).rows[0];
+        if (
+          !fresh ||
+          fresh.password_hash !== user.password_hash ||
+          fresh.banned
+        ) {
+          await client.query("ROLLBACK");
+          return reply.code(fresh?.banned ? 403 : 401).send({
+            error: fresh?.banned ? "ACCOUNT_SUSPENDED" : "INVALID_CREDENTIALS",
+          });
+        }
+        await client.query("DELETE FROM sessions WHERE expires_at<=now()");
+        await client.query(
+          "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '30 days')",
+          [digest(raw), user.id],
+        );
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
       reply.setCookie("mench_session", raw, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -185,10 +219,14 @@ export function registerAuth(app: FastifyInstance, db: Database) {
   });
   app.post("/api/auth/logout", async (req, reply) => {
     const raw = token(req);
-    if (raw)
-      await db.pool.query("DELETE FROM sessions WHERE token_hash=$1", [
-        digest(raw),
-      ]);
+    if (raw) {
+      const deleted = await db.pool.query<{ user_id: string }>(
+        "DELETE FROM sessions WHERE token_hash=$1 RETURNING user_id",
+        [digest(raw)],
+      );
+      if (deleted.rows[0])
+        revoke({ accountId: deleted.rows[0].user_id, tokenHash: digest(raw) });
+    }
     reply.clearCookie("mench_session", { path: "/" });
     return { ok: true };
   });
@@ -222,6 +260,7 @@ export function registerAuth(app: FastifyInstance, db: Database) {
     )
       return reply.code(401).send({ error: "INVALID_CREDENTIALS" });
     await db.pool.query("DELETE FROM users WHERE id=$1", [user.id]);
+    revoke({ accountId: user.id });
     reply.clearCookie("mench_session", { path: "/" });
     return { ok: true };
   });
