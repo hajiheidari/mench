@@ -3,6 +3,7 @@ import type { Messages } from "./messages";
 import { Social } from "./Social";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
+import { Tournaments } from "./Tournaments";
 interface Profile {
   id: string;
   name: string;
@@ -81,6 +82,7 @@ export function Account({ t }: { t: Messages }) {
             <Social t={t} />
             <Rankings t={t} />
             <Wallet t={t} />
+            <Tournaments t={t} userId={user.id} />
             <button
               className="secondary"
               disabled={busy}

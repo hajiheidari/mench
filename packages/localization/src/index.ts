@@ -1,5 +1,18 @@
 export const messages = {
   fa: {
+    tournament: "تورنمنت",
+    createTournament: "ساخت تورنمنت",
+    tournamentId: "شناسهٔ تورنمنت",
+    view: "مشاهده",
+    round: "دور",
+    linkMatch: "ثبت اتاق این مسابقه",
+    match: "مسابقه",
+    lobby: "در انتظار بازیکن",
+    running: "در حال برگزاری",
+    finished: "پایان‌یافته",
+    cancelled: "لغوشده",
+    tournamentHint:
+      "دو حریف اتاق دو نفره بسازند و وارد شوند؛ پیش از شروع بازی، کد اتاق را برای مسابقهٔ تعیین‌شده ثبت کنید",
     wallet: "کیف پول",
     coins: "سکه",
     buy: "خرید",
@@ -104,6 +117,10 @@ export const messages = {
     unwitnessed:
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
+      TOURNAMENT_FULL: "تورنمنت پر است",
+      TOURNAMENT_STARTED: "تورنمنت شروع شده است",
+      MATCH_UNAVAILABLE: "اتاق یا مسابقهٔ تعیین‌شده آماده نیست",
+      FORBIDDEN: "اجازهٔ این کار را ندارید",
       INSUFFICIENT_COINS: "سکه کافی نیست",
       ALREADY_OWNED: "این ظاهر را دارید",
       NOT_OWNED: "ابتدا این ظاهر را تهیه کنید",
@@ -129,6 +146,19 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    tournament: "Tournament",
+    createTournament: "Create tournament",
+    tournamentId: "Tournament ID",
+    view: "View",
+    round: "Round",
+    linkMatch: "Link this match room",
+    match: "Match",
+    lobby: "Waiting for players",
+    running: "In progress",
+    finished: "Finished",
+    cancelled: "Cancelled",
+    tournamentHint:
+      "The two opponents create and join a two-player room, then link its code to their assigned match before starting play",
     wallet: "Wallet",
     coins: "Coins",
     buy: "Buy",
@@ -234,6 +264,10 @@ export const messages = {
     unwitnessed:
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {
+      TOURNAMENT_FULL: "Tournament is full",
+      TOURNAMENT_STARTED: "Tournament has already started",
+      MATCH_UNAVAILABLE: "Assigned match or room is not ready",
+      FORBIDDEN: "Action not permitted",
       INSUFFICIENT_COINS: "Not enough coins",
       ALREADY_OWNED: "Theme already owned",
       NOT_OWNED: "Buy this theme first",

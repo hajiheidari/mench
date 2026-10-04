@@ -168,3 +168,9 @@ export class GameClient {
 export { readSocial, sendSocial } from "./social";
 export { readRankings } from "./rankings";
 export { readEconomy, buyCosmetic, equipCosmetic } from "./economy";
+export {
+  listTournaments,
+  readTournament,
+  createTournament,
+  sendTournament,
+} from "./tournaments";

@@ -11,7 +11,11 @@ function App() {
   const [locale, setLocale] = useState<Locale>("fa");
   const t = messages[locale];
   const [mode, setMode] = useState(
-    location.pathname.startsWith("/join/") ? "online" : "practice",
+    location.pathname.startsWith("/join/")
+      ? "online"
+      : location.pathname.startsWith("/tournament/")
+        ? "account"
+        : "practice",
   );
   useEffect(() => {
     void readEconomy()

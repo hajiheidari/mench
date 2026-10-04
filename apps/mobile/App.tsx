@@ -29,6 +29,7 @@ import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
+import { Tournaments } from "./Tournaments";
 import { chooseMove, type Difficulty } from "@mench/game-bot";
 function Button({
   title,
@@ -519,6 +520,13 @@ function Account({
           <Social t={t} server={server} token={token} onInvite={onInvite} />
           <Rankings t={t} server={server} token={token} />
           <Wallet t={t} server={server} token={token} onTheme={onTheme} />
+          <Tournaments
+            t={t}
+            userId={profile.id}
+            server={server}
+            token={token}
+            onInvite={onInvite}
+          />
           <Button
             title={t.logout}
             disabled={busy}

@@ -87,3 +87,19 @@ export interface EconomySnapshot {
     created_at: string;
   }[];
 }
+import type { TournamentState } from "@mench/tournament";
+export interface PublicTournament extends TournamentState {
+  id: string;
+  owner: string | null;
+  profiles: SocialPerson[];
+}
+export interface TournamentListing {
+  tournaments: {
+    id: string;
+    capacity: number;
+    phase: TournamentState["phase"];
+  }[];
+}
+export type TournamentIntent =
+  | { type: "join" | "leave" | "start" | "cancel" }
+  | { type: "link"; matchId: string; code: string };

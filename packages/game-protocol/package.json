@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mench/game-engine": "0.0.0",
-    "@mench/fair-dice": "0.0.0"
+    "@mench/fair-dice": "0.0.0",
+    "@mench/tournament": "0.0.0"
   }
 }

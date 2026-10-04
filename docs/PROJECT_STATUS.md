@@ -1,6 +1,6 @@
 # Project status
 
-M1–M8 acceptance: PASS. M9 web/PWA/shared Expo client verified; native delivery externally blocked. M10 social implemented and verified. M11 two-player ranking verified; M12 ledger economy verified; M13 offline bots verified; next M14 basic tournaments.
+M1–M8 acceptance: PASS. M9 web/PWA/shared Expo client verified; native delivery externally blocked. M10 social implemented and verified. M11 two-player ranking verified; M12 ledger economy verified; M13 offline bots verified; M14 basic tournaments verified; next M15 moderation.
 
 - M1: pure deterministic engine, 25 engine tests, >97% statement/branch coverage.
 - M2: 100000-roll distribution report, commitment/client nonce design and browser verification.
@@ -22,3 +22,5 @@ M11: full ranked and casual PostgreSQL/WebSocket matches, proof verification, ex
 M12: server-only completion rewards, immutable coin ledger, daily cap, atomic cosmetics purchases/equipment and persistent web/Expo theme selection. Fourteen DB tests, six Chromium E2E and two platform tests pass; mobile JS exports and full checks pass. No real-money integration.
 
 M13: independent legal-move bot package, three difficulty heuristics, web/Expo offline controls and180 full simulations. Seven Chromium E2E and two platform tests pass. Source run:51 passed,14 database tests explicitly skipped; separate actual DB suite remains14 passed.
+
+M14: durable registered single-elimination4/8/16/32 brackets, assigned-room linking and transactional server-only advancement. Full three-game4-player tournament passed with every proof verified. Seventeen DB tests, eight web E2E and two platform tests pass; all mobile JS exports and source checks pass. Manual match setup and abandoned-bracket limitations documented.
