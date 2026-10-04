@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Messages } from "./messages";
 import { Social } from "./Social";
+import { Rankings } from "./Rankings";
 interface Profile {
   id: string;
   name: string;
@@ -76,6 +77,7 @@ export function Account({ t }: { t: Messages }) {
               {t.accountId}: <span dir="ltr">{user.id}</span>
             </p>
             <Social t={t} />
+            <Rankings t={t} />
             <button
               className="secondary"
               disabled={busy}

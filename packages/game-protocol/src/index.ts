@@ -14,6 +14,7 @@ export interface PublicPlayer {
 }
 export interface PublicRoom {
   code: string;
+  ranked?: boolean;
   hostId: string;
   players: PublicPlayer[];
   capacity: number;
@@ -28,14 +29,14 @@ export interface Envelope<T> {
   payload: T;
 }
 export type Intent =
-  | { type: "create"; name: string; capacity: number }
+  | { type: "create"; name: string; capacity: number; ranked?: boolean }
   | { type: "join"; name: string; code: string }
   | { type: "resume"; code: string; token: string }
   | { type: "start" }
   | { type: "roll"; nonce: string; expectedVersion: number }
   | { type: "move"; pawn: number; expectedVersion: number }
   | { type: "leave" }
-  | { type: "queue"; name: string }
+  | { type: "queue"; name: string; ranked?: boolean }
   | { type: "cancelQueue" };
 export type Command = Envelope<Intent>;
 export type Reply =
@@ -65,3 +66,11 @@ export type SocialIntent =
   | { type: "request" | "accept" | "remove" | "block" | "unblock" }
   | { type: "report"; reason: "abuse" | "cheating" | "spam" }
   | { type: "invite"; code: string };
+export interface RatingSummary {
+  rating: number;
+  games: number;
+  wins: number;
+}
+export interface Rankings {
+  players: (SocialPerson & RatingSummary)[];
+}

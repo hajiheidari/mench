@@ -2,6 +2,7 @@ import pg from "pg";
 import { readFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import type { RoomSnapshot } from "./rooms";
+import { eloDelta } from "./rating";
 export class Database {
   readonly pool: pg.Pool;
   private closed = false;
@@ -25,6 +26,7 @@ export class Database {
         [1, "001_identity.sql"],
         [2, "002_room_recovery.sql"],
         [3, "003_social.sql"],
+        [4, "004_rankings.sql"],
       ] as const) {
         const sql = await readFile(
           new URL("../../../infra/migrations/" + file, import.meta.url),
@@ -93,6 +95,65 @@ export class Database {
             "INSERT INTO recent_opponents(player,opponent) SELECT a.id,b.id FROM users a CROSS JOIN users b WHERE a.id=ANY($1::uuid[]) AND b.id=ANY($1::uuid[]) AND a.id<>b.id ON CONFLICT(player,opponent) DO UPDATE SET played_at=now()",
             [ids],
           );
+        }
+        if (snapshot.state?.phase === "finished" && snapshot.state.winner) {
+          const recorded = await client.query(
+            "INSERT INTO game_results(game_id,result) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING game_id",
+            [
+              snapshot.matchId,
+              JSON.stringify({
+                state: snapshot.state,
+                players: snapshot.members.map((m) => ({
+                  id: m.id,
+                  accountId: m.accountId,
+                })),
+                ranked: snapshot.ranked,
+              }),
+            ],
+          );
+          if (
+            recorded.rowCount &&
+            snapshot.ranked &&
+            snapshot.members.length === 2
+          ) {
+            const winner = snapshot.members.find(
+              (m) => m.id === snapshot.state!.winner,
+            )?.accountId;
+            const loser = snapshot.members.find(
+              (m) => m.id !== snapshot.state!.winner,
+            )?.accountId;
+            if (winner && loser && winner !== loser) {
+              const users = await client.query(
+                "SELECT id FROM users WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE",
+                [[winner, loser]],
+              );
+              if (users.rowCount === 2) {
+                await client.query(
+                  "INSERT INTO ratings(user_id) VALUES($1),($2) ON CONFLICT DO NOTHING",
+                  [winner, loser],
+                );
+                const ratings = await client.query<{
+                  user_id: string;
+                  rating: number;
+                }>(
+                  "SELECT user_id,rating FROM ratings WHERE user_id=ANY($1::uuid[]) ORDER BY user_id FOR UPDATE",
+                  [[winner, loser]],
+                );
+                const delta = eloDelta(
+                  ratings.rows.find((r) => r.user_id === winner)!.rating,
+                  ratings.rows.find((r) => r.user_id === loser)!.rating,
+                );
+                await client.query(
+                  "UPDATE ratings SET rating=rating+CASE WHEN user_id=$1 THEN $3::integer ELSE -$3::integer END,games=games+1,wins=wins+CASE WHEN user_id=$1 THEN 1 ELSE 0 END WHERE user_id=ANY($2::uuid[])",
+                  [winner, [winner, loser], delta],
+                );
+                await client.query(
+                  "UPDATE game_results SET rated=true WHERE game_id=$1",
+                  [snapshot.matchId],
+                );
+              }
+            }
+          }
         }
       } else
         await client.query("DELETE FROM room_snapshots WHERE code=$1", [code]);

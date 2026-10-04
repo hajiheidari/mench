@@ -166,3 +166,4 @@ export class GameClient {
   }
 }
 export { readSocial, sendSocial } from "./social";
+export { readRankings } from "./rankings";

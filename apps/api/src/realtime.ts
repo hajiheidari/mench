@@ -24,6 +24,7 @@ const schema = z
           type: z.literal("create"),
           name,
           capacity: z.number().int().min(2).max(4),
+          ranked: z.boolean().optional(),
         })
         .strict(),
       z.object({ type: z.literal("join"), name, code }).strict(),
@@ -50,7 +51,13 @@ const schema = z
         })
         .strict(),
       z.object({ type: z.literal("leave") }).strict(),
-      z.object({ type: z.literal("queue"), name }).strict(),
+      z
+        .object({
+          type: z.literal("queue"),
+          name,
+          ranked: z.boolean().optional(),
+        })
+        .strict(),
       z.object({ type: z.literal("cancelQueue") }).strict(),
     ]),
   })
@@ -93,7 +100,7 @@ export function attachRealtime(
       }
     });
 
-  const queue = new Map<string, string>();
+  const queue = new Map<string, { name: string; ranked: boolean }>();
   let healthy = true;
   let tail = Promise.resolve();
   let pendingJobs = 0;
@@ -174,7 +181,14 @@ export function attachRealtime(
           ack(result);
           return;
         }
-        const backup = database ? rooms.checkpoint() : null;
+        const backup = database
+          ? rooms.checkpoint([
+              ...(session ? [session.room.code] : []),
+              ...(payload.type === "join" || payload.type === "resume"
+                ? [payload.code]
+                : []),
+            ])
+          : null;
         let code = session?.room.code;
         const effects: (() => void)[] = [];
         let writing = false;
@@ -182,7 +196,14 @@ export function attachRealtime(
           let result: Reply;
           switch (payload.type) {
             case "create":
-              result = rooms.create(socket.id, payload.name, payload.capacity);
+              if (payload.ranked && !database)
+                throw new Error("RANKED_UNAVAILABLE");
+              result = rooms.create(
+                socket.id,
+                payload.name,
+                payload.capacity,
+                payload.ranked ?? false,
+              );
               break;
             case "join":
               if (database) {
@@ -258,7 +279,11 @@ export function attachRealtime(
                 throw new Error("ALREADY_JOINED");
               let opponent: string | undefined;
               const account = rooms.identities.get(socket.id);
+              const ranked = payload.ranked ?? false;
+              if (ranked && (!database || !account))
+                throw new Error("RANKED_UNAVAILABLE");
               for (const id of queue.keys()) {
+                if (queue.get(id)!.ranked !== ranked) continue;
                 if (id === socket.id || !io.sockets.sockets.has(id)) continue;
                 const otherAccount = rooms.identities.get(id);
                 if (
@@ -274,13 +299,13 @@ export function attachRealtime(
               }
               if (!opponent) {
                 if (queue.size >= 1000) throw new Error("QUEUE_FULL");
-                queue.set(socket.id, payload.name);
+                queue.set(socket.id, { name: payload.name, ranked });
                 result = { ok: true, room: null, queued: true };
                 break;
               }
-              const otherName = queue.get(opponent)!;
+              const otherName = queue.get(opponent)!.name;
               queue.delete(opponent);
-              const other = rooms.create(opponent, otherName, 2);
+              const other = rooms.create(opponent, otherName, 2, ranked);
               if (!other.ok || !other.room) throw new Error("MATCH_ERROR");
               const theirs = io.sockets.sockets.get(opponent)!;
               result = rooms.join(socket.id, payload.name, other.room.code);

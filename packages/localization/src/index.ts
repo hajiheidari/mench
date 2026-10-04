@@ -1,5 +1,11 @@
 export const messages = {
   fa: {
+    ranked: "مسابقهٔ رتبه‌دار",
+    ranking: "رتبه‌بندی",
+    rating: "امتیاز",
+    games: "مسابقه",
+    wins: "برد",
+    rankedHint: "دو حساب ثبت‌شده؛ امتیاز پس از پایان مسابقه محاسبه می‌شود",
     social: "دوستان",
     accountId: "شناسهٔ بازیکن",
     addFriend: "درخواست دوستی",
@@ -80,6 +86,7 @@ export const messages = {
     unwitnessed:
       "این تعهد را پیش از پرتاب مشاهده نکردید؛ ترتیب تعهد قابل تأیید نیست.",
     errors: {
+      RANKED_UNAVAILABLE: "مسابقهٔ رتبه‌دار به دو حساب ثبت‌شده نیاز دارد",
       PERSISTENCE_UNAVAILABLE: "ذخیره‌سازی سرور در دسترس نیست؛ بعداً تلاش کنید",
       INTERACTION_UNAVAILABLE: "این ارتباط در دسترس نیست",
       UNAUTHENTICATED: "ابتدا وارد حساب شوید",
@@ -101,6 +108,13 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    ranked: "Ranked match",
+    ranking: "Rankings",
+    rating: "Rating",
+    games: "Games",
+    wins: "Wins",
+    rankedHint:
+      "Two registered accounts; rating changes after a completed match",
     social: "Friends",
     accountId: "Player ID",
     addFriend: "Request friendship",
@@ -181,6 +195,8 @@ export const messages = {
     unwitnessed:
       "You did not observe this commitment before the roll; commitment timing cannot be verified.",
     errors: {
+      RANKED_UNAVAILABLE:
+        "Ranked requires two registered accounts and persistent storage",
       PERSISTENCE_UNAVAILABLE: "Server storage unavailable; try later",
       INTERACTION_UNAVAILABLE: "Interaction unavailable",
       UNAUTHENTICATED: "Sign in first",

@@ -16,6 +16,7 @@ export function Online({ t }: { t: Messages }) {
         ?.toUpperCase() ?? "",
   );
   const [capacity, setCapacity] = useState(2);
+  const [ranked, setRanked] = useState(false);
   const [notice, setNotice] = useState("");
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -106,12 +107,24 @@ export function Online({ t }: { t: Messages }) {
             disabled={!connected || busy}
             onClick={() =>
               void send(
-                queued ? { type: "cancelQueue" } : { type: "queue", name },
+                queued
+                  ? { type: "cancelQueue" }
+                  : { type: "queue", name, ranked },
               )
             }
           >
             {queued ? t.cancel : t.matchmaking}
           </button>
+          <label>
+            <input
+              type="checkbox"
+              checked={ranked}
+              disabled={queued || busy}
+              onChange={(e) => setRanked(e.target.checked)}
+            />
+            {t.ranked}
+          </label>
+          {ranked && <p className="fine">{t.rankedHint}</p>}
           {queued && <p role="status">{t.queue}</p>}
         </div>
       </section>
@@ -135,6 +148,7 @@ export function Online({ t }: { t: Messages }) {
           <div className="room-code" data-testid="room-code">
             {room.code}
           </div>
+          {room.ranked && <p>{t.ranked}</p>}
           <div className="players">
             {room.players.map((p) => (
               <div key={p.id}>

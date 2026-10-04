@@ -2,9 +2,9 @@
 
 From root: npm ci; npm run check (lint, formatting, strict typecheck across all workspaces, Vitest, web/API/shared builds); CI=1 npm run build:mobile (Expo Android/iOS/web bundle export). Export validates JS assets, not signed native binaries.
 
-Tests exercise Fastify through injection: versioned health JSON and unknown route rejection; validation rejects unsupported language identifiers. No engine gameplay tests exist before M1.
+Source tests exercise engine, fairness, authoritative Socket.IO games, reconnect and API validation. Default test runs explicitly skip DB suites when TEST_DATABASE_URL is absent; run npm run test:db with PostgreSQL to execute real persistence/identity/social/ranking cases.
 
-Runtime: start dev:api and request /health, assert JSON/status; start dev:web, request page and entry source; inspect actual server output. Docker: docker compose config, build, up and request the same health/page routes. Optional storage profile is not required by M0.
+Runtime: start dev:api and request /health, assert JSON/status; start dev:web, request page and entry source; inspect actual server output. Docker: docker compose config, build, up and request the same health/page routes. Start PostgreSQL before API/E2E; Redis remains optional.
 
 CI executes the same commands on Node .nvmrc. Local execution cannot establish GitHub Actions success; native device/store tests need separate tooling in M9/M17.
 

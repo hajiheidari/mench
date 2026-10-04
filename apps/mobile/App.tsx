@@ -21,6 +21,7 @@ import { verifyProof } from "@mench/fair-dice/portable";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
+import { Rankings } from "./Rankings";
 function Button({
   title,
   onPress,
@@ -169,6 +170,7 @@ function Online({
   });
   const [name, setName] = useState(t.guest);
   const [code, setCode] = useState(inviteCode);
+  const [ranked, setRanked] = useState(false);
   const [capacity, setCapacity] = useState(2);
   const [notice, setNotice] = useState("");
   useEffect(() => {
@@ -250,10 +252,18 @@ function Online({
           disabled={!connected || busy}
           onPress={() =>
             void ref.current?.send(
-              queued ? { type: "cancelQueue" } : { type: "queue", name },
+              queued
+                ? { type: "cancelQueue" }
+                : { type: "queue", name, ranked },
             )
           }
         />
+        <Button
+          title={`${ranked ? "✓ " : ""}${t.ranked}`}
+          disabled={queued || busy}
+          onPress={() => setRanked(!ranked)}
+        />
+        {ranked && <Text>{t.rankedHint}</Text>}
         {error && (
           <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
         )}
@@ -280,6 +290,7 @@ function Online({
           : t.waiting}
       </Text>
       <Text selectable>{room.code}</Text>
+      {room.ranked && <Text>{t.ranked}</Text>}
       {!state &&
         room.players.map((p) => (
           <Text key={p.id}>
@@ -445,6 +456,7 @@ function Account({
             {t.accountId}: {profile.id}
           </Text>
           <Social t={t} server={server} token={token} onInvite={onInvite} />
+          <Rankings t={t} server={server} token={token} />
           <Button
             title={t.logout}
             disabled={busy}

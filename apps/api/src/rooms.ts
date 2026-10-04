@@ -29,6 +29,8 @@ interface Pending {
 }
 export interface Room {
   code: string;
+  matchId: string;
+  ranked: boolean;
   hostId: string;
   capacity: number;
   members: Member[];
@@ -67,13 +69,30 @@ export class Rooms {
   exportAll(): RoomSnapshot[] {
     return [...this.rooms.values()].map((room) => this.exportRoom(room));
   }
-  checkpoint(): Room[] {
-    return structuredClone([...this.rooms.values()]);
+  checkpoint(codes: readonly string[]): {
+    rooms: Room[];
+    existing: Set<string>;
+  } {
+    return {
+      rooms: structuredClone(
+        [...new Set(codes)].flatMap((code) => {
+          const room = this.rooms.get(code);
+          return room ? [room] : [];
+        }),
+      ),
+      existing: new Set(this.rooms.keys()),
+    };
   }
-  rollback(checkpoint: Room[]): void {
-    this.rooms.clear();
-    this.sessions.clear();
-    for (const room of checkpoint) {
+  rollback(checkpoint: ReturnType<Rooms["checkpoint"]>): void {
+    const restoring = new Set(checkpoint.rooms.map((room) => room.code));
+    for (const [code] of this.rooms)
+      if (!checkpoint.existing.has(code)) {
+        this.rooms.delete(code);
+        restoring.add(code);
+      }
+    for (const [socketId, session] of this.sessions)
+      if (restoring.has(session.room.code)) this.sessions.delete(socketId);
+    for (const room of checkpoint.rooms) {
       this.rooms.set(room.code, room);
       for (const member of room.members)
         if (member.socketId)
@@ -89,6 +108,8 @@ export class Rooms {
       if (this.now() - snapshot.createdAt > 24 * 3600000) continue;
       const room: Room = {
         ...structuredClone(snapshot),
+        matchId: snapshot.matchId ?? randomUUID(),
+        ranked: snapshot.ranked ?? false,
         members: snapshot.members.map((m) => ({
           ...structuredClone(m),
           replies: new Map(),
@@ -115,6 +136,7 @@ export class Rooms {
   public(room: Room): PublicRoom {
     return {
       code: room.code,
+      ranked: room.ranked,
       hostId: room.hostId,
       capacity: room.capacity,
       players: room.members.map((m) => ({
@@ -133,6 +155,7 @@ export class Rooms {
   private add(room: Room, socketId: string, name: string): Reply {
     if (this.sessions.has(socketId)) throw new RoomError("ALREADY_JOINED");
     const accountId = this.identities.get(socketId) ?? null;
+    if (room.ranked && !accountId) throw new RoomError("UNAUTHENTICATED");
     if (accountId && room.members.some((m) => m.accountId === accountId))
       throw new RoomError("ALREADY_JOINED");
     const token = randomBytes(32).toString("hex");
@@ -150,7 +173,14 @@ export class Rooms {
     this.sessions.set(socketId, { room, member });
     return { ok: true, room: this.public(room), playerId: member.id, token };
   }
-  create(socketId: string, name: string, capacity: number): Reply {
+  create(
+    socketId: string,
+    name: string,
+    capacity: number,
+    ranked = false,
+  ): Reply {
+    if (ranked && (!this.identities.has(socketId) || capacity !== 2))
+      throw new RoomError("RANKED_UNAVAILABLE");
     if (this.rooms.size >= 1000) throw new RoomError("SERVER_FULL");
     if (this.sessions.has(socketId)) throw new RoomError("ALREADY_JOINED");
     let code: string;
@@ -159,6 +189,8 @@ export class Rooms {
     } while (this.rooms.has(code));
     const room: Room = {
       code,
+      matchId: randomUUID(),
+      ranked,
       hostId: "",
       capacity,
       members: [],
