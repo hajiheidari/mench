@@ -27,6 +27,7 @@ import { verifyProof } from "@mench/fair-dice/portable";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
+import { History } from "./History";
 import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
 import { Tournaments } from "./Tournaments";
@@ -529,6 +530,7 @@ function Account({
           </Text>
           <Social t={t} server={server} token={token} onInvite={onInvite} />
           <Rankings t={t} server={server} token={token} />
+          <History t={t} server={server} token={token} />
           <Wallet t={t} server={server} token={token} onTheme={onTheme} />
           <Tournaments
             t={t}

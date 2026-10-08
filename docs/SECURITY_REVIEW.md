@@ -1,0 +1,12 @@
+# Security review — 2026-10-04
+
+Local engineering review only; no independent penetration test, container CVE scan or production-security certification is claimed.
+
+- Strict allowlisted intents reject client dice/results/rewards/admin roles. Engine replay, all proof contexts and original live nonce/commitment requirements are tested. Archive verification is explicitly consistency only.
+- Server-side sessions use scrypt password hashes and hashed random capabilities. Browser cookies are HttpOnly/SameSiteStrict/Secure in production; native bearer tokens use SecureStore. Origin checks, request limits and body/frame caps are enforced. Proxy forwarding is not blindly trusted.
+- Every private history/admin/account operation resolves current server identity. Suspensions, logout, deletion and expiry revoke live registered sockets. A guest capability alone cannot impersonate an account.
+- PostgreSQL mutations use parameterized values; row locks serialize friend/block, wallet/rating/tournament/admin operations. Final result/ledger/audit references are idempotent; append-only guards are tested. Single room ownership and durable-before-ack are required.
+- Request credentials and passwords are redacted. Signature scan of source/tracked and untracked review files found no AWS access-key signatures, GitHub token signatures or PEM private keys. This narrow scan is not proof that every possible credential format is absent. Private backups/certificates are outside the checkout.
+- npm audit after the compatible esbuild update reports 23 findings: 16 high, 7 moderate, 0 critical. Remaining findings involve Expo/React Native native/dev tooling and dependencies such as metro, node-forge, braces, micromatch, uuid and xcode. Suggested automatic fixes downgrade Expo to44 or RN to0.72; they are incompatible with the chosen stack and were not forced. Reassess upstream fixes and native artifact exposure before distribution. Do not interpret a successful JS export as remediation.
+
+Release gaps: email verification/recovery and OAuth, long-duration abuse/load testing, independent security review, dedicated database roles, production logging/retention/alerts, offsite encrypted backups and account-history anonymization/retention decisions. Account deletion removes authentication/profile and anonymizes wallet/audit ownership; historical names/participant UUIDs in result JSON and bracket data still need a defined erasure policy before public release. See STORE_READINESS.md.

@@ -21,3 +21,9 @@ M3: npm run test:e2e passed both real Chromium tests: full local two-player matc
 M4/M5: real Socket.IO 2/4-client full games, proof verification, forged intent rejection, duplicate replay, live reconnect/session eviction and default rate-limit test passed. Fake clock 2/10/30s disconnect and 45s grace tested. E2E: invite link, online start, proof verification and reload restoration passed. Vitest config explicitly includes source tests to avoid accidentally counting generated dist tests.
 
 M6: npm run test:db passed three real PostgreSQL tests covering repeat migration, registration/hash, duplicate input, login, cookie flags, private/public profile isolation, foreign Origin rejection, session revocation and password-confirmed deletion. Four Chromium E2E tests passed including registration/reload/logout/deletion. M8: real-client pairing/cancellation/auto-start passed.
+
+## Current hardening acceptance
+
+npm run test:db runs database files sequentially because the room authority supports one owning API process per database. Tests still exercise concurrent commands/transactions within each file. The default source test run intentionally skips these DB cases; it does not count skips as passes. Replay tests cover JSONB key ordering, proof/action binding and restart transitions; real shared-client tests cover cached lobby acknowledgements and admission limits. Nine Chromium E2E cases and two platform cases passed; privileged admin UI/device testing remains unclaimed.
+
+Reproduce million-roll/load/backup measurements with commands in HARDENING.md. Private archives must remain outside Git. Production images were built and exercised with a temporary trusted TLS certificate and real proxied WebSocket commands on loopback; no public deployment was made. STORE_READINESS.md lists native/store prerequisites.

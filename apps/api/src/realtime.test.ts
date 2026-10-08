@@ -9,6 +9,7 @@ import {
   type PublicRoom,
 } from "@mench/game-protocol";
 import { legalMoves } from "@mench/game-engine";
+import { GameClient } from "@mench/game-client";
 import { createApp } from "./app";
 const sockets: Socket[] = [];
 afterEach(() => {
@@ -299,6 +300,73 @@ test("reusing a request ID for different payload is rejected", async () => {
     });
     client.disconnect();
     other.disconnect();
+  } finally {
+    await app.close();
+  }
+});
+
+test("a cached lobby acknowledgement cannot replace a newer joined-player snapshot in the shared client", async () => {
+  const app = createApp();
+  const requestId = randomUUID();
+  let client: GameClient | undefined;
+  try {
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    const address = app.server.address();
+    if (!address || typeof address === "string") throw Error();
+    const url = `http://127.0.0.1:${address.port}`;
+    client = new GameClient({
+      url,
+      requestId: () => requestId,
+      save: () => {},
+    });
+    client.connect();
+    await new Promise<void>((resolve) => {
+      const stop = client!.subscribe((state) => {
+        if (state.connected) {
+          queueMicrotask(stop);
+          resolve();
+        }
+      });
+    });
+    const intent = { type: "create", name: "LobbyHost", capacity: 2 } as const;
+    const created = await client.send(intent);
+    if (!created?.ok || !created.room) throw Error();
+    const peer = await connect(url);
+    const joined = new Promise<void>((resolve) => {
+      const stop = client!.subscribe((state) => {
+        if (state.room?.players.length === 2) {
+          queueMicrotask(stop);
+          resolve();
+        }
+      });
+    });
+    await command(peer, {
+      type: "join",
+      name: "LobbyGuest",
+      code: created.room.code,
+    });
+    await joined;
+    const newer = client.state.room!.revision;
+    const cached = await client.send(intent);
+    expect(roomOf(cached!).players).toHaveLength(1);
+    expect(client.state.room!.players).toHaveLength(2);
+    expect(client.state.room!.revision).toBe(newer);
+  } finally {
+    client?.close();
+    await app.close();
+  }
+});
+
+test("socket admission bounds active connections before account/database lookup", async () => {
+  const app = createApp(undefined, 100, undefined, { maxConnections: 2 });
+  try {
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    const address = app.server.address();
+    if (!address || typeof address === "string") throw Error();
+    const url = `http://127.0.0.1:${address.port}`;
+    await connect(url);
+    await connect(url);
+    await expect(connect(url)).rejects.toThrow("SERVER_FULL");
   } finally {
     await app.close();
   }

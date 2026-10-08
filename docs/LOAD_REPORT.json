@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-10-08T07:34:16.807Z",
+  "scenario": "Single local API process and PostgreSQL, guest sockets, four rolls per two-player game, 50 concurrent match command sequences. Short admission/gameplay smoke, not sustained production capacity.",
+  "reports": [
+    {
+      "clients": 100,
+      "matches": 50,
+      "commands": 425,
+      "verifiedProofs": 200,
+      "errors": 0,
+      "elapsedMs": 1567,
+      "ackP50Ms": 87.32,
+      "ackP95Ms": 120.32,
+      "ackP99Ms": 126.88,
+      "peakRssKiB": 118212,
+      "serverCpuSeconds": 0.51,
+      "databaseProbeP50Ms": 0.27,
+      "databaseProbeP95Ms": 6.09
+    },
+    {
+      "clients": 500,
+      "matches": 250,
+      "commands": 2104,
+      "verifiedProofs": 1000,
+      "errors": 0,
+      "elapsedMs": 4242,
+      "ackP50Ms": 75.2,
+      "ackP95Ms": 101.19,
+      "ackP99Ms": 110.07,
+      "peakRssKiB": 144428,
+      "serverCpuSeconds": 1.97,
+      "databaseProbeP50Ms": 0.17,
+      "databaseProbeP95Ms": 0.36
+    },
+    {
+      "clients": 1000,
+      "matches": 500,
+      "commands": 4093,
+      "verifiedProofs": 2000,
+      "errors": 0,
+      "elapsedMs": 7399,
+      "ackP50Ms": 73,
+      "ackP95Ms": 92.12,
+      "ackP99Ms": 111.7,
+      "peakRssKiB": 230456,
+      "serverCpuSeconds": 3.54,
+      "databaseProbeP50Ms": 0.15,
+      "databaseProbeP95Ms": 0.47
+    }
+  ]
+}

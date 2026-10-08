@@ -6,6 +6,7 @@ import { registerAuth } from "./auth";
 import type { Database } from "./database";
 import { Rooms } from "./rooms";
 import { registerSocial } from "./social";
+import { registerHistory } from "./history";
 import { registerRankings } from "./rankings";
 import { registerEconomy } from "./economy";
 import { registerTournaments } from "./tournaments";
@@ -14,7 +15,7 @@ export function createApp(
   rooms = new Rooms(),
   commandBudget = 100,
   database?: Database,
-  options: { adminUserIds?: readonly string[] } = {},
+  options: { adminUserIds?: readonly string[]; maxConnections?: number } = {},
 ) {
   const app = Fastify({
     logger: {
@@ -36,10 +37,17 @@ export function createApp(
   });
   app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   if (database) app.addHook("onClose", async () => database.close());
-  const realtime = attachRealtime(app, rooms, commandBudget, database);
+  const realtime = attachRealtime(
+    app,
+    rooms,
+    commandBudget,
+    database,
+    options.maxConnections,
+  );
   if (database) registerAuth(app, database, realtime.revoke);
   if (database) registerSocial(app, database, rooms);
   if (database) registerRankings(app, database);
+  if (database) registerHistory(app, database);
   if (database) registerEconomy(app, database);
   if (database) registerTournaments(app, database);
   if (database)
@@ -55,10 +63,17 @@ export function createApp(
       realtime.revoke,
       realtime.isHealthy,
     );
-  app.get("/health", async (_req, reply) =>
-    realtime.isHealthy()
-      ? { status: "ok", protocolVersion: 1 }
-      : reply.code(503).send({ status: "unavailable", protocolVersion: 1 }),
-  );
+  app.get("/health/live", async () => ({ status: "ok", protocolVersion: 1 }));
+  app.get("/health", async (_req, reply) => {
+    if (realtime.isHealthy()) {
+      try {
+        if (database) await database.pool.query("SELECT 1");
+        return { status: "ok", protocolVersion: 1 };
+      } catch {
+        /* readiness must reflect database availability */
+      }
+    }
+    return reply.code(503).send({ status: "unavailable", protocolVersion: 1 });
+  });
   return app;
 }

@@ -385,5 +385,24 @@ describe.skipIf(!url)(
         client.close();
       }
     });
+    test("an already connected authenticated socket is revoked when its session expires", async () => {
+      const shortToken = randomBytes(32).toString("hex");
+      await db.pool.query(
+        "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 second')",
+        [createHash("sha256").update(shortToken).digest("hex"), ids[2]],
+      );
+      const socket = await connect(shortToken);
+      await new Promise<void>((resolve) =>
+        socket.once(EVENTS.AUTH_REVOKED, resolve),
+      );
+      expect(
+        (
+          await app.inject({
+            url: "/api/me",
+            headers: { authorization: `Bearer ${shortToken}` },
+          })
+        ).statusCode,
+      ).toBe(401);
+    });
   },
 );

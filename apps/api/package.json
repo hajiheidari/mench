@@ -15,14 +15,14 @@
     "@mench/fair-dice": "0.0.0",
     "@mench/game-engine": "0.0.0",
     "@mench/game-protocol": "0.0.0",
+    "@mench/tournament": "0.0.0",
     "fastify": "5.12.5",
     "pg": "8.23.1",
     "socket.io": "4.8.4",
-    "zod": "3.25.76",
-    "@mench/tournament": "0.0.0"
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "esbuild": "0.27.4",
+    "esbuild": "0.28.2",
     "tsx": "^4.20.0"
   }
 }

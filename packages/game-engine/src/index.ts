@@ -181,3 +181,35 @@ export function replay(
 ): GameState {
   return actions.reduce(applyAction, structuredClone(initial));
 }
+export function verifyReplay(
+  initial: GameState,
+  actions: readonly Action[],
+  expected: GameState,
+): boolean {
+  const view = (state: GameState) => [
+    state.version,
+    state.turn,
+    state.phase,
+    state.dice,
+    state.sixes,
+    state.winner,
+    state.players.map((p) => [p.id, p.seat, p.pawns, p.connected]),
+    [
+      state.rules.enterOn,
+      state.rules.safeCells,
+      state.rules.extraOnSix,
+      state.rules.extraOnCapture,
+      state.rules.extraOnFinish,
+      state.rules.consecutiveSixLimit,
+      state.rules.exactFinish,
+    ],
+  ];
+  try {
+    return (
+      JSON.stringify(view(replay(initial, actions))) ===
+      JSON.stringify(view(expected))
+    );
+  } catch {
+    return false;
+  }
+}

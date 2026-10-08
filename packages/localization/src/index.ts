@@ -1,5 +1,14 @@
 export const messages = {
   fa: {
+    gameHistory: "تاریخچهٔ مسابقه‌ها",
+    replayCheck: "بررسی بازپخش",
+    replayConsistent: "بازپخش و محاسبهٔ تاس‌ها سازگار است",
+    replayInvalid: "بازپخش سازگار نیست",
+    archiveHint:
+      "این بررسی سازگاری تاریخچه را نشان می‌دهد؛ مشاهدهٔ تعهد پیش از تاس فقط هنگام بازی زنده ممکن است",
+    downloadReplay: "دریافت فایل بازپخش",
+    noGames: "هنوز مسابقه‌ای پایان نیافته است",
+
     admin: "مدیریت",
     recentUsers: "بازیکنان اخیر",
     suspend: "تعلیق حساب",
@@ -162,6 +171,15 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    gameHistory: "Match history",
+    replayCheck: "Check replay",
+    replayConsistent: "Replay and dice calculations are consistent",
+    replayInvalid: "Replay is inconsistent",
+    archiveHint:
+      "This checks archive consistency. Prior commitment publication can only be witnessed during live play.",
+    downloadReplay: "Download replay",
+    noGames: "No completed matches yet",
+
     admin: "Administration",
     recentUsers: "Recent players",
     suspend: "Suspend account",

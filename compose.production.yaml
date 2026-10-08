@@ -1,0 +1,50 @@
+# Reviewable single-instance deployment; supplying secrets does not deploy anything.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.production
+      target: api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_FILE: /run/secrets/database_url
+      ALLOWED_ORIGINS: https://${MENCH_DOMAIN:?Set the real HTTPS domain}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+    secrets: [database_url]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+  web:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.production
+      target: web
+    restart: unless-stopped
+    ports: ["443:443"]
+    environment:
+      MENCH_DOMAIN: ${MENCH_DOMAIN:?Set the real HTTPS domain}
+      NGINX_ENVSUBST_FILTER: MENCH_DOMAIN
+    secrets: [tls_certificate, tls_key]
+    depends_on:
+      api:
+        condition: service_healthy
+secrets:
+  database_url:
+    file: ${MENCH_DATABASE_URL_FILE:?Set a private file containing the PostgreSQL URL}
+  tls_certificate:
+    file: ${MENCH_TLS_CERTIFICATE_FILE:?Set the TLS certificate file}
+  tls_key:
+    file: ${MENCH_TLS_KEY_FILE:?Set the private TLS key file}

@@ -20,7 +20,10 @@ interface Member {
   tokenHash: string;
   socketId: string | null;
   disconnectedAt: number | null;
-  replies: Map<string, { payload: string; reply: Reply; proofCount: number }>;
+  replies: Map<
+    string,
+    { payload: string; reply: Reply; proofCount: number; proofOffset: number }
+  >;
 }
 interface Pending {
   seed: string;
@@ -29,6 +32,7 @@ interface Pending {
 }
 export interface Room {
   code: string;
+  revision: number;
   matchId: string;
   ranked: boolean;
   hostId: string;
@@ -42,6 +46,7 @@ export interface Room {
 }
 export interface RoomSnapshot extends Omit<Room, "members"> {
   storageVersion: 1;
+  proofOffset?: number;
   members: Omit<Member, "replies">[];
 }
 const tokenHash = (token: string) =>
@@ -60,6 +65,8 @@ export class Rooms {
     return structuredClone({
       ...room,
       storageVersion: 1,
+      proofs: room.proofs.slice(-16),
+      proofOffset: Math.max(0, room.proofs.length - 16),
       members: room.members.map(({ replies, ...member }) => {
         void replies;
         return member;
@@ -109,6 +116,7 @@ export class Rooms {
       const room: Room = {
         ...structuredClone(snapshot),
         matchId: snapshot.matchId ?? randomUUID(),
+        revision: (snapshot.revision ?? 0) + (afterRestart ? 1 : 0),
         ranked: snapshot.ranked ?? false,
         members: snapshot.members.map((m) => ({
           ...structuredClone(m),
@@ -136,6 +144,8 @@ export class Rooms {
   public(room: Room): PublicRoom {
     return {
       code: room.code,
+      revision: room.revision,
+      matchId: room.matchId,
       ranked: room.ranked,
       hostId: room.hostId,
       capacity: room.capacity,
@@ -149,7 +159,8 @@ export class Rooms {
       commitment: room.pending
         ? { hash: room.pending.hash, context: room.pending.context }
         : null,
-      proofs: structuredClone(room.proofs),
+      proofs: structuredClone(room.proofs.slice(-16)),
+      proofOffset: Math.max(0, room.proofs.length - 16),
     };
   }
   private add(room: Room, socketId: string, name: string): Reply {
@@ -169,6 +180,7 @@ export class Rooms {
       replies: new Map(),
     };
     room.members.push(member);
+    room.revision++;
     if (!room.hostId) room.hostId = member.id;
     this.sessions.set(socketId, { room, member });
     return { ok: true, room: this.public(room), playerId: member.id, token };
@@ -189,6 +201,7 @@ export class Rooms {
     } while (this.rooms.has(code));
     const room: Room = {
       code,
+      revision: 0,
       matchId: randomUUID(),
       ranked,
       hostId: "",
@@ -236,6 +249,7 @@ export class Rooms {
         playerId: member.id,
         connected: true,
       });
+    room.revision++;
     return {
       reply: { ok: true, room: this.public(room), playerId: member.id },
       replaced: replaced !== socketId ? replaced : null,
@@ -274,6 +288,7 @@ export class Rooms {
     )
       throw new RoomError("WAITING_FOR_PLAYERS");
     room.state = createGame(room.members.map((m) => m.id));
+    room.revision++;
     this.prepare(room);
     return this.public(room);
   }
@@ -291,6 +306,7 @@ export class Rooms {
       value: proof.value,
     });
     room.proofs.push(proof);
+    room.revision++;
     this.prepare(room);
     return this.public(room);
   }
@@ -304,6 +320,7 @@ export class Rooms {
       playerId: member.id,
       pawn,
     });
+    room.revision++;
     this.prepare(room);
     return this.public(room);
   }
@@ -315,6 +332,7 @@ export class Rooms {
     if (member.socketId !== socketId) return null;
     member.socketId = null;
     member.disconnectedAt = this.now();
+    room.revision++;
     if (room.state && room.state.phase !== "finished") {
       room.state = applyAction(room.state, {
         type: "connection",
@@ -334,6 +352,7 @@ export class Rooms {
     }
     this.sessions.delete(socketId);
     room.members = room.members.filter((m) => m.id !== member.id);
+    room.revision++;
     if (!room.members.length) {
       this.rooms.delete(room.code);
       return null;
@@ -365,6 +384,7 @@ export class Rooms {
           type: "timeout",
           playerId: currentPlayer(room.state).id,
         });
+        room.revision++;
         this.prepare(room);
         const active = room.members.find(
           (m) => m.id === currentPlayer(room.state!).id,

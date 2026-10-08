@@ -85,19 +85,28 @@ export async function checkPassword(
     expected.length === derived.length && timingSafeEqual(expected, derived)
   );
 }
-export async function resolveAccount(
+export async function resolveSession(
   db: Database,
   raw: string | undefined,
-): Promise<Account | null> {
+): Promise<{ account: Account; expiresAt: number } | null> {
   if (!raw || !/^[a-f0-9]{64}$/.test(raw)) return null;
-  const result = await db.pool.query<UserRow>(
-    "SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now() AND (u.banned_until IS NULL OR u.banned_until<=now())",
+  const result = await db.pool.query<UserRow & { expires_at: Date }>(
+    "SELECT u.*,s.expires_at FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=$1 AND s.expires_at>now() AND (u.banned_until IS NULL OR u.banned_until<=now())",
     [digest(raw)],
   );
   const user = result.rows[0];
   return user
-    ? { id: user.id, name: user.display_name, email: user.email }
+    ? {
+        account: { id: user.id, name: user.display_name, email: user.email },
+        expiresAt: user.expires_at.getTime(),
+      }
     : null;
+}
+export async function resolveAccount(
+  db: Database,
+  raw: string | undefined,
+): Promise<Account | null> {
+  return (await resolveSession(db, raw))?.account ?? null;
 }
 export function registerAuth(
   app: FastifyInstance,

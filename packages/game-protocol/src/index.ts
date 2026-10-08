@@ -1,4 +1,4 @@
-import type { GameState } from "@mench/game-engine";
+import type { Action, GameState } from "@mench/game-engine";
 import type { DiceContext, DiceProof } from "@mench/fair-dice";
 export const PROTOCOL_VERSION = 1 as const;
 export const EVENTS = {
@@ -15,6 +15,8 @@ export interface PublicPlayer {
 }
 export interface PublicRoom {
   code: string;
+  revision?: number;
+  matchId?: string;
   ranked?: boolean;
   hostId: string;
   players: PublicPlayer[];
@@ -23,6 +25,7 @@ export interface PublicRoom {
   deadline: number | null;
   commitment: { hash: string; context: DiceContext } | null;
   proofs: DiceProof[];
+  proofOffset?: number;
 }
 export interface Envelope<T> {
   version: typeof PROTOCOL_VERSION;
@@ -159,3 +162,22 @@ export interface AdminSummary {
   tournaments: { id: string; phase: "lobby" | "running"; capacity: number }[];
   health: { healthy: boolean; rooms: number; activeGames: number };
 }
+
+export interface GameTranscript {
+  initialState: GameState;
+  actions: Action[];
+  finalState: GameState;
+  proofs: DiceProof[];
+}
+export interface GameHistory {
+  games: {
+    id: string;
+    createdAt: string;
+    ranked: boolean;
+    won: boolean;
+    players: { id: string; name: string }[];
+    replayAvailable: boolean;
+  }[];
+}
+
+export { verifyTranscriptConsistency } from "./replay";

@@ -1,0 +1,21 @@
+FROM node:24.19.0-bookworm-slim AS build
+WORKDIR /app
+COPY . .
+RUN --mount=type=secret,id=ca if [ -f /run/secrets/ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/ca; fi; npm ci --no-fund --no-audit --fetch-retries=1 --fetch-timeout=30000
+RUN npm run build -w @mench/api && npm run build -w @mench/web
+RUN npm prune --omit=dev --no-fund --no-audit
+
+FROM node:24.19.0-bookworm-slim AS api
+ENV NODE_ENV=production PORT=3001
+WORKDIR /app
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+COPY --from=build --chown=node:node /app/infra/migrations ./infra/migrations
+COPY --from=build --chown=node:node /app/package.json ./package.json
+USER node
+EXPOSE 3001
+CMD ["node", "apps/api/dist/main.js"]
+
+FROM nginx:1.28.0-alpine AS web
+COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+COPY infra/nginx.conf.template /etc/nginx/templates/default.conf.template

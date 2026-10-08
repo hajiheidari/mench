@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-10-04T12:32:56.067Z",
+  "count": 1000000,
+  "counts": [167027, 166821, 166411, 166477, 167097, 166167],
+  "chiSquare": 4.139108,
+  "degreesOfFreedom": 5,
+  "threshold": 30,
+  "verifiedProofs": 1000000,
+  "elapsedMs": 44760,
+  "limitation": "Deterministic distribution regression, not proof of server honesty or adversarial fairness."
+}

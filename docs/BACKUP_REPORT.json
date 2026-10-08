@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-10-08T07:43:52.725Z",
+  "format": "PostgreSQL custom archive",
+  "tablesVerified": 19,
+  "counts": {
+    "admin_audit": 36,
+    "cosmetics": 2,
+    "friend_invites": 0,
+    "friendships": 0,
+    "game_results": 0,
+    "owned_cosmetics": 19,
+    "ratings": 0,
+    "recent_opponents": 0,
+    "room_events": 26,
+    "room_snapshots": 2,
+    "schema_migrations": 7,
+    "sessions": 0,
+    "tournament_games": 0,
+    "tournaments": 0,
+    "user_blocks": 0,
+    "user_reports": 0,
+    "users": 1,
+    "wallet_ledger": 188,
+    "wallets": 130
+  },
+  "ledgerReconciled": true,
+  "privateArchiveOutsideRepository": true,
+  "limitation": "Local development restore rehearsal. Requires externally encrypted offsite backups and production RPO/RTO policy before launch."
+}

@@ -120,9 +120,9 @@ export class GameClient {
       const old = this.state.room;
       const room =
         old?.code === reply.room.code &&
-        old.state &&
-        reply.room.state &&
-        old.state.version > reply.room.state.version
+        old.matchId === reply.room.matchId &&
+        (old.revision ?? old.state?.version ?? 0) >
+          (reply.room.revision ?? reply.room.state?.version ?? 0)
           ? old
           : reply.room;
       if (reply.token && reply.playerId) {
@@ -187,3 +187,5 @@ export {
   sendTournament,
 } from "./tournaments";
 export { readAdmin, sendAdmin } from "./admin";
+
+export { readHistory, readTranscript } from "./history";

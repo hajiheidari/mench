@@ -5,9 +5,12 @@ import type { RoomSnapshot } from "./rooms";
 import { eloDelta } from "./rating";
 import { rewardMatch } from "./economy";
 import { advanceTournament } from "./tournaments";
+import { verifyReplay, type GameState, type Action } from "@mench/game-engine";
+import type { DiceProof } from "@mench/fair-dice";
 export class Database {
   readonly pool: pg.Pool;
   private closed = false;
+  private available = true;
   constructor(url: string) {
     this.pool = new pg.Pool({
       connectionString: url,
@@ -15,6 +18,18 @@ export class Database {
       connectionTimeoutMillis: 5000,
       statement_timeout: 10000,
     });
+    // Idle-pool errors otherwise become uncaught exceptions with private connection details.
+    this.pool.on("error", () => {
+      this.available = false;
+    });
+  }
+  isHealthy(): boolean {
+    return this.available;
+  }
+  async pruneExpiredRooms(): Promise<void> {
+    await this.pool.query(
+      "DELETE FROM room_snapshots WHERE created_at<=now()-interval '24 hours'",
+    );
   }
   async migrate(): Promise<void> {
     const client = await this.pool.connect();
@@ -62,10 +77,51 @@ export class Database {
     }
   }
   async loadRooms(): Promise<RoomSnapshot[]> {
-    const result = await this.pool.query<{ snapshot: RoomSnapshot }>(
-      "SELECT snapshot FROM room_snapshots WHERE created_at>now()-interval '24 hours'",
-    );
-    return result.rows.map((r) => r.snapshot);
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      const result = await client.query<{ snapshot: RoomSnapshot }>(
+        "SELECT snapshot FROM room_snapshots WHERE created_at>now()-interval '24 hours'",
+      );
+      const snapshots = result.rows.map((r) => r.snapshot);
+      const codes = snapshots
+        .filter((s) => (s.proofOffset ?? 0) > 0)
+        .map((s) => s.code);
+      if (codes.length) {
+        const rows = await client.query<{
+          room_code: string;
+          proof: DiceProof;
+        }>(
+          "SELECT room_code,data->'proof' AS proof FROM room_events WHERE room_code=ANY($1::text[]) AND kind='roll' AND data ? 'proof' ORDER BY id",
+          [codes],
+        );
+        const grouped = new Map<string, DiceProof[]>();
+        for (const row of rows.rows) {
+          const proofs = grouped.get(row.room_code) ?? [];
+          proofs.push(row.proof);
+          grouped.set(row.room_code, proofs);
+        }
+        for (const snapshot of snapshots)
+          if ((snapshot.proofOffset ?? 0) > 0) {
+            const proofs = grouped.get(snapshot.code) ?? [];
+            if (
+              proofs.length !==
+                (snapshot.proofOffset ?? 0) + snapshot.proofs.length ||
+              proofs.some((proof, index) => proof.context.roll !== index)
+            )
+              throw Error("MISSING_PROOF_HISTORY");
+            snapshot.proofs = proofs;
+            snapshot.proofOffset = 0;
+          }
+      }
+      await client.query("COMMIT");
+      return snapshots;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
   async saveRoom(
     code: string,
@@ -102,6 +158,33 @@ export class Database {
           );
         }
         if (snapshot.state?.phase === "finished" && snapshot.state.winner) {
+          const events = await client.query<{
+            data: {
+              initialState?: GameState;
+              action?: Action;
+              actions?: Action[];
+              proof?: DiceProof;
+            };
+          }>("SELECT data FROM room_events WHERE room_code=$1 ORDER BY id", [
+            code,
+          ]);
+          const initialState = events.rows.find((row) => row.data.initialState)
+            ?.data.initialState;
+          const actions = events.rows.flatMap(
+            (row) =>
+              row.data.actions ?? (row.data.action ? [row.data.action] : []),
+          );
+          const transcript =
+            initialState && verifyReplay(initialState, actions, snapshot.state)
+              ? {
+                  initialState,
+                  actions,
+                  finalState: snapshot.state,
+                  proofs: events.rows.flatMap((row) =>
+                    row.data.proof ? [row.data.proof] : [],
+                  ),
+                }
+              : null;
           const recorded = await client.query(
             "INSERT INTO game_results(game_id,result) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING game_id",
             [
@@ -111,8 +194,10 @@ export class Database {
                 players: snapshot.members.map((m) => ({
                   id: m.id,
                   accountId: m.accountId,
+                  name: m.name,
                 })),
                 ranked: snapshot.ranked,
+                transcript,
               }),
             ],
           );

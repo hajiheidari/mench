@@ -1,7 +1,10 @@
+import { readFile } from "node:fs/promises";
 import { createApp } from "./app.js";
 import { Database } from "./database.js";
 const url =
-  process.env.DATABASE_URL ??
+  (process.env.DATABASE_URL_FILE
+    ? (await readFile(process.env.DATABASE_URL_FILE, "utf8")).trim()
+    : process.env.DATABASE_URL) ??
   (process.env.NODE_ENV === "production"
     ? undefined
     : "postgres://mench:local-development-only@127.0.0.1:5432/mench");

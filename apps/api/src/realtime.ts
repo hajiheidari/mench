@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { EVENTS, type Reply } from "@mench/game-protocol";
 import type { Database } from "./database";
-import { resolveAccount } from "./auth";
+import { resolveSession } from "./auth";
 import { Rooms } from "./rooms";
 import { canInteract } from "./social";
 import { createHash } from "node:crypto";
@@ -69,6 +69,7 @@ export function attachRealtime(
   rooms = new Rooms(),
   commandBudget = 100,
   database?: Database,
+  maxConnections = 5000,
 ) {
   const allowed = (
     process.env.ALLOWED_ORIGINS ??
@@ -85,7 +86,19 @@ export function attachRealtime(
         !req.headers.origin || allowed.includes(req.headers.origin),
       ),
   });
-  const bindings = new Map<string, { accountId: string; tokenHash: string }>();
+  if (!Number.isSafeInteger(maxConnections) || maxConnections < 1)
+    throw Error("INVALID_CONNECTION_LIMIT");
+  const admitted = new Set<object>();
+  io.use((socket, next) => {
+    if (admitted.size >= maxConnections) return next(new Error("SERVER_FULL"));
+    admitted.add(socket.conn);
+    socket.conn.once("close", () => admitted.delete(socket.conn));
+    next();
+  });
+  const bindings = new Map<
+    string,
+    { accountId: string; tokenHash: string; expiresAt: number }
+  >();
   if (database)
     io.use(async (socket, next) => {
       try {
@@ -95,16 +108,19 @@ export function attachRealtime(
           : socket.handshake.headers.cookie?.match(
               /(?:^|;\s*)mench_session=([a-f0-9]{64})(?:;|$)/,
             )?.[1];
-        const account = await resolveAccount(database, raw);
-        if (account && raw) {
+        const session = await resolveSession(database, raw);
+        const account = session?.account;
+        if (account && raw && session) {
           rooms.identities.set(socket.id, account.id);
           bindings.set(socket.id, {
             accountId: account.id,
             tokenHash: createHash("sha256").update(raw).digest("hex"),
+            expiresAt: session.expiresAt,
           });
         }
         next();
       } catch {
+        admitted.delete(socket.conn);
         next(new Error("AUTH_UNAVAILABLE"));
       }
     });
@@ -128,9 +144,24 @@ export function attachRealtime(
     return next;
   };
   if (database)
-    app.addHook("onReady", async () =>
-      rooms.restore(await database.loadRooms(), true),
-    );
+    app.addHook("onReady", async () => {
+      await database.pruneExpiredRooms();
+      rooms.restore(await database.loadRooms(), true);
+      // Restart connection transitions belong in the same replay as later commands.
+      for (const room of rooms.rooms.values()) {
+        if (!room.state || room.state.phase === "finished") continue;
+        await database.saveRoom(room.code, rooms.exportRoom(room), {
+          kind: "recovery",
+          data: {
+            actions: room.members.map((member) => ({
+              type: "connection",
+              playerId: member.id,
+              connected: false,
+            })),
+          },
+        });
+      }
+    });
   const broadcast = (room: ReturnType<Rooms["public"]>) =>
     io.to(room.code).emit(EVENTS.SNAPSHOT, room);
   const persist = async (
@@ -169,7 +200,7 @@ export function attachRealtime(
         if (!socket.connected) {
           return;
         }
-        if (!healthy) {
+        if (!healthy || (database && !database.isHealthy())) {
           ack({ ok: false, error: "PERSISTENCE_UNAVAILABLE" });
           return;
         }
@@ -185,7 +216,10 @@ export function attachRealtime(
           const result = structuredClone(cached.reply);
           if (result.ok && result.room)
             result.room.proofs = structuredClone(
-              session!.room.proofs.slice(0, cached.proofCount),
+              session!.room.proofs.slice(
+                cached.proofOffset,
+                cached.proofOffset + cached.proofCount,
+              ),
             );
           ack(result);
           return;
@@ -197,6 +231,14 @@ export function attachRealtime(
                 ? [payload.code]
                 : []),
             ])
+          : null;
+        const queueBackup = new Map(queue);
+        const previousRoom =
+          payload.type === "join" || payload.type === "resume"
+            ? rooms.rooms.get(payload.code)
+            : session?.room;
+        const previousState = previousRoom?.state
+          ? structuredClone(previousRoom.state)
           : null;
         let code = session?.room.code;
         const effects: (() => void)[] = [];
@@ -331,6 +373,32 @@ export function attachRealtime(
           code = active?.room.code ?? code;
           if (code) {
             writing = true;
+            const initialState =
+              payload.type === "start" || payload.type === "queue"
+                ? active?.room.state
+                : null;
+            const action =
+              payload.type === "roll"
+                ? {
+                    type: "roll",
+                    playerId: active?.member.id,
+                    value: active?.room.proofs.at(-1)?.value,
+                  }
+                : payload.type === "move"
+                  ? {
+                      type: "move",
+                      playerId: active?.member.id,
+                      pawn: payload.pawn,
+                    }
+                  : (payload.type === "resume" || payload.type === "leave") &&
+                      previousState &&
+                      previousState.phase !== "finished"
+                    ? {
+                        type: "connection",
+                        playerId: active?.member.id ?? session?.member.id,
+                        connected: payload.type === "resume",
+                      }
+                    : null;
             await persist(
               code,
               payload.type,
@@ -342,6 +410,8 @@ export function attachRealtime(
                     ? { pawn: payload.pawn }
                     : {}),
                 version: active?.room.state?.version ?? null,
+                ...(initialState ? { initialState } : {}),
+                ...(action ? { action } : {}),
               },
               requestId,
             );
@@ -350,14 +420,17 @@ export function attachRealtime(
           if (active) {
             const compact = structuredClone(result);
             let proofCount = 0;
+            let proofOffset = 0;
             if (compact.ok && compact.room) {
               proofCount = compact.room.proofs.length;
+              proofOffset = compact.room.proofOffset ?? 0;
               compact.room.proofs = [];
             }
             active.member.replies.set(requestId, {
               payload: fingerprint,
               reply: compact,
               proofCount,
+              proofOffset,
             });
             if (active.member.replies.size > 128)
               active.member.replies.delete(
@@ -376,6 +449,8 @@ export function attachRealtime(
           });
         } catch (error) {
           if (backup) rooms.rollback(backup);
+          queue.clear();
+          for (const [id, name] of queueBackup) queue.set(id, name);
           if (writing) {
             healthy = false;
             app.log.error({ event: "room_persistence_failed" });
@@ -393,12 +468,23 @@ export function attachRealtime(
       rooms.identities.delete(socket.id);
       bindings.delete(socket.id);
       void enqueue(async () => {
+        const session = rooms.sessions.get(socket.id);
+        const previousState = session?.room.state;
         const snapshot = rooms.disconnect(socket.id);
         if (snapshot) {
           try {
             if (healthy)
               await persist(snapshot.code, "disconnect", {
                 version: snapshot.state?.version ?? null,
+                ...(previousState && previousState.phase !== "finished"
+                  ? {
+                      action: {
+                        type: "connection",
+                        playerId: session?.member.id,
+                        connected: false,
+                      },
+                    }
+                  : {}),
               });
           } catch {
             healthy = false;
@@ -414,17 +500,32 @@ export function attachRealtime(
   });
   let tickPending = false;
   const timer = setInterval(() => {
-    if (tickPending || !healthy) return;
+    for (const binding of bindings.values())
+      if (Date.now() >= binding.expiresAt)
+        revoke({ accountId: binding.accountId, tokenHash: binding.tokenHash });
+    if (tickPending || !healthy || (database && !database.isHealthy())) return;
     tickPending = true;
     void enqueue(async () => {
       try {
         const previousCodes = [...rooms.rooms.keys()];
+        const previousTurns = new Map(
+          [...rooms.rooms.values()]
+            .filter((room) => room.state)
+            .map((room) => [
+              room.code,
+              room.state!.players[room.state!.turn]!.id,
+            ]),
+        );
         const snapshots = rooms.tick();
         for (const code of previousCodes)
           if (!rooms.rooms.has(code)) await persist(code, "expired", {});
         for (const snapshot of snapshots) {
           await persist(snapshot.code, "timeout", {
             version: snapshot.state?.version ?? null,
+            action: {
+              type: "timeout",
+              playerId: previousTurns.get(snapshot.code),
+            },
           });
           broadcast(snapshot);
         }
@@ -461,5 +562,10 @@ export function attachRealtime(
         socket?.disconnect(true);
       }
   };
-  return { io, rooms, isHealthy: () => healthy, revoke };
+  return {
+    io,
+    rooms,
+    isHealthy: () => healthy && (!database || database.isHealthy()),
+    revoke,
+  };
 }

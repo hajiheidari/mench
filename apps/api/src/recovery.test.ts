@@ -1,3 +1,4 @@
+import { verifyReplay } from "@mench/game-engine";
 import { randomUUID } from "node:crypto";
 import { io, type Socket } from "socket.io-client";
 import { describe, expect, test, vi } from "vitest";
@@ -42,6 +43,24 @@ async function listen(app: ReturnType<typeof createApp>) {
   return `http://127.0.0.1:${address.port}`;
 }
 describe.skipIf(!url)("PostgreSQL match recovery", () => {
+  test("idle database connection errors fail readiness closed without dumping private pool details", async () => {
+    const db = new Database(url!);
+    await db.migrate();
+    const app = createApp(undefined, 100, db);
+    const endpoint = await listen(app);
+    const socket = await connect(endpoint);
+    try {
+      db.pool.emit("error", new Error("injected idle connection failure"));
+      expect((await app.inject({ url: "/health" })).statusCode).toBe(503);
+      expect((await app.inject({ url: "/health/live" })).statusCode).toBe(200);
+      expect(
+        await command(socket, { type: "create", name: "Alpha", capacity: 2 }),
+      ).toEqual({ ok: false, error: "PERSISTENCE_UNAVAILABLE" });
+    } finally {
+      socket.disconnect();
+      await app.close();
+    }
+  });
   test("failed persistence never acknowledges or broadcasts an uncommitted room", async () => {
     const db = new Database(url!);
     await db.migrate();
@@ -64,6 +83,7 @@ describe.skipIf(!url)("PostgreSQL match recovery", () => {
       expect(
         (await app.inject({ method: "GET", url: "/health" })).statusCode,
       ).toBe(503);
+      expect((await app.inject({ url: "/health/live" })).statusCode).toBe(200);
       save.mockRestore();
       expect(
         await command(socket, { type: "create", name: "Alpha", capacity: 2 }),
@@ -142,6 +162,16 @@ describe.skipIf(!url)("PostgreSQL match recovery", () => {
           [code],
         );
         expect(events.rows).toHaveLength(1);
+        const recorded = await secondDb.pool.query(
+          "SELECT data FROM room_events WHERE room_code=$1 ORDER BY id",
+          [code],
+        );
+        const initial = recorded.rows.find((r) => r.data.initialState).data
+          .initialState;
+        const actions = recorded.rows.flatMap(
+          (r) => r.data.actions ?? (r.data.action ? [r.data.action] : []),
+        );
+        expect(verifyReplay(initial, actions, restored.state!)).toBe(true);
       } finally {
         reconnect.disconnect();
       }

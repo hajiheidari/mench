@@ -7,7 +7,7 @@ import {
   type Reply,
   type PublicRoom,
 } from "@mench/game-protocol";
-import { legalMoves } from "@mench/game-engine";
+import { verifyReplay, legalMoves } from "@mench/game-engine";
 import { verifyProof } from "@mench/fair-dice";
 import { createApp } from "./app";
 import { Database } from "./database";
@@ -21,7 +21,7 @@ describe.skipIf(!url)("PostgreSQL ranked settlement", () => {
   const db = new Database(url!);
   const rooms = new Rooms();
   const app = createApp(rooms, 10000, db);
-  const ids = [randomUUID(), randomUUID()];
+  const ids = [randomUUID(), randomUUID(), randomUUID()];
   const tokens = ids.map(() => randomBytes(32).toString("hex"));
   const sockets: Socket[] = [];
   const codes: string[] = [];
@@ -34,7 +34,7 @@ describe.skipIf(!url)("PostgreSQL ranked settlement", () => {
     }) as Promise<Reply>;
   beforeAll(async () => {
     await db.migrate();
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < ids.length; i++) {
       await db.pool.query(
         "INSERT INTO users(id,email,display_name,password_hash) VALUES($1,$2,$3,$4)",
         [ids[i], `${ids[i]}@example.com`, `Rank${i}`, "unusable-test-hash"],
@@ -125,6 +125,53 @@ describe.skipIf(!url)("PostgreSQL ranked settlement", () => {
       }
     }
     expect(room.state!.phase).toBe("finished");
+    expect(room.proofs.length).toBeLessThanOrEqual(16);
+    const fullProofs = rooms.rooms.get(room.code)!.proofs;
+    expect(fullProofs.length).toBeGreaterThan(16);
+    const recovered = (await db.loadRooms()).find((r) => r.code === room.code)!;
+    expect(recovered.proofs).toEqual(fullProofs);
+    const history = await app.inject({
+      url: `/api/history/${matchId}`,
+      headers: { authorization: `Bearer ${tokens[0]}` },
+    });
+    expect(history.statusCode).toBe(200);
+    const transcript = history.json();
+    expect(
+      verifyReplay(
+        transcript.initialState,
+        transcript.actions,
+        transcript.finalState,
+      ),
+    ).toBe(true);
+    expect(transcript.proofs).toEqual(fullProofs);
+    expect(JSON.stringify(transcript)).not.toContain(ids[0]!);
+    expect(JSON.stringify(transcript)).not.toContain("tokenHash");
+    expect(
+      (await app.inject({ url: `/api/history/${matchId}` })).statusCode,
+    ).toBe(401);
+    expect(
+      (
+        await app.inject({
+          url: `/api/history/${randomUUID()}`,
+          headers: { authorization: `Bearer ${tokens[0]}` },
+        })
+      ).statusCode,
+    ).toBe(404);
+    expect(
+      (
+        await app.inject({
+          url: `/api/history/${matchId}`,
+          headers: { authorization: `Bearer ${tokens[2]}` },
+        })
+      ).statusCode,
+    ).toBe(404);
+    const listing = await app.inject({
+      url: "/api/history",
+      headers: { authorization: `Bearer ${tokens[0]}` },
+    });
+    expect(
+      listing.json().games.some((g: { id: string }) => g.id === matchId),
+    ).toBe(true);
     const snapshot = rooms.exportRoom(rooms.rooms.get(room.code)!);
     await Promise.all([
       db.saveRoom(room.code, snapshot, { kind: "duplicate-final", data: {} }),
