@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-10-08",
+  "android": {
+    "artifact": "/workspace/mench-artifacts/mench-development-arm64.apk",
+    "sha256": "7523ae2a32066e70ef1a09e8d401f23bc264243444b5657badabac6e6661701c",
+    "bytes": 26149648,
+    "package": "com.mench.game",
+    "version": "0.0.1",
+    "minSdk": 24,
+    "targetSdk": 36,
+    "architecture": "arm64-v8a",
+    "apkSignatureVerified": true,
+    "signing": "Android Debug development key; not production/store signing",
+    "zipAlignment16KiBVerified": true,
+    "permissions": [
+      "android.permission.INTERNET",
+      "com.mench.game.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ],
+    "deviceExecutionVerified": false,
+    "elfLoadAlignment16KiBVerified": true,
+    "nativeLibrariesChecked": 14
+  },
+  "ios": {
+    "artifact": "/workspace/mench-artifacts/mench-ios-project.tar.gz",
+    "sha256": "d857d350188d3cbb161ce80a059896471ca76e72b7189047f631d493e6405b9f",
+    "generatedProjectVerified": true,
+    "podsInstalled": false,
+    "xcodeBuildVerified": false
+  },
+  "limitations": [
+    "No device or emulator is attached; native runtime acceptance remains unverified.",
+    "iOS compilation requires macOS/Xcode.",
+    "Publisher identifiers, production signing and store submission are not configured."
+  ]
+}
