@@ -81,11 +81,17 @@ function Input({
   );
 }
 function Practice({ t, width }: { t: Messages; width: number }) {
-  const [count, setCount] = useState(2);
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const count = state.players.length;
+  function newGame(playerCount = count) {
+    setState(
+      createGame(Array.from({ length: playerCount }, (_, i) => String(i))),
+    );
+    setLast(null);
+  }
   const botTurn =
     bots && state.phase !== "finished" && currentPlayer(state).id !== "0";
   useEffect(() => {
@@ -191,19 +197,11 @@ function Practice({ t, width }: { t: Messages; width: number }) {
           <Button
             key={n}
             title={[t.two, t.three, t.four][n - 2]!}
-            onPress={() => setCount(n)}
+            onPress={() => newGame(n)}
           />
         ))}
       </View>
-      <Button
-        title={t.newGame}
-        onPress={() => {
-          setState(
-            createGame(Array.from({ length: count }, (_, i) => String(i))),
-          );
-          setLast(null);
-        }}
-      />
+      <Button title={t.newGame} onPress={() => newGame()} />
       <Text style={styles.fine}>{t.hint}</Text>
     </>
   );

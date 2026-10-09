@@ -1,6 +1,6 @@
 # Project status
 
-Core milestones M1–M8 and M10–M15 are implemented with local acceptance checks. M9 shared Expo/PWA behavior is verified; the Android development APK now builds, while device execution/iOS delivery remain blocked. M16 local hardening, replay history, load/backup rehearsal and deployment templates are implemented. M17 has a verified debug-signed ARM64 APK and generated iOS project archive; production signing and store delivery remain unfinished.
+Core milestones M1–M8 and M10–M15 are implemented with local acceptance checks. M9 shared Expo/PWA behavior is verified; the Android APK builds and emulator practice smoke checks pass, while physical-device execution/iOS delivery remain blocked. M16 local hardening, replay history, load/backup rehearsal and deployment templates are implemented. M17 has a verified debug-signed ARM64 APK and generated iOS project archive; production signing and store delivery remain unfinished.
 
 Current validation: npm ci from the lockfile; lint/format/typecheck/source tests/shared+web+API builds; 60 source tests passed with 24 PostgreSQL cases explicitly skipped in the default run; a separate actual database run executes those cases. Nine Chromium E2E tests and two platform tests passed, including replay consistency/export, shared Expo-to-desktop proof verification and offline PWA practice. Android/iOS/web JS exports passed. See TESTING.md and hardening reports for exact scope. No remote CI/device/store acceptance claim.
 
@@ -19,3 +19,5 @@ Validated again on2026-10-08:60 source tests,24 actual PostgreSQL tests,9 web E2
 2026-10-09 player-count fix: selecting 2/3/4 players immediately starts a fresh practice match with the corresponding colors. The selector now derives its value from the actual game state, removing the mismatch between the menu and board. Standalone v3 includes this correction.
 
 2026-10-09 practice layout: the bot checkbox and its text share a horizontal, vertically centered label. Standalone v4 passes alignment and text-click toggle checks in Persian/English at 390px and 1280px widths.
+
+2026-10-09 native runtime: installed a headless software Android10/API29 x86_64 emulator and executed the native application. Practice smoke checks passed for Persian/English UI, immediate2/3/4-player setup, random dice/legal pawn movement, restart and bot controls/automatic turns. The native player-count mismatch was reproduced and corrected. Rebuilt and statically verified the ARM64 phone APK as mench-android-v2.apk. Full native match/online flows and physical-device/iOS/store acceptance remain outstanding; see ANDROID_EMULATOR_REPORT.json.

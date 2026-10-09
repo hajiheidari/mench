@@ -1,4 +1,4 @@
-"""Build the cloud's debug-signed ARM64 development APK with verified tools."""
+"""Build a debug-signed development APK with verified tools (ARM64 by default)."""
 import os
 import subprocess
 import urllib.parse
@@ -6,6 +6,9 @@ from pathlib import Path
 
 repo = Path(__file__).resolve().parents[2]
 base = Path(os.environ.get('MENCH_TOOLCHAIN_ROOT', '/workspace/mench-toolchains'))
+architecture = os.environ.get('MENCH_ANDROID_ARCHITECTURE', 'arm64-v8a')
+if architecture not in ('arm64-v8a', 'x86_64'):
+    raise SystemExit('MENCH_ANDROID_ARCHITECTURE must be arm64-v8a or x86_64')
 env = os.environ.copy()
 env.update(JAVA_HOME=str(base / 'java17/usr/lib/jvm/java-17-openjdk-amd64'),
            ANDROID_HOME=str(base / 'android'),
@@ -28,7 +31,7 @@ if env.get('HTTPS_PROXY'):
 if options:
     env['GRADLE_OPTS'] = ' '.join(options)
 result = subprocess.run(['./gradlew', 'app:assembleRelease', '--no-daemon', '--max-workers=4',
-                         '-PreactNativeArchitectures=arm64-v8a',
+                         f'-PreactNativeArchitectures={architecture}',
                          '-Pkotlin.compiler.execution.strategy=in-process',
                          '-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m',
                          '--console=plain'], cwd=android, env=env)

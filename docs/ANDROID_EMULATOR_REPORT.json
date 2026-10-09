@@ -1,0 +1,74 @@
+{
+  "verifiedAt": "2026-10-09",
+  "scope": "Native offline practice smoke acceptance, not full native release acceptance",
+  "emulator": {
+    "android": "10",
+    "api": 29,
+    "image": "system-images;android-29;default;x86_64",
+    "emulatorVersion": "37.2.12.0",
+    "architecture": "x86_64",
+    "hardwareAcceleration": false,
+    "graphics": "swiftshader",
+    "display": "1080x1920",
+    "initialPersianLayoutDpi": 420,
+    "interactionDpi": 240,
+    "headless": true,
+    "bootCompleted": true,
+    "apkInstalled": true,
+    "nativeActivityLaunched": true,
+    "artifact": "/workspace/mench-artifacts/mench-development-emulator-x86_64.apk",
+    "sha256": "e04124627cf588d51ad534a37b3250bb2bc60041f4af249c2d01b4426696f328",
+    "bytes": 26562382,
+    "hermesBundleSha256": "3b6ac6b35a3b3dad2ac6dfb6f3489e1d7022a4733cd214cca22343741eba215f"
+  },
+  "phone": {
+    "architecture": "arm64-v8a",
+    "minSdk": 24,
+    "targetSdk": 36,
+    "signatureVerified": true,
+    "signing": "Android Debug development key",
+    "zipAlignment16KiBVerified": true,
+    "elfLoadAlignment16KiBVerified": true,
+    "nativeLibrariesChecked": 14,
+    "physicalDeviceExecutionVerified": false,
+    "artifact": "/workspace/mench-artifacts/mench-android-v2.apk",
+    "sha256": "5d35f58c0431dc992f979af96be664b16e4829c3909b59f20d29e424e1ff0022",
+    "bytes": 26150048,
+    "hermesBundleSha256": "3b6ac6b35a3b3dad2ac6dfb6f3489e1d7022a4733cd214cca22343741eba215f"
+  },
+  "sameHermesGameBundleVerified": true,
+  "passedSmokeChecks": [
+    "Persian launch, switch to English, two-player board",
+    "3 players immediately show 12 pawns and reset turn",
+    "4 players immediately show 16 pawns and reset turn",
+    "2 players immediately show 8 pawns and reset turn",
+    "Native random dice, legal pawn touch and board movement",
+    "New game resets local match",
+    "Bot practice enabled and difficulty controls shown",
+    "Bot automatically completes its turn and returns control to human",
+    "Difficulty selection changes checked indicator for Hard, Easy and Normal",
+    "Cold restart returns to playable Persian two-player board after UI readiness"
+  ],
+  "appFatalExceptionsObserved": false,
+  "bugFixed": "Native player-count selection immediately resets match and displays corresponding 8/12/16 pawns. Previously selection only changed a separate count value.",
+  "screenshots": [
+    "/workspace/mench-artifacts/mench-android-emulator.png",
+    "/workspace/mench-artifacts/mench-android-four-players.png",
+    "/workspace/mench-artifacts/mench-android-bot.png"
+  ],
+  "sourceValidation": {
+    "npmRunCheck": "passed",
+    "sourceTestsPassed": 60,
+    "databaseTestsSkippedInDefaultRun": 24,
+    "androidArm64Build": "passed",
+    "androidX86_64Build": "passed"
+  },
+  "limitations": [
+    "Full native match to completion and winner behavior not exercised.",
+    "Native online/authentication/account flows not exercised.",
+    "Physical ARM64 phone execution remains unverified.",
+    "Only Android 10/API29 runtime exercised; no device battery/performance acceptance.",
+    "Software emulator and system images use temporary /tmp resources; no future-task restoration claim.",
+    "iOS native execution and production/store signing remain unverified."
+  ]
+}
