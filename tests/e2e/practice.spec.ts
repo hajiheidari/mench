@@ -43,11 +43,44 @@ test("four-player setup works at mobile viewport without horizontal overflow", a
   await page.goto("/");
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page.getByLabel("Players", { exact: true }).selectOption("4");
-  await page.getByRole("button", { name: "New game" }).click();
   await expect(page.locator(".pawn")).toHaveCount(16);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+});
+
+test("player count immediately resets the board and all selected colors", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByRole("button", { name: "Roll dice", exact: true }).click();
+  for (const count of [3, 4, 2, 4]) {
+    await page
+      .getByLabel("Players", { exact: true })
+      .selectOption(String(count));
+    await expect(page.locator(".pawn")).toHaveCount(count * 4);
+    await expect(page.locator(".players > div")).toHaveCount(count);
+    const colors =
+      count === 2
+        ? ["Coral", "Gold"]
+        : ["Coral", "Jade", "Gold", "Blue"].slice(0, count);
+    for (const color of colors) {
+      await expect(
+        page.getByRole("button", { name: new RegExp(`^${color} Pawn`) }),
+      ).toHaveCount(4);
+    }
+    await expect(page.locator('.pawn[data-progress="-1"]')).toHaveCount(
+      count * 4,
+    );
+    await expect(page.locator(".dice")).toHaveText("✦");
+    await expect(
+      page.getByRole("button", { name: "Roll dice", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("heading", { name: "Turn: Coral", exact: true }),
+    ).toBeVisible();
+  }
 });

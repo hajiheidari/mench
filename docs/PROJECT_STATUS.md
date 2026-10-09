@@ -15,3 +15,5 @@ Read HARDENING.md, SECURITY_REVIEW.md, STORE_READINESS.md and KNOWN_ISSUES.md be
 Validated again on2026-10-08:60 source tests,24 actual PostgreSQL tests,9 web E2E tests,2 platform tests, all JS exports,100/500/1000-client load and19-table backup restore. The final APK also passed debug-signature, ARM64/SDK/permission,16KiB ZIP and14-library ELF alignment checks. Linux iOS prebuild succeeded without installing Pods. See NATIVE_BUILD_REPORT.json and MOBILE.md for artifact paths/reproduction.
 
 2026-10-09 result feedback: practice and online matches now show a winner dialog; bot practice congratulates the human or names the winning bot. Practice can restart from the dialog. The standalone HTML download is rebuilt using scripts/build-offline.mjs. Full source checks and focused full-game browser acceptance passed; bot difficulty and dice behavior are unchanged.
+
+2026-10-09 player-count fix: selecting 2/3/4 players immediately starts a fresh practice match with the corresponding colors. The selector now derives its value from the actual game state, removing the mismatch between the menu and board. Standalone v3 includes this correction.

@@ -17,14 +17,16 @@ function randomDie(): number {
   return (bytes[0]! % 6) + 1;
 }
 export function Practice({ t }: { t: Messages }) {
-  const [count, setCount] = useState(2);
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const winner = state.players.find((player) => player.id === state.winner);
-  function newGame() {
-    setState(createGame(Array.from({ length: count }, (_, i) => String(i))));
+  const count = state.players.length;
+  function newGame(playerCount = count) {
+    setState(
+      createGame(Array.from({ length: playerCount }, (_, i) => String(i))),
+    );
     setLast(null);
   }
   const botTurn =
@@ -61,7 +63,7 @@ export function Practice({ t }: { t: Messages }) {
               : t.names[winner.seat]!
           }
           won={bots ? winner.id === "0" : undefined}
-          onPlayAgain={newGame}
+          onPlayAgain={() => newGame()}
         />
       )}
       <section>
@@ -141,7 +143,7 @@ export function Practice({ t }: { t: Messages }) {
           <select
             aria-label={t.players}
             value={count}
-            onChange={(e) => setCount(Number(e.target.value))}
+            onChange={(e) => newGame(Number(e.target.value))}
           >
             <option value="2">{t.two}</option>
             <option value="3">{t.three}</option>
@@ -175,7 +177,7 @@ export function Practice({ t }: { t: Messages }) {
             <p className="fine">{t.botHint}</p>
           </>
         )}
-        <button className="secondary" onClick={newGame}>
+        <button className="secondary" onClick={() => newGame()}>
           {t.newGame}
         </button>
         <p className="fine">{t.fairness}</p>
