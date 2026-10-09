@@ -150,13 +150,13 @@ export function Practice({ t }: { t: Messages }) {
             <option value="4">{t.four}</option>
           </select>
         </label>
-        <label>
+        <label className="bot-option">
           <input
             type="checkbox"
             checked={bots}
             onChange={(e) => setBots(e.target.checked)}
           />
-          {t.bot}
+          <span>{t.bot}</span>
         </label>
         {bots && (
           <>
