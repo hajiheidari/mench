@@ -4,6 +4,7 @@ import { clientNonce, verifyProof } from "@mench/fair-dice/browser";
 import type { DiceProof } from "@mench/fair-dice";
 import type { Messages } from "./messages";
 import { useOnline } from "./useOnline";
+import { ResultDialog } from "./ResultDialog";
 import { Board, colors } from "./Board";
 export function Online({ t }: { t: Messages }) {
   const online = useOnline();
@@ -190,6 +191,14 @@ export function Online({ t }: { t: Messages }) {
   );
   return (
     <div className="game-layout">
+      {state.phase === "finished" && active && (
+        <ResultDialog
+          key={room.matchId ?? room.code}
+          t={t}
+          winnerName={active.name}
+          won={state.winner === playerId}
+        />
+      )}
       <section>
         <Board
           state={state}

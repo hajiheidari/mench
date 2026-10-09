@@ -361,3 +361,30 @@ html[data-theme="sunset"] .board {
     0 0 0 5px #c98e67,
     0 14px 30px #855c3f33;
 }
+
+.result-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 32px 24px;
+  border: 1px solid #c5d2c7;
+  border-radius: 24px;
+  background: #f8faf5;
+  color: #203e38;
+  text-align: center;
+  box-shadow: 0 24px 80px #122e3640;
+}
+.result-dialog::backdrop {
+  background: #122e36b3;
+}
+.result-symbol {
+  font-size: 48px;
+}
+.result-dialog h2 {
+  margin: 16px 0;
+}
+.result-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}

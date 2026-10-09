@@ -13,3 +13,5 @@ External/release constraints: fresh in-sandbox Android downloads still return403
 Read HARDENING.md, SECURITY_REVIEW.md, STORE_READINESS.md and KNOWN_ISSUES.md before public release. User authorization covers continued development; it does not cover publication or paid services.
 
 Validated again on2026-10-08:60 source tests,24 actual PostgreSQL tests,9 web E2E tests,2 platform tests, all JS exports,100/500/1000-client load and19-table backup restore. The final APK also passed debug-signature, ARM64/SDK/permission,16KiB ZIP and14-library ELF alignment checks. Linux iOS prebuild succeeded without installing Pods. See NATIVE_BUILD_REPORT.json and MOBILE.md for artifact paths/reproduction.
+
+2026-10-09 result feedback: practice and online matches now show a winner dialog; bot practice congratulates the human or names the winning bot. Practice can restart from the dialog. The standalone HTML download is rebuilt using scripts/build-offline.mjs. Full source checks and focused full-game browser acceptance passed; bot difficulty and dice behavior are unchanged.

@@ -1,5 +1,12 @@
 export const messages = {
   fa: {
+    gameOver: "بازی تمام شد",
+    congratulations: "تبریک! شما برنده شدید",
+    opponentWon: "این بار حریف برنده شد",
+    playAgain: "دوباره بازی کن",
+    viewBoard: "مشاهدهٔ صفحهٔ بازی",
+    robotName: "ربات",
+
     gameHistory: "تاریخچهٔ مسابقه‌ها",
     replayCheck: "بررسی بازپخش",
     replayConsistent: "بازپخش و محاسبهٔ تاس‌ها سازگار است",
@@ -171,6 +178,13 @@ export const messages = {
     } as Record<string, string>,
   },
   en: {
+    gameOver: "Game over",
+    congratulations: "Congratulations! You won",
+    opponentWon: "Your opponent won this time",
+    playAgain: "Play again",
+    viewBoard: "View board",
+    robotName: "Bot",
+
     gameHistory: "Match history",
     replayCheck: "Check replay",
     replayConsistent: "Replay and dice calculations are consistent",

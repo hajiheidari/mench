@@ -26,6 +26,15 @@ test("complete a local two-player game and switch RTL/language", async ({
   await expect(
     page.getByRole("button", { name: "Roll dice", exact: true }),
   ).toBeDisabled();
+  const result = page.getByRole("dialog", { name: "Game over", exact: true });
+  await expect(result).toBeVisible();
+  await expect(result).toContainText("Winner:");
+  await result.getByRole("button", { name: "View board", exact: true }).click();
+  await expect(result).not.toBeVisible();
+  await page.getByRole("button", { name: "New game", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Roll dice", exact: true }),
+  ).toBeEnabled();
 });
 test("four-player setup works at mobile viewport without horizontal overflow", async ({
   page,

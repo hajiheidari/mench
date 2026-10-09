@@ -27,3 +27,9 @@ M6: npm run test:db passed three real PostgreSQL tests covering repeat migration
 npm run test:db runs database files sequentially because the room authority supports one owning API process per database. Tests still exercise concurrent commands/transactions within each file. The default source test run intentionally skips these DB cases; it does not count skips as passes. Replay tests cover JSONB key ordering, proof/action binding and restart transitions; real shared-client tests cover cached lobby acknowledgements and admission limits. Nine Chromium E2E cases and two platform cases passed; privileged admin UI/device testing remains unclaimed.
 
 Reproduce million-roll/load/backup measurements with commands in HARDENING.md. Private archives must remain outside Git. Production images were built and exercised with a temporary trusted TLS certificate and real proxied WebSocket commands on loopback; no public deployment was made. STORE_READINESS.md lists native/store prerequisites.
+
+## Match results and standalone practice (2026-10-09)
+
+Practice and online matches display a modal with the winner's name when finished. Bot practice distinguishes human congratulations from an opponent victory. Practice offers restart; closing the modal preserves the final board. Four focused Chromium tests cover full local games, mobile layout, both bot outcomes and restart. Test-only deterministic dice select the winner; production dice are unchanged.
+
+Build the self-contained offline practice download with `node scripts/build-offline.mjs /workspace/mench-artifacts/mench-offline-v2.html`. It bundles the same Practice component, engine, bots and localization; no account or online services are included. Chromium `setContent` verification of the generated HTML exercises both bot outcomes and restart with zero network requests. This does not assert managed-browser permission to navigate directly to file URLs.

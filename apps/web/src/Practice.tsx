@@ -6,6 +6,7 @@ import {
   currentPlayer,
   FINISH,
 } from "@mench/game-engine";
+import { ResultDialog } from "./ResultDialog";
 import { Board, colors } from "./Board";
 import type { Messages } from "./messages";
 function randomDie(): number {
@@ -21,6 +22,11 @@ export function Practice({ t }: { t: Messages }) {
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const winner = state.players.find((player) => player.id === state.winner);
+  function newGame() {
+    setState(createGame(Array.from({ length: count }, (_, i) => String(i))));
+    setLast(null);
+  }
   const botTurn =
     bots && state.phase !== "finished" && currentPlayer(state).id !== "0";
   useEffect(() => {
@@ -46,6 +52,18 @@ export function Practice({ t }: { t: Messages }) {
   }, [botTurn, state, difficulty]);
   return (
     <div className="game-layout">
+      {state.phase === "finished" && winner && (
+        <ResultDialog
+          t={t}
+          winnerName={
+            bots && winner.id !== "0"
+              ? `${t.robotName} · ${t.names[winner.seat]}`
+              : t.names[winner.seat]!
+          }
+          won={bots ? winner.id === "0" : undefined}
+          onPlayAgain={newGame}
+        />
+      )}
       <section>
         <Board
           state={state}
@@ -157,15 +175,7 @@ export function Practice({ t }: { t: Messages }) {
             <p className="fine">{t.botHint}</p>
           </>
         )}
-        <button
-          className="secondary"
-          onClick={() => {
-            setState(
-              createGame(Array.from({ length: count }, (_, i) => String(i))),
-            );
-            setLast(null);
-          }}
-        >
+        <button className="secondary" onClick={newGame}>
           {t.newGame}
         </button>
         <p className="fine">{t.fairness}</p>
