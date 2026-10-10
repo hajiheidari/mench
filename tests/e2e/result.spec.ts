@@ -23,7 +23,7 @@ for (const humanWins of [true, false]) {
             const humanTurn =
               document
                 .querySelector(".panel h2")
-                ?.textContent?.includes("Coral") ?? false;
+                ?.textContent?.includes("Red") ?? false;
             array[0] =
               humanTurn === humanWins ? (++rolls % 3 === 0 ? 0 : 5) : 0;
           } else array[0] = 0;
@@ -49,13 +49,13 @@ for (const humanWins of [true, false]) {
       }
     }
     await expect(result).toBeVisible();
-    await expect(result).toContainText(humanWins ? "Coral" : "Bot");
+    await expect(result).toContainText(humanWins ? "Red" : "Bot");
     await result
       .getByRole("button", { name: "Play again", exact: true })
       .click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Turn: Coral", exact: true }),
+      page.getByRole("heading", { name: "Turn: Red", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Roll dice", exact: true }),

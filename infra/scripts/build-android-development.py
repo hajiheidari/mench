@@ -30,6 +30,10 @@ if env.get('HTTPS_PROXY'):
                 '-Dhttp.nonProxyHosts=localhost|127.*']
 if options:
     env['GRADLE_OPTS'] = ' '.join(options)
+# Gradle does not track every shared workspace source/asset used by Metro.
+# Invalidate the generated JS bundle so shared palette/localization changes
+# are included even when files directly under the native source stay unchanged.
+(android / 'app/build/generated/assets/react/release/index.android.bundle').unlink(missing_ok=True)
 result = subprocess.run(['./gradlew', 'app:assembleRelease', '--no-daemon', '--max-workers=4',
                          f'-PreactNativeArchitectures={architecture}',
                          '-Pkotlin.compiler.execution.strategy=in-process',

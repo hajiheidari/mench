@@ -1,6 +1,6 @@
 import { bases, colors, track } from "./index";
 
-export const depths = ["#b92749", "#08786c", "#bf791d", "#226cba"];
+export const depths = ["#ad2020", "#147a29", "#c5a315", "#1754a8"];
 export const dicePips = [
   [],
   [4],
@@ -67,13 +67,13 @@ export function backdropSvg(): string {
 export function avatarSvg(seat: number): string {
   const ears =
     seat === 1
-      ? '<circle cx="29" cy="30" r="13" fill="#6ae3ae"/><circle cx="71" cy="30" r="13" fill="#6ae3ae"/>'
+      ? `<circle cx="29" cy="30" r="13" fill="${colors[seat]}"/><circle cx="71" cy="30" r="13" fill="${colors[seat]}"/>`
       : seat === 2
-        ? '<circle cx="50" cy="51" r="36" fill="#cb7b24"/>'
+        ? `<circle cx="50" cy="51" r="36" fill="${depths[seat]}"/>`
         : '<path d="M20 46L19 16L41 31M59 31L81 16L80 46" fill="' +
           colors[seat] +
           '" stroke="' +
           depths[seat] +
           '" stroke-width="3"/>';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100"><defs><linearGradient id="bg" y2="1" x2=".4"><stop stop-color="${colors[seat]}"/><stop offset="1" stop-color="${depths[seat]}"/></linearGradient></defs><circle cx="50" cy="50" r="47" fill="url(#bg)" stroke="#fff0ba" stroke-width="4"/><circle cx="50" cy="73" r="26" fill="#301c4b" opacity=".2"/>${ears}<ellipse cx="50" cy="52" rx="31" ry="29" fill="${seat === 1 ? "#8ceabb" : seat === 2 ? "#ffd681" : seat === 3 ? "#a3deff" : "#ffbe98"}"/><path d="M22 56Q34 58 50 48Q66 58 78 56Q75 80 50 80Q25 80 22 56" fill="#fff5db"/><ellipse cx="37" cy="46" rx="5" ry="7" fill="#302039"/><ellipse cx="63" cy="46" rx="5" ry="7" fill="#302039"/><circle cx="38" cy="44" r="1.7" fill="white"/><circle cx="64" cy="44" r="1.7" fill="white"/><path d="M45 59Q50 55 55 59L50 64Z" fill="#573344"/><path d="M40 67Q50 78 60 67" fill="none" stroke="#6b3e4b" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="29" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/><ellipse cx="71" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100"><defs><linearGradient id="bg" y2="1" x2=".4"><stop stop-color="${colors[seat]}"/><stop offset="1" stop-color="${depths[seat]}"/></linearGradient></defs><circle cx="50" cy="50" r="47" fill="url(#bg)" stroke="#fff0ba" stroke-width="4"/><circle cx="50" cy="73" r="26" fill="#301c4b" opacity=".2"/>${ears}<ellipse cx="50" cy="52" rx="31" ry="29" fill="${colors[seat]}"/><path d="M22 56Q34 58 50 48Q66 58 78 56Q75 80 50 80Q25 80 22 56" fill="white" fill-opacity=".35"/><ellipse cx="37" cy="46" rx="5" ry="7" fill="#302039"/><ellipse cx="63" cy="46" rx="5" ry="7" fill="#302039"/><circle cx="38" cy="44" r="1.7" fill="white"/><circle cx="64" cy="44" r="1.7" fill="white"/><path d="M45 59Q50 55 55 59L50 64Z" fill="#573344"/><path d="M40 67Q50 78 60 67" fill="none" stroke="#6b3e4b" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="29" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/><ellipse cx="71" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/></svg>`;
 }

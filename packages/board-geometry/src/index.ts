@@ -1,5 +1,5 @@
 import { FINISH } from "@mench/game-engine";
-export const colors = ["#ff5668", "#28cda5", "#ffc64f", "#51b7ff"];
+export const colors = ["#ef3333", "#24b83e", "#ffe035", "#2988ef"];
 export const track = [
   [6, 1],
   [6, 2],

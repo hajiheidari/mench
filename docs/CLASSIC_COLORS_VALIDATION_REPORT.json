@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-10",
+  "change": "Classic Red/Green/Yellow/Blue names and shared pawn/home/avatar palette",
+  "checks": {
+    "source": "npm run check passed: 60 tests, 24 DB skipped",
+    "web": "12 E2E passed",
+    "standalone": "Four-player previews, bundled Samim, zero external HTTP requests, no overflow at 390/1280; visually inspected",
+    "android": "ARM64 build succeeded; all shared PNG decoded pixels match assets inside APK. Fresh bundle generated after detecting stale shared-workspace inputs in Gradle cache. Build helper invalidates bundle for subsequent builds.",
+    "native_runtime": "Not rerun for this palette revision; preceding native smoke documented separately"
+  },
+  "bundle_sha256": "1a7dd4d37f65db2345c311ba971a3f0642d3c4705913dd17acdd0e0264206c91",
+  "artifacts": {
+    "mench-classic-colors.html": {
+      "bytes": 461381,
+      "sha256": "dd92d988ac436eaa7c90f55113804f5922780034308c2592530b717e611c4b03"
+    },
+    "mench-android-classic-colors.apk": {
+      "bytes": 27313969,
+      "sha256": "4fea01cf0c4d8118fcd0e47f68368aab2e180782c66e72db2eacc6a323887662"
+    },
+    "mench-classic-mobile.png": {
+      "bytes": 327591,
+      "sha256": "5f4103720f4b0a10d5ec277842ba1f86380d26091e04c71a5d83cb06aa633777"
+    },
+    "mench-classic-desktop.png": {
+      "bytes": 725814,
+      "sha256": "499adbf63ee52cbff0f3ec668edb0c18555358c9527b2c037ab2721d6c195109"
+    }
+  }
+}

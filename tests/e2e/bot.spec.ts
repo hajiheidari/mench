@@ -27,7 +27,7 @@ test("practice bot completes its legal turn automatically while human controls a
   ).toBeVisible();
   await expect(roll).toBeDisabled();
   await expect(
-    page.getByRole("heading", { name: "Turn: Coral", exact: true }),
+    page.getByRole("heading", { name: "Turn: Red", exact: true }),
   ).toBeVisible({ timeout: 10000 });
   await expect(roll).toBeEnabled();
   await expect(

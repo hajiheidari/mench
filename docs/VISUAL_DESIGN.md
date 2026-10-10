@@ -21,3 +21,7 @@ No production/store signing or publication is claimed. Android minimum24/target3
 ## Persian typography
 
 Samim regular and bold replace the system typography with softer Persian forms. Unmodified font files and their upstream license are included under packages/board-geometry/assets/fonts. Web embeds the fonts locally, including data URLs in the standalone HTML. Native uses expo-font and waits for loading before rendering. Native bold labels select the actual bold font rather than synthesizing weight. Phone board size responds to available height so the roll control remains visible.
+
+## Classic color revision
+
+Player colors are now red, green, yellow and blue; Persian labels are قرمز، سبز، زرد، آبی and English labels match. Avatar face/ears use the shared seat palette rather than peach skin/orange mane. The yellow shade is bright yellow and green is a traditional green. Gold remains only decorative framing. New deliveries are mench-classic-colors.html and mench-android-classic-colors.apk, with a four-player preview in mench-classic-mobile.png.

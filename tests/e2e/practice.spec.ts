@@ -65,8 +65,8 @@ test("player count immediately resets the board and all selected colors", async 
     await expect(page.locator(".players > div")).toHaveCount(count);
     const colors =
       count === 2
-        ? ["Coral", "Gold"]
-        : ["Coral", "Jade", "Gold", "Blue"].slice(0, count);
+        ? ["Red", "Yellow"]
+        : ["Red", "Green", "Yellow", "Blue"].slice(0, count);
     for (const color of colors) {
       await expect(
         page.getByRole("button", { name: new RegExp(`^${color} Pawn`) }),
@@ -80,7 +80,7 @@ test("player count immediately resets the board and all selected colors", async 
       page.getByRole("button", { name: "Roll dice", exact: true }),
     ).toBeEnabled();
     await expect(
-      page.getByRole("heading", { name: "Turn: Coral", exact: true }),
+      page.getByRole("heading", { name: "Turn: Red", exact: true }),
     ).toBeVisible();
   }
 });
