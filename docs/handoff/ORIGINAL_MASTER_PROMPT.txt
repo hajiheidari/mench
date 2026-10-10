@@ -1,0 +1,1442 @@
+# MASTER PROJECT PROMPT
+## Build a Production-Grade Cross-Platform Online Ludo Game
+
+You are the principal software architect, senior full-stack engineer, multiplayer game engineer, DevOps engineer, QA engineer, and security reviewer for this project.
+
+Your responsibility is to build a completely original, production-quality online Ludo/Manch game from an empty GitHub repository.
+
+This is NOT a clone of Mencherz or any other existing application.
+
+Do not copy proprietary source code, artwork, UI, sounds, names, branding, layouts, animations, text, or assets from Mencherz or any competitor.
+
+The product must have its own architecture, visual identity, UX, game presentation, and brand.
+
+Existing Ludo applications may only be treated as market references.
+
+---
+
+# 1. PRODUCT VISION
+
+Build a standalone online Ludo game available as:
+
+1. Responsive Web Application
+2. Installable PWA
+3. Android application
+4. iPhone/iOS application
+
+All platforms must connect to the same backend, account system, multiplayer infrastructure, economy, ranking, friends system, statistics, and game state.
+
+A user should eventually be able to:
+
+- create an account on the website,
+- play from a browser,
+- install the Android/iOS application,
+- log into the same account,
+- and retain all progress, friends, cosmetics, statistics, rankings, coins and history.
+
+The architecture must NOT depend on a larger multi-game platform.
+
+This is a standalone product.
+
+However, code should still be modular and reusable where reasonable.
+
+---
+
+# 2. DEVELOPMENT PHILOSOPHY
+
+Do NOT attempt to implement the entire product in one pass.
+
+Use milestone-driven development.
+
+For every milestone:
+
+PLAN
+→ IMPLEMENT
+→ TEST
+→ REVIEW
+→ FIX
+→ RETEST
+→ DOCUMENT
+→ COMMIT
+
+Never silently ignore failing tests.
+
+Never mark a milestone complete because the code merely compiles.
+
+A milestone is complete only when its acceptance criteria pass.
+
+Maintain:
+
+/docs/PROJECT_STATUS.md
+/docs/ARCHITECTURE.md
+/docs/DECISIONS.md
+/docs/TESTING.md
+/docs/SECURITY.md
+/docs/ROADMAP.md
+/docs/KNOWN_ISSUES.md
+
+PROJECT_STATUS.md must always show:
+
+- current milestone
+- completed work
+- tests executed
+- test results
+- known issues
+- next milestone
+- blockers
+
+---
+
+# 3. INITIAL TECHNOLOGY DECISION
+
+Before implementation, evaluate the current stable ecosystem and select an appropriate stack.
+
+Preferred direction:
+
+Monorepo
+
+TypeScript wherever practical.
+
+Candidate stack:
+
+Web:
+Next.js / React
+
+Mobile:
+React Native + Expo
+
+Backend:
+Node.js
+NestJS or equivalent structured TypeScript backend
+
+Realtime:
+WebSocket / Socket.IO or equivalent
+
+Database:
+PostgreSQL
+
+ORM:
+Prisma or equivalent
+
+Cache / ephemeral state:
+Redis
+
+Testing:
+Vitest/Jest
+Playwright
+appropriate integration testing
+
+Infrastructure:
+Docker
+Docker Compose
+
+CI:
+GitHub Actions
+
+Do NOT blindly use these technologies.
+
+First verify that they are suitable for:
+
+- realtime multiplayer
+- deterministic game logic
+- web
+- PWA
+- Android
+- iOS
+- App Store distribution
+- Google Play distribution
+- maintainability by AI coding agents
+- reasonable hosting costs
+
+Record major technology choices as ADRs in:
+
+/docs/adr/
+
+---
+
+# 4. MONOREPO TARGET
+
+Prefer a structure similar to:
+
+apps/
+  web/
+  mobile/
+  api/
+
+packages/
+  game-engine/
+  game-protocol/
+  shared-types/
+  validation/
+  ui/
+  config/
+
+services/
+  realtime/
+
+infra/
+
+docs/
+
+tests/
+
+Do not force this exact structure if architectural analysis identifies a better solution.
+
+---
+
+# 5. CORE ARCHITECTURAL RULE
+
+THE SERVER IS AUTHORITATIVE.
+
+Clients must never decide:
+
+- dice outcomes
+- legal moves
+- captures
+- turns
+- game results
+- rewards
+- ranking changes
+- coin transactions
+
+Clients send intents.
+
+Server validates them.
+
+Example:
+
+Client:
+
+MOVE_PAWN pawnId=3
+
+Server:
+
+validate turn
+validate ownership
+validate legal movement
+apply movement
+check capture
+check home
+check victory
+persist state
+broadcast authoritative result
+
+This principle must be maintained throughout the project.
+
+---
+
+# 6. DETERMINISTIC GAME ENGINE
+
+The Ludo engine must be implemented as an independent package.
+
+It must NOT depend on:
+
+React
+React Native
+Next.js
+database
+WebSockets
+UI
+
+Example:
+
+packages/game-engine
+
+The engine must support deterministic replay.
+
+Given:
+
+initial state
+player configuration
+dice sequence
+player actions
+
+the engine must reproduce the exact same final state.
+
+Create extensive unit tests.
+
+---
+
+# 7. GAME RULES
+
+Start with configurable standard Ludo rules.
+
+Support:
+
+2 players
+3 players
+4 players
+
+Core mechanics:
+
+- four pawns per player
+- starting yard
+- dice rolling
+- configurable requirement for entering board
+- legal movement
+- safe cells
+- captures
+- home lane
+- exact finish rules
+- extra turn rules
+- consecutive-six handling
+- win detection
+- turn progression
+- timeout handling
+- disconnected player handling
+
+Do not hard-code rule variations unnecessarily.
+
+Use GameRules configuration.
+
+---
+
+# 8. FAIR DICE SYSTEM
+
+This is a major product differentiator.
+
+Users must never need to trust the server blindly.
+
+Design a cryptographically verifiable dice mechanism.
+
+Investigate an appropriate commit/reveal design.
+
+Potential approach:
+
+Before the roll:
+
+server generates secret seed
+
+server publishes:
+
+SHA256(secret + contextual data)
+
+After the roll:
+
+server reveals the required verification information.
+
+The user should eventually be able to inspect:
+
+Game History
+→ Dice History
+→ Verify Roll
+
+and independently verify that a roll was not modified after commitment.
+
+IMPORTANT:
+
+The dice algorithm MUST NEVER use:
+
+- player spending
+- purchases
+- coin balance
+- losing streak
+- winning streak
+- table value
+- account age
+- VIP status
+- advertisements
+- engagement metrics
+
+to manipulate outcomes.
+
+Document the complete algorithm.
+
+Create automated statistical tests.
+
+Run large simulations.
+
+At minimum test:
+
+100,000 rolls during development.
+
+Before production readiness:
+
+1,000,000+ simulated rolls.
+
+Check approximate distribution.
+
+Also test reproducibility and commitment verification.
+
+---
+
+# 9. GAME MODES
+
+Architecture must eventually support:
+
+Classic
+Quick Match
+Private Room
+Ranked
+Offline vs Bot
+2v2 Team
+Tournament
+
+Future experimental modes:
+
+Turbo Ludo
+
+Choice Dice / reduced-luck mode
+
+Special seasonal modes
+
+Do NOT implement every mode immediately.
+
+Build the engine so additional modes do not require rewriting core architecture.
+
+---
+
+# 10. PRIVATE WEB ROOM — HIGH PRIORITY
+
+One important acquisition feature:
+
+A registered player should eventually be able to create a room and receive a URL similar to:
+
+example.com/join/AB92K
+
+Another person can open the link.
+
+The architecture should support joining from browser with minimal friction.
+
+Where appropriate, guest play should be possible.
+
+This feature is strategically important because users should be able to share game invitations through:
+
+WhatsApp
+Telegram
+Instagram
+SMS
+other messaging apps
+
+without forcing the invited player to install the app first.
+
+---
+
+# 11. REALTIME MULTIPLAYER
+
+Design a robust multiplayer protocol.
+
+Define explicit events such as:
+
+ROOM_CREATED
+PLAYER_JOINED
+PLAYER_LEFT
+GAME_STARTING
+GAME_STARTED
+TURN_STARTED
+DICE_COMMITTED
+DICE_ROLLED
+MOVE_REQUESTED
+MOVE_ACCEPTED
+MOVE_REJECTED
+PAWN_MOVED
+PAWN_CAPTURED
+PLAYER_RECONNECTED
+TURN_TIMEOUT
+GAME_FINISHED
+
+Use versioned protocol definitions.
+
+Do not scatter arbitrary WebSocket messages across the codebase.
+
+Create:
+
+packages/game-protocol
+
+or equivalent.
+
+---
+
+# 12. RECONNECTION
+
+This is critical.
+
+Temporary internet loss must NOT immediately destroy a match.
+
+Implement architecture for:
+
+heartbeat
+disconnect detection
+grace period
+reconnect token
+state restoration
+event synchronization
+
+Target scenario:
+
+player loses internet for 15 seconds
+
+→ connection drops
+
+→ server preserves game
+
+→ user reconnects
+
+→ client requests authoritative state
+
+→ game resumes correctly
+
+Eventually test simulated:
+
+2 second disconnect
+10 second disconnect
+30 second disconnect
+
+and reconnect during:
+
+dice roll
+pawn movement
+opponent turn
+turn transition
+
+---
+
+# 13. ANTI-CHEAT
+
+Assume the client is hostile.
+
+Never trust client claims.
+
+Protect against:
+
+fake dice results
+illegal moves
+duplicate requests
+replayed messages
+multiple simultaneous sessions
+modified clients
+packet manipulation
+rapid command spam
+
+Use:
+
+server-side validation
+idempotency
+sequence numbers where appropriate
+rate limiting
+authentication
+authorization
+audit logs
+
+Do not implement invasive anti-cheat techniques without necessity.
+
+---
+
+# 14. ACCOUNT SYSTEM
+
+Eventually support:
+
+Guest
+Email
+Phone where appropriate
+Google
+Apple Sign In
+
+Profiles should support:
+
+display name
+avatar
+country
+level
+XP
+statistics
+rank
+friends
+cosmetics
+game history
+
+Never expose sensitive account information publicly.
+
+---
+
+# 15. SOCIAL SYSTEM
+
+Eventually implement:
+
+Friends
+Friend requests
+Online status
+Invite friend
+Recent opponents
+Block user
+Report user
+
+Potential future:
+
+Clans / Clubs
+
+---
+
+# 16. CHAT SAFETY
+
+Provide controlled communication.
+
+Possible systems:
+
+preset phrases
+emojis
+optional text chat
+
+If free text chat is implemented, architecture must include:
+
+mute
+block
+report
+rate limiting
+moderation hooks
+spam prevention
+
+Do not expose minors or users to an unmoderated unrestricted chat system.
+
+---
+
+# 17. RANKING
+
+Design rating architecture for Ranked mode.
+
+Research whether Elo, Glicko-2 or another rating approach fits multiplayer Ludo.
+
+Document the decision.
+
+Rank system could eventually include divisions such as:
+
+Bronze
+Silver
+Gold
+Platinum
+Diamond
+Master
+
+Exact names are temporary.
+
+Do not over-invest in branding yet.
+
+---
+
+# 18. TOURNAMENTS
+
+Future architecture should support:
+
+4 player
+8 player
+16 player
+32 player
+
+tournaments.
+
+Possible structures:
+
+single elimination
+scheduled tournaments
+quick tournaments
+
+Do not implement complex tournament functionality until core multiplayer is stable.
+
+---
+
+# 19. ECONOMY
+
+Create a ledger-based economy.
+
+Never simply store mutable balance without transaction history.
+
+Example:
+
+wallet_transactions
+
+id
+user_id
+currency
+amount
+type
+reference
+created_at
+
+Transactions must be auditable.
+
+Potential currencies:
+
+soft coins
+premium currency later
+
+Economy actions must be atomic.
+
+Prevent double spending.
+
+---
+
+# 20. MONETIZATION PRINCIPLE
+
+The game must NOT become pay-to-win.
+
+Revenue should primarily come from:
+
+cosmetics
+dice skins
+pawn skins
+board themes
+avatar frames
+emotes
+season pass
+optional rewarded advertisements
+
+Dice probability must NEVER change because of payment.
+
+Purchases must never secretly influence gameplay RNG.
+
+---
+
+# 21. BOT SYSTEM
+
+Build bots separately from the game engine.
+
+Difficulty candidates:
+
+Easy
+Normal
+Hard
+
+Bot decisions must use legal engine APIs.
+
+Bots must never directly mutate game state.
+
+Later bots may use strategies involving:
+
+capture probability
+safety
+distance
+risk
+home progress
+
+Bots should be testable independently.
+
+---
+
+# 22. UX PRINCIPLES
+
+The design must be original.
+
+Do not imitate Mencherz.
+
+Target experience:
+
+modern
+premium
+clean
+fast
+friendly
+slightly playful
+international
+mobile-first
+
+Avoid:
+
+clutter
+excessive popups
+casino-like manipulation
+confusing coin mechanics
+aggressive advertisements
+
+Gameplay must clearly show:
+
+current player
+current turn
+dice state
+legal moves
+connection state
+reconnection state
+timer
+score/progress
+
+---
+
+# 23. INTERNATIONALIZATION
+
+Build localization from the beginning.
+
+Initial target languages:
+
+Persian
+English
+
+Architecture should easily allow:
+
+Arabic
+Turkish
+Urdu
+others
+
+Support RTL correctly.
+
+Never hard-code visible strings inside components.
+
+---
+
+# 24. WEB PERFORMANCE
+
+The web version is strategically important.
+
+Target:
+
+fast first load
+responsive layout
+mobile browser compatibility
+desktop browser compatibility
+PWA installability
+
+Do not ship huge unnecessary bundles.
+
+Lazy-load nonessential features.
+
+---
+
+# 25. MOBILE APPLICATIONS
+
+Use shared logic wherever practical.
+
+The Android and iOS applications must NOT contain separate game engines.
+
+They must use the same rules/protocol packages.
+
+iOS compatibility is particularly important.
+
+Architecture must not depend on Android-only APIs.
+
+Maintain App Store compatibility throughout development.
+
+---
+
+# 26. APP STORE READINESS
+
+Design with Apple requirements in mind from the beginning.
+
+Avoid features likely to create unnecessary review problems.
+
+Prepare eventually for:
+
+Apple Sign In where required
+privacy disclosures
+account deletion
+report/block functionality
+restore purchases
+privacy policy
+terms
+data deletion workflow
+
+Do not submit anything yet.
+
+Just keep architecture compatible with eventual App Store submission.
+
+---
+
+# 27. ADMIN PANEL
+
+Later build an internal admin interface.
+
+It should eventually provide:
+
+users
+matches
+reports
+bans
+chat moderation
+economy transactions
+game statistics
+server health
+tournaments
+cosmetics
+configuration
+
+Sensitive administrative actions require audit logs.
+
+---
+
+# 28. OBSERVABILITY
+
+Prepare structured logging.
+
+Important events include:
+
+match creation
+match start
+match completion
+disconnect
+reconnect
+server error
+invalid move
+rate-limit event
+wallet transaction
+authentication failure
+
+Do not log passwords, tokens or unnecessary personal data.
+
+---
+
+# 29. DATABASE
+
+Design a proper relational schema.
+
+Potential entities:
+
+User
+Profile
+AuthIdentity
+Friendship
+Block
+Game
+GamePlayer
+GameEvent
+DiceCommitment
+DiceRoll
+GameResult
+Rating
+Wallet
+WalletTransaction
+Cosmetic
+UserCosmetic
+Report
+Tournament
+TournamentPlayer
+
+Do not implement unnecessary tables before needed.
+
+Use migrations.
+
+Never manually mutate production schema.
+
+---
+
+# 30. TEST STRATEGY
+
+Testing is mandatory.
+
+Create:
+
+unit tests
+integration tests
+protocol tests
+engine tests
+database tests
+realtime tests
+E2E tests
+
+Critical engine tests:
+
+legal movement
+illegal movement
+capture
+safe cells
+home entry
+finish
+extra turn
+consecutive six
+winner detection
+turn timeout
+player disconnect
+
+Fairness tests:
+
+commit verification
+seed verification
+dice range
+distribution
+large simulation
+
+Multiplayer tests:
+
+two clients
+four clients
+simultaneous commands
+duplicate commands
+reconnect
+server restart strategy where applicable
+
+---
+
+# 31. LOAD TESTING
+
+Do not load-test heavily in early milestones.
+
+Once multiplayer becomes functional, create reproducible load tests for:
+
+100 concurrent players
+500
+1,000
+
+Later:
+
+5,000+
+
+Measure:
+
+CPU
+memory
+event latency
+database latency
+WebSocket stability
+
+Document bottlenecks instead of hiding them.
+
+---
+
+# 32. SECURITY
+
+At appropriate milestones run:
+
+dependency audit
+secret scan
+authentication review
+authorization review
+rate-limit review
+input validation review
+WebSocket abuse review
+SQL injection review
+XSS review
+CSRF review where applicable
+
+No credentials in Git.
+
+Provide:
+
+.env.example
+
+Never commit actual secrets.
+
+---
+
+# 33. CI
+
+Configure GitHub Actions.
+
+Pull requests should eventually run:
+
+install
+lint
+typecheck
+unit tests
+integration tests where feasible
+build
+
+No merge should be considered healthy if required CI fails.
+
+---
+
+# 34. CODING QUALITY
+
+Use:
+
+strict TypeScript
+clear interfaces
+small modules
+dependency boundaries
+schema validation
+consistent error handling
+
+Avoid:
+
+god classes
+huge files
+duplicated game logic
+UI-dependent business rules
+magic numbers
+silent catches
+untyped `any` unless justified
+
+---
+
+# 35. AGENT DOCUMENTATION
+
+Create an AGENTS.md at repository root.
+
+It must explain:
+
+project architecture
+development commands
+testing commands
+code conventions
+dependency rules
+game-engine invariants
+server-authoritative rule
+fair-dice requirements
+commit expectations
+
+Future coding agents must read AGENTS.md before changing the repository.
+
+---
+
+# 36. GIT WORKFLOW
+
+Use clear commits.
+
+Examples:
+
+chore: initialize monorepo
+feat(engine): add deterministic board model
+test(engine): add capture scenarios
+feat(rng): implement dice commitment
+fix(engine): correct home-lane validation
+
+Do not create giant meaningless commits.
+
+Do not rewrite stable unrelated code unnecessarily.
+
+---
+
+# 37. MILESTONES
+
+## M0 — Repository + Architecture
+
+Deliver:
+
+monorepo
+tooling
+Docker development environment
+CI baseline
+documentation
+ADRs
+lint
+format
+typecheck
+basic test harness
+AGENTS.md
+
+Acceptance:
+
+fresh clone can install
+lint passes
+typecheck passes
+tests pass
+basic apps build
+
+STOP and report.
+
+---
+
+## M1 — Deterministic Ludo Engine
+
+Deliver:
+
+board model
+players
+pawns
+turns
+dice input
+legal moves
+captures
+safe cells
+home
+finish
+winner detection
+configurable rules
+deterministic replay
+
+Add extensive unit tests.
+
+Target very high coverage for game-engine package.
+
+STOP and report.
+
+---
+
+## M2 — Fair Dice
+
+Deliver:
+
+cryptographic commitment design
+secure seed generation
+commit
+roll
+reveal
+verification
+dice history
+simulation test
+
+Run >=100,000 simulated development rolls.
+
+Generate fairness report.
+
+STOP and report.
+
+---
+
+## M3 — Local Web Game
+
+Create polished browser gameplay using local engine.
+
+No networking yet.
+
+Support:
+
+2 players
+4 players
+
+Create responsive original board UI.
+
+Test gameplay end-to-end.
+
+STOP and report.
+
+---
+
+## M4 — Multiplayer Backend
+
+Implement:
+
+rooms
+WebSockets
+authoritative state
+2-player online game
+4-player online game
+protocol package
+turn timers
+
+Test with multiple simulated clients.
+
+STOP and report.
+
+---
+
+## M5 — Reconnection
+
+Implement:
+
+heartbeat
+disconnect state
+grace period
+reconnect
+state synchronization
+
+Run disconnect simulations.
+
+STOP and report.
+
+---
+
+## M6 — Authentication + Profiles
+
+Implement appropriate account infrastructure.
+
+STOP and report.
+
+---
+
+## M7 — Private Rooms + Share Links
+
+Implement browser invitation flow.
+
+Example:
+
+/join/:code
+
+Optimize for minimal friction.
+
+STOP and report.
+
+---
+
+## M8 — Matchmaking
+
+Implement queues and Quick Match.
+
+STOP and report.
+
+---
+
+## M9 — Mobile
+
+Build shared React Native application.
+
+Android first development build.
+
+Then iOS build readiness.
+
+STOP and report.
+
+---
+
+## M10 — Social
+
+Friends
+invites
+recent opponents
+block/report
+
+STOP and report.
+
+---
+
+## M11 — Ranking
+
+Implement documented rating system.
+
+STOP and report.
+
+---
+
+## M12 — Economy
+
+Ledger
+coins
+cosmetics infrastructure
+
+STOP and report.
+
+---
+
+## M13 — Bots
+
+Offline / practice mode.
+
+STOP and report.
+
+---
+
+## M14 — Tournament
+
+Basic tournament infrastructure.
+
+STOP and report.
+
+---
+
+## M15 — Admin + Moderation
+
+STOP and report.
+
+---
+
+## M16 — Production Hardening
+
+Security
+load testing
+observability
+backup strategy
+deployment
+failure recovery
+
+STOP and report.
+
+---
+
+## M17 — Store Readiness
+
+Prepare Android release artifacts.
+
+Prepare iOS/App Store project.
+
+Do NOT publish or spend money without explicit user approval.
+
+STOP and report.
+
+---
+
+# 38. IMPORTANT SCOPE CONTROL
+
+Do NOT prematurely implement:
+
+clans
+complex tournaments
+premium currency
+advanced season pass
+voice chat
+spectator mode
+advanced analytics
+dozens of cosmetics
+
+until the core loop works reliably.
+
+The first major success criterion is:
+
+Two real users can open the game from different devices, join a match, play a complete fair Ludo game, disconnect/reconnect safely, and obtain the same authoritative result.
+
+Everything else comes after that.
+
+---
+
+# 39. FIRST EXECUTION INSTRUCTIONS
+
+Begin ONLY with M0.
+
+1. Inspect the repository.
+
+2. If empty, initialize it.
+
+3. Research only what is necessary for current stable technology decisions.
+
+4. Create architecture documentation.
+
+5. Create ADRs.
+
+6. Establish monorepo.
+
+7. Configure development environment.
+
+8. Configure lint/typecheck/tests.
+
+9. Configure CI.
+
+10. Create AGENTS.md.
+
+11. Add minimal skeletons for web/mobile/api/shared packages.
+
+12. Verify clean installation.
+
+13. Run all available tests.
+
+14. Run typecheck.
+
+15. Run lint.
+
+16. Run builds.
+
+17. Fix all failures caused by the implementation.
+
+18. Commit M0.
+
+DO NOT proceed automatically to M1.
+
+At the end provide a concise report containing:
+
+MILESTONE: M0
+
+STATUS:
+PASS / FAIL / BLOCKED
+
+IMPLEMENTED:
+...
+
+ARCHITECTURE:
+...
+
+FILES CREATED/CHANGED:
+...
+
+TESTS:
+command → result
+
+CI:
+...
+
+KNOWN ISSUES:
+...
+
+SECURITY NOTES:
+...
+
+GIT COMMIT:
+hash + message
+
+NEXT:
+M1 — Deterministic Ludo Engine
+
+WAIT FOR REVIEW BEFORE STARTING M1.
+
+---
+
+# 40. CORE PROJECT PRINCIPLE
+
+Reliability is more important than feature count.
+
+A small multiplayer game that works perfectly is more valuable than a large application containing many unfinished systems.
+
+Build the foundation as if this product may eventually serve hundreds of thousands of players.
