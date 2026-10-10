@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useState } from "react";
-import { Text, View, TextInput, Pressable, StyleSheet } from "react-native";
+import { View, TextInput, Pressable, StyleSheet } from "react-native";
 import {
   listTournaments,
   readTournament,
@@ -256,11 +257,13 @@ const styles = StyleSheet.create({
   button: {
     padding: 12,
     minHeight: 44,
-    backgroundColor: "#dce9df",
+    backgroundColor: "#63418c",
     marginVertical: 4,
     borderRadius: 8,
   },
   input: {
+    color: "#fff4df",
+    backgroundColor: "#2d1c48",
     borderWidth: 1,
     borderColor: "#a5b8b0",
     borderRadius: 8,

@@ -4,8 +4,10 @@ import { clientNonce, verifyProof } from "@mench/fair-dice/browser";
 import type { DiceProof } from "@mench/fair-dice";
 import type { Messages } from "./messages";
 import { useOnline } from "./useOnline";
+import { Avatar } from "./Avatar";
+import { Dice } from "./Dice";
 import { ResultDialog } from "./ResultDialog";
-import { Board, colors } from "./Board";
+import { Board } from "./Board";
 export function Online({ t }: { t: Messages }) {
   const online = useOnline();
   const { room, playerId, connected, queued, error, busy, send } = online;
@@ -27,7 +29,7 @@ export function Online({ t }: { t: Messages }) {
   const connection = (
     <div className="connection" role="status">
       <span
-        className="dot"
+        className="player-avatar"
         style={{ background: connected ? "#388872" : "#d3a32d" }}
       />
       {connected ? t.connected : t.reconnecting}
@@ -152,9 +154,9 @@ export function Online({ t }: { t: Messages }) {
           {room.ranked && <p>{t.ranked}</p>}
           <div className="players">
             {room.players.map((p) => (
-              <div key={p.id}>
+              <div key={p.id} className="player-card">
                 <span
-                  className="dot"
+                  className="player-avatar"
                   style={{ background: p.connected ? "#388872" : "#d3a32d" }}
                 />
                 {p.name}
@@ -210,14 +212,12 @@ export function Online({ t }: { t: Messages }) {
         />
         <p className="board-hint">{t.hint}</p>
       </section>
-      <aside className="panel">
+      <aside className="panel game-panel">
         {connection}
         <h2>
           {state.winner ? t.winner : t.turn}: {active?.name}
         </h2>
-        <div className="dice" aria-live="polite">
-          {state.dice ?? room.proofs.at(-1)?.value ?? "✦"}
-        </div>
+        <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
         <span className="timer">
           {room.deadline
             ? Math.max(0, Math.ceil((room.deadline - now) / 1000))
@@ -238,11 +238,13 @@ export function Online({ t }: { t: Messages }) {
         {mine && state.phase === "move" && <p role="status">{t.move}</p>}
         <div className="players">
           {room.players.map((p, index) => (
-            <div key={p.id}>
-              <span
-                className="dot"
-                style={{ background: colors[state.players[index]!.seat] }}
-              />
+            <div
+              key={p.id}
+              className={
+                p.id === active?.id ? "player-card current" : "player-card"
+              }
+            >
+              <Avatar seat={state.players[index]!.seat} />
               {p.name}
               <small>
                 {state.players[index]!.pawns.filter((n) => n === FINISH).length}

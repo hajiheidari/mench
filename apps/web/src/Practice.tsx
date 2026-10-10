@@ -6,6 +6,8 @@ import {
   currentPlayer,
   FINISH,
 } from "@mench/game-engine";
+import { Avatar } from "./Avatar";
+import { Dice } from "./Dice";
 import { ResultDialog } from "./ResultDialog";
 import { Board, colors } from "./Board";
 import type { Messages } from "./messages";
@@ -83,7 +85,7 @@ export function Practice({ t }: { t: Messages }) {
         />
         <p className="board-hint">{t.hint}</p>
       </section>
-      <aside className="panel">
+      <aside className="panel game-panel">
         <span className="eyebrow">{t.offline}</span>
         <h2>
           {state.winner ? t.winner : t.turn}:{" "}
@@ -105,9 +107,7 @@ export function Practice({ t }: { t: Messages }) {
             }
           </span>
         </h2>
-        <div className="dice" aria-live="polite">
-          {last ?? "✦"}
-        </div>
+        <Dice value={last} />
         <button
           className="primary"
           disabled={state.phase !== "roll" || botTurn}
@@ -129,8 +129,15 @@ export function Practice({ t }: { t: Messages }) {
         {botTurn && <p role="status">{t.botThinking}</p>}
         <div className="players">
           {state.players.map((p) => (
-            <div key={p.id}>
-              <span className="dot" style={{ background: colors[p.seat] }} />
+            <div
+              key={p.id}
+              className={
+                p.id === currentPlayer(state).id
+                  ? "player-card current"
+                  : "player-card"
+              }
+            >
+              <Avatar seat={p.seat} />
               {t.names[p.seat]}
               <small>
                 {p.pawns.filter((n) => n === FINISH).length}/4 {t.home}

@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-10",
+  "reference": {
+    "url": "https://cafebazaar.ir/app/com.incytel.mencherz",
+    "status": "HTTP403; screenshots unavailable; original artwork, no exact comparison claimed"
+  },
+  "font": {
+    "name": "Samim regular and bold",
+    "commit": "ee3ab5791d96818e0311d82e43a4887a059507e4",
+    "license": "SIL OFL 1.1, upstream Open Sans attribution included",
+    "delivery": "Local bundled TTF in native and embedded data URLs in standalone HTML"
+  },
+  "checks": {
+    "source": "npm run check: passed; 60 tests passed, 24 DB-dependent skipped",
+    "web": "12 E2E passed after font change, including human/bot win dialogs and restart",
+    "platforms": "2 passed: Expo browser online interoperability, PWA offline",
+    "exports": "Android/iOS/web Expo exports passed",
+    "standalone": "Final HTML: Samim loads, zero external HTTP requests, no horizontal overflow at 390/1280. Both full bot outcomes/restart were checked before typography change; final E2E repeats these flows.",
+    "native": [
+      "Persian launch, switch to English, two-player board",
+      "3 players immediately show 12 pawns and reset turn",
+      "4 players immediately show 16 pawns and reset turn",
+      "2 players immediately show 8 pawns and reset turn",
+      "Native random dice, legal pawn touch and board movement",
+      "New game resets local match",
+      "Bot practice enabled and difficulty controls shown",
+      "Bot automatically completes its turn and returns control to human"
+    ],
+    "apk": "ARM64 signature, 16KiB ZIP and all 14 ELF libraries alignment verified; matching ARM64/x86 Hermes bundle; both TTF assets included",
+    "native_phone": "Final Samim Persian launch at 420dpi: roll bounds [63,1651,760,1780], within 1794px app viewport; real screenshot inspected."
+  },
+  "native_environment": {
+    "image": "AOSP Android 10/API29 x86_64",
+    "acceleration": "Software; no KVM",
+    "density": "240 for complete control smoke; 420 for phone screenshot",
+    "dexopt": "pm.dexopt.install=verify to avoid slow software-emulator compilation",
+    "incidents": [
+      "One System UI ANR during earlier setup; dismissed, no application JS fatal found.",
+      "First post-font smoke started before launch readiness and failed its initial pawn assertion; app explicitly launched, fresh hierarchy used and test repeated."
+    ],
+    "scope_limits": [
+      "No physical ARM64 device execution",
+      "No iOS simulator execution",
+      "No full native match/result or native online/auth acceptance",
+      "No emulator performance claim"
+    ]
+  },
+  "hermes_sha256": "f004a111b5144e9104d09840a2403794a5514d0ddde5dbdf9e349a0ae6d4f668",
+  "artifacts": {
+    "mench-visual-v1.html": {
+      "bytes": 461436,
+      "sha256": "35ca7873fe9e77f3acd96ba866cd8d5e82546a0b2cf47ae8161f4c1178f5a00a"
+    },
+    "mench-android-visual-v1.apk": {
+      "bytes": 27361913,
+      "sha256": "b9c4364d32a46940cacb40253bdf2335381d67190405eed66144fdbd3829f6f8"
+    },
+    "mench-visual-emulator-x86.apk": {
+      "bytes": 27774247,
+      "sha256": "8da8b4f5848c145a7e709a0d6d8e129f7090ad69d1891780f0fcc696c45b1318"
+    },
+    "mench-visual-mobile.png": {
+      "bytes": 303754,
+      "sha256": "3243d653c56059336f40c83db0954bcbf33521ed29204b88b54638efcb3453aa"
+    },
+    "mench-visual-desktop.png": {
+      "bytes": 676666,
+      "sha256": "606a56a41d27d3f4cc6f0e9ae37e4860e5bfc7ecdfa43a7fa30b0ea15880a2d8"
+    },
+    "mench-visual-android-fa.png": {
+      "bytes": 1020746,
+      "sha256": "b759b7189fb0a2d3f35494dd6c42a127c8deea2ad67f55535425b54a77be3be3"
+    },
+    "mench-visual-android-four-players.png": {
+      "bytes": 1053934,
+      "sha256": "8f194c1a93e991420e4a7d2b4a63e8d2bd79c1fe56acc718ab1c52ae2eba261c"
+    },
+    "mench-visual-android-bot.png": {
+      "bytes": 1048137,
+      "sha256": "536ca69430973ec054f30db81dd6a6e19a576a11fefd1f5e822da7dc1792fd66"
+    }
+  }
+}

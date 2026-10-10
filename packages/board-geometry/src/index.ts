@@ -1,5 +1,5 @@
 import { FINISH } from "@mench/game-engine";
-export const colors = ["#d66a55", "#388872", "#d3a32d", "#508aaa"];
+export const colors = ["#ff5668", "#28cda5", "#ffc64f", "#51b7ff"];
 export const track = [
   [6, 1],
   [6, 2],
@@ -87,3 +87,12 @@ export function pawnLocation(
   const cell = track[(seat * 13 + position) % 52]!;
   return [cell[0] + 0.5, cell[1] + 0.5];
 }
+
+export {
+  avatarSvg,
+  boardSvg,
+  pawnSvg,
+  backdropSvg,
+  dicePips,
+  depths,
+} from "./art";

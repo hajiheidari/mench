@@ -1,12 +1,17 @@
+import { useFonts } from "expo-font";
+import regularFont from "../../packages/board-geometry/assets/fonts/Samim.ttf";
+import boldFont from "../../packages/board-geometry/assets/fonts/Samim-Bold.ttf";
+import { Text } from "./Theme";
 import { useEffect, useRef, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TextInput,
   Pressable,
   useWindowDimensions,
+  ImageBackground,
+  StatusBar,
 } from "react-native";
 import * as Crypto from "expo-crypto";
 import {
@@ -24,6 +29,9 @@ import {
 import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
 import { verifyProof } from "@mench/fair-dice/portable";
+import { Dice } from "./Dice";
+import backdropArt from "./assets/game/backdrop.png";
+import { Avatar } from "./Avatar";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
@@ -37,10 +45,16 @@ function Button({
   title,
   onPress,
   disabled = false,
+  primary = false,
+  selected = false,
+  wide = false,
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  primary?: boolean;
+  selected?: boolean;
+  wide?: boolean;
 }) {
   return (
     <Pressable
@@ -48,9 +62,30 @@ function Button({
       accessibilityLabel={title}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, disabled && { opacity: 0.45 }]}
+      style={[
+        styles.button,
+        wide && { flex: 1 },
+        primary && {
+          backgroundColor: "#35be88",
+          borderColor: "#a8f8bf",
+          borderBottomColor: "#177b62",
+        },
+        selected && {
+          backgroundColor: "#ffcf68",
+          borderColor: "#ffe8a9",
+          borderBottomColor: "#b17832",
+        },
+        disabled && { opacity: 0.45 },
+      ]}
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text
+        style={[
+          styles.buttonText,
+          (primary || selected) && { color: "#382a3f" },
+        ]}
+      >
+        {title}
+      </Text>
     </Pressable>
   );
 }
@@ -148,26 +183,44 @@ function Practice({ t, width }: { t: Messages; width: number }) {
         }
         t={t}
       />
-      <Text style={styles.dice}>{last ?? "✦"}</Text>
-      <Button
-        title={t.roll}
-        disabled={state.phase !== "roll" || botTurn}
-        onPress={() => {
-          let n: number;
-          do {
-            n = Crypto.getRandomBytes(1)[0]!;
-          } while (n >= 252);
-          n = (n % 6) + 1;
-          setLast(n);
-          setState((s) =>
-            applyAction(s, {
-              type: "roll",
-              playerId: currentPlayer(s).id,
-              value: n,
-            }),
-          );
-        }}
-      />
+      <View style={styles.playerCards}>
+        {state.players.map((p, index) => (
+          <View
+            key={p.id}
+            style={[
+              styles.playerCard,
+              index === state.turn && { borderColor: "#ffdf8d" },
+            ]}
+          >
+            <Avatar seat={p.seat} />
+            <Text style={styles.playerName}>{t.names[p.seat]}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.rollControls}>
+        <Dice value={last} />
+        <Button
+          title={t.roll}
+          primary
+          wide
+          disabled={state.phase !== "roll" || botTurn}
+          onPress={() => {
+            let n: number;
+            do {
+              n = Crypto.getRandomBytes(1)[0]!;
+            } while (n >= 252);
+            n = (n % 6) + 1;
+            setLast(n);
+            setState((s) =>
+              applyAction(s, {
+                type: "roll",
+                playerId: currentPlayer(s).id,
+                value: n,
+              }),
+            );
+          }}
+        />
+      </View>
       {state.phase === "move" && !botTurn && (
         <Text>
           {t.move} ({legalMoves(state).length})
@@ -197,6 +250,7 @@ function Practice({ t, width }: { t: Messages; width: number }) {
           <Button
             key={n}
             title={[t.two, t.three, t.four][n - 2]!}
+            selected={count === n}
             onPress={() => newGame(n)}
           />
         ))}
@@ -286,6 +340,7 @@ function Online({
             <Button
               key={n}
               title={[t.two, t.three, t.four][n - 2]!}
+              selected={capacity === n}
               onPress={() => setCapacity(n)}
             />
           ))}
@@ -383,9 +438,7 @@ function Online({
               })
             }
           />
-          <Text style={styles.dice}>
-            {state.dice ?? room.proofs.at(-1)?.value ?? "✦"}
-          </Text>
+          <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
           <Button
             title={t.roll}
             disabled={!mine || state.phase !== "roll" || !room.commitment}
@@ -571,6 +624,10 @@ function Account({
   );
 }
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    Samim: regularFont,
+    SamimBold: boldFont,
+  });
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState("practice");
   const [inviteCode, setInviteCode] = useState("");
@@ -581,8 +638,9 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [theme, setTheme] = useState<CosmeticSku | null>(null);
   const [storageError, setStorageError] = useState(false);
-  const { width } = useWindowDimensions();
-  const boardWidth = Math.min(width - 32, 540);
+  const { width, height } = useWindowDimensions();
+  const contentWidth = Math.min(width - 32, 540);
+  const boardWidth = Math.min(contentWidth, Math.max(240, height * 0.43));
   const t = messages[locale];
   useEffect(() => {
     void getStored("mench-account")
@@ -598,72 +656,85 @@ export default function App() {
       .then((data) => setTheme(data.active))
       .catch(() => setTheme(null));
   }, [token, server]);
+  if (!fontsLoaded && !fontError) return null;
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.screen,
-        { direction: locale === "fa" ? "rtl" : "ltr" },
-        theme && {
-          backgroundColor: theme === "aurora" ? "#e2eee9" : "#f5e6d9",
-        },
-      ]}
+    <ImageBackground
+      source={backdropArt}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      <View style={{ width: boardWidth, gap: 16 }}>
-        <View style={styles.row}>
-          <Text style={styles.title}>{t.brand} ✦</Text>
-          <Button
-            title={t.language}
-            onPress={() => setLocale(locale === "fa" ? "en" : "fa")}
-          />
-        </View>
-        <Text style={styles.fine}>{t.tagline}</Text>
-        <View style={styles.row}>
-          {[
-            ["practice", t.practice],
-            ["online", t.online],
-            ["account", t.signIn],
-          ].map(([key, title]) => (
-            <Button key={key} title={title!} onPress={() => setMode(key!)} />
-          ))}
-        </View>
-        {mode === "practice" ? (
-          <Practice t={t} width={boardWidth} />
-        ) : (
-          <>
-            <Input label={t.server} value={draft} onChange={setDraft} />
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={[
+          styles.screen,
+          { direction: locale === "fa" ? "rtl" : "ltr" },
+          theme && {
+            backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
+          },
+        ]}
+      >
+        <View style={{ width: contentWidth, gap: 12 }}>
+          <View style={styles.row}>
+            <Text style={styles.title}>{t.brand} ✦</Text>
             <Button
-              title={t.reconnect}
-              onPress={() => {
-                if (/^https?:\/\//.test(draft))
-                  setServer(draft.replace(/\/$/, ""));
-              }}
+              title={t.language}
+              onPress={() => setLocale(locale === "fa" ? "en" : "fa")}
             />
-            {mode === "online" ? (
-              <Online
-                t={t}
-                width={boardWidth}
-                server={server}
-                token={token}
-                inviteCode={inviteCode}
+          </View>
+          {mode !== "practice" && <Text style={styles.fine}>{t.tagline}</Text>}
+          <View style={styles.row}>
+            {[
+              ["practice", t.practice],
+              ["online", t.online],
+              ["account", t.signIn],
+            ].map(([key, title]) => (
+              <Button
+                key={key}
+                title={title!}
+                selected={mode === key}
+                onPress={() => setMode(key!)}
               />
-            ) : (
-              <Account
-                t={t}
-                server={server}
-                token={token}
-                onToken={setToken}
-                onTheme={setTheme}
-                onInvite={(code) => {
-                  setInviteCode(code);
-                  setMode("online");
+            ))}
+          </View>
+          {mode === "practice" ? (
+            <Practice t={t} width={boardWidth} />
+          ) : (
+            <>
+              <Input label={t.server} value={draft} onChange={setDraft} />
+              <Button
+                title={t.reconnect}
+                onPress={() => {
+                  if (/^https?:\/\//.test(draft))
+                    setServer(draft.replace(/\/$/, ""));
                 }}
               />
-            )}
-          </>
-        )}
-        {storageError && <Text>{t.secureStorage}</Text>}
-      </View>
-    </ScrollView>
+              {mode === "online" ? (
+                <Online
+                  t={t}
+                  width={boardWidth}
+                  server={server}
+                  token={token}
+                  inviteCode={inviteCode}
+                />
+              ) : (
+                <Account
+                  t={t}
+                  server={server}
+                  token={token}
+                  onToken={setToken}
+                  onTheme={setTheme}
+                  onInvite={(code) => {
+                    setInviteCode(code);
+                    setMode("online");
+                  }}
+                />
+              )}
+            </>
+          )}
+          {storageError && <Text>{t.secureStorage}</Text>}
+        </View>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 const styles = StyleSheet.create({
@@ -671,12 +742,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     padding: 16,
-    paddingTop: 52,
+    paddingTop: 44,
     paddingBottom: 48,
-    backgroundColor: "#f1f3ed",
+    backgroundColor: "transparent",
   },
-  title: { fontSize: 28, fontWeight: "bold", color: "#203e38" },
-  heading: { fontSize: 18, fontWeight: "bold", color: "#203e38" },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#ffe7a0",
+    textShadowColor: "#693861",
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 1,
+  },
+  heading: { fontSize: 18, fontWeight: "bold", color: "#fff4df" },
   row: {
     flexDirection: "row",
     gap: 8,
@@ -685,23 +763,60 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   button: {
-    backgroundColor: "#235e4f",
+    backgroundColor: "#63418c",
+    borderWidth: 1,
+    borderColor: "#b48acb",
+    borderBottomWidth: 4,
+    borderBottomColor: "#33204e",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontSize: 12 },
+  buttonText: { color: "#fff2d7", fontSize: 12, fontWeight: "bold" },
   input: {
+    fontFamily: "Samim",
     borderWidth: 1,
-    borderColor: "#c4d1c0",
+    borderColor: "#946aad",
     borderRadius: 10,
     padding: 12,
-    backgroundColor: "white",
-    color: "#203e38",
+    backgroundColor: "#2d1c48",
+    color: "#fff4df",
   },
-  label: { fontSize: 12, color: "#647565", marginBottom: 6 },
-  dice: { fontSize: 38, textAlign: "center", color: "#203e38" },
-  fine: { fontSize: 11, lineHeight: 20, color: "#74836d" },
-  error: { color: "#a6463c" },
+  label: { fontSize: 12, color: "#dbc9ed", marginBottom: 6 },
+  rollControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 24,
+    paddingHorizontal: 8,
+  },
+  fine: { fontSize: 11, lineHeight: 20, color: "#dbc9ed" },
+  error: { color: "#ffb6be" },
+  playerCards: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  playerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#2a193fbb",
+    borderWidth: 1,
+    borderColor: "#9d72b8",
+    borderRadius: 14,
+    padding: 8,
+  },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#fff0c5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: { color: "white", fontWeight: "bold", fontSize: 12 },
+  playerName: { color: "#fff2dc", fontSize: 11 },
 });

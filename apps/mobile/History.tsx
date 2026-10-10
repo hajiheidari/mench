@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { readHistory, readTranscript } from "@mench/game-client";
 import {
   verifyTranscriptConsistency,

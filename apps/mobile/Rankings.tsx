@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useState } from "react";
-import { Text, View, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { readRankings } from "@mench/game-client";
 import type { Messages } from "@mench/localization";
 export function Rankings({

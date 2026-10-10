@@ -21,3 +21,7 @@ Validated again on2026-10-08:60 source tests,24 actual PostgreSQL tests,9 web E2
 2026-10-09 practice layout: the bot checkbox and its text share a horizontal, vertically centered label. Standalone v4 passes alignment and text-click toggle checks in Persian/English at 390px and 1280px widths.
 
 2026-10-09 native runtime: installed a headless software Android10/API29 x86_64 emulator and executed the native application. Practice smoke checks passed for Persian/English UI, immediate2/3/4-player setup, random dice/legal pawn movement, restart and bot controls/automatic turns. The native player-count mismatch was reproduced and corrected. Rebuilt and statically verified the ARM64 phone APK as mench-android-v2.apk. Full native match/online flows and physical-device/iOS/store acceptance remain outstanding; see ANDROID_EMULATOR_REPORT.json.
+
+2026-10-10 visual redesign: replaced prototype styling with a shared original arcade board/pawns/avatars, real pip dice, purple/gold interface, active-player highlights and compact mobile roll controls. Native form text/surfaces use the dark theme consistently. Shared SVG source generates native PNG assets. The named Mencherz store reference returned403; exact benchmark comparison remains pending accessible screenshots. See VISUAL_DESIGN.md and VISUAL_VALIDATION_REPORT.json for delivered artifacts and actual test scope.
+
+Bundled Samim regular/bold now provides the softer Persian typography on web and native; upstream font license is included. The offline download embeds fonts without a CDN.

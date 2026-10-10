@@ -5,7 +5,17 @@ import {
   type GameState,
 } from "@mench/game-engine";
 import type { Messages } from "./messages";
-import { colors, track, bases, pawnLocation } from "@mench/board-geometry";
+import {
+  track,
+  bases,
+  pawnLocation,
+  boardSvg,
+  pawnSvg,
+} from "@mench/board-geometry";
+const boardArt = `data:image/svg+xml,${encodeURIComponent(boardSvg())}`;
+const pawnArt = [0, 1, 2, 3].map(
+  (seat) => `data:image/svg+xml,${encodeURIComponent(pawnSvg(seat))}`,
+);
 export { colors } from "@mench/board-geometry";
 export function Board({
   state,
@@ -22,82 +32,40 @@ export function Board({
   return (
     <div className="board" dir="ltr">
       <svg viewBox="0 0 15 15" role="img" aria-label={t.rules}>
-        <rect width="15" height="15" rx=".6" fill="#fffdf8" />
-        {bases.map(([x, y], seat) => (
-          <g key={seat}>
-            <rect
-              x={x + 0.2}
-              y={y + 0.2}
-              width="5.6"
-              height="5.6"
-              rx=".6"
-              fill={colors[seat]}
-              opacity=".14"
-            />
-            <rect
-              x={x + 1}
-              y={y + 1}
-              width="4"
-              height="4"
-              rx=".6"
-              fill="white"
-              stroke={colors[seat]}
-              strokeWidth=".04"
-            />
-          </g>
-        ))}
-        {track.map(([x, y], index) => (
-          <g key={index}>
-            <rect
-              x={x + 0.04}
-              y={y + 0.04}
-              width=".92"
-              height=".92"
-              rx=".15"
-              fill={index % 13 === 0 ? colors[index / 13] : "#f0f2ec"}
-              opacity={index % 13 === 0 ? 0.65 : 1}
-            />
-            {state.rules.safeCells.includes(index) && (
+        <image href={boardArt} width="15" height="15" />
+        {bases.map(
+          ([x, y], seat) =>
+            state.players[state.turn]?.seat === seat &&
+            state.phase !== "finished" && (
+              <rect
+                key={seat}
+                className="active-base"
+                x={x + 0.24}
+                y={y + 0.24}
+                width="5.52"
+                height="5.52"
+                rx=".55"
+                fill="none"
+                stroke="#fff6b0"
+                strokeWidth=".11"
+              />
+            ),
+        )}
+        {track.map(
+          ([x, y], index) =>
+            state.rules.safeCells.includes(index) && (
               <text
+                key={index}
                 x={x + 0.5}
                 y={y + 0.67}
                 textAnchor="middle"
                 fontSize=".5"
-                fill="#65746c"
+                fill={index % 13 === 0 ? "white" : "#78628d"}
               >
                 ★
               </text>
-            )}
-          </g>
-        ))}
-        {[0, 1, 2, 3].flatMap((seat) =>
-          [1, 2, 3, 4, 5, 6].map((n) => {
-            const [x, y] =
-              seat === 0
-                ? [7, n]
-                : seat === 1
-                  ? [n, 7]
-                  : seat === 2
-                    ? [7, 14 - n]
-                    : [14 - n, 7];
-            return (
-              <rect
-                key={`${seat}-${n}`}
-                x={x! + 0.05}
-                y={y! + 0.05}
-                width=".9"
-                height=".9"
-                rx=".13"
-                fill={colors[seat]}
-                opacity=".4"
-              />
-            );
-          }),
+            ),
         )}
-        <rect x="6.1" y="6.1" width="2.8" height="2.8" rx=".6" fill="#163d3a" />
-        <text x="7.5" y="8" fontSize="1.1" textAnchor="middle" fill="#fbf6df">
-          ✦
-        </text>
       </svg>
       {state.players.flatMap((player, index) =>
         player.pawns.map((position, pawn) => {
@@ -117,14 +85,19 @@ export function Board({
               style={{
                 left: `${((x + (stacked > 1 ? ((pawn % 2) - 0.5) * 0.22 : 0)) / 15) * 100}%`,
                 top: `${((y + (stacked > 1 ? (Math.floor(pawn / 2) - 0.5) * 0.22 : 0)) / 15) * 100}%`,
-                backgroundColor: colors[player.seat],
               }}
               disabled={index !== state.turn || !moves.includes(pawn)}
               onClick={() => onMove(pawn)}
               aria-label={`${t.names[player.seat]} ${t.pawn} ${pawn + 1}`}
               data-progress={position}
             >
-              {pawn + 1}
+              <img
+                key={position}
+                src={pawnArt[player.seat]}
+                alt=""
+                draggable={false}
+              />
+              <span>{pawn + 1}</span>
             </button>
           );
         }),

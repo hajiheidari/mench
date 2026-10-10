@@ -18,3 +18,5 @@
 - Administration defaults to disabled. Production must nominate trusted ADMIN_USER_IDS, define staff procedures/report SLAs and retention. Privileged panel compiles, but no privileged browser/native device acceptance is claimed. Active socket expiry and revocation are tested.
 
 - Replay archives verify internal consistency; they cannot prove prior commitment publication. Legacy results without a complete event transcript return REPLAY_UNAVAILABLE. Guest history is session-local. Full proof arrays remain in memory for current matches; short load runs do not establish sustained capacity.
+
+- Visual benchmark store pages returned HTTP403, so direct screenshot comparison with Mencherz remains pending. The delivered artwork is original. Shared Samim typography is bundled locally. Native validation covers software Android 10 emulator smoke; physical phone, iOS execution and full native match/results/online flows remain unverified. An earlier emulator System UI ANR is recorded in VISUAL_VALIDATION_REPORT.json.

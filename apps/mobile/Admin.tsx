@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, TextInput, Pressable, Alert } from "react-native";
 import * as Crypto from "expo-crypto";
 import { readAdmin, sendAdmin } from "@mench/game-client";
 import type {
@@ -31,7 +32,7 @@ function Action({
       style={{
         padding: 12,
         minHeight: 44,
-        backgroundColor: "#dce9df",
+        backgroundColor: "#63418c",
         borderRadius: 8,
         marginVertical: 4,
         opacity: disabled ? 0.5 : 1,

@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import { View, TextInput, Pressable, StyleSheet } from "react-native";
 import { readSocial, sendSocial } from "@mench/game-client";
 import type { SocialIntent, SocialSnapshot } from "@mench/game-protocol";
 import type { Messages } from "@mench/localization";
@@ -198,6 +199,8 @@ export function Social({
 const styles = StyleSheet.create({
   heading: { fontSize: 20, marginTop: 16 },
   input: {
+    color: "#fff4df",
+    backgroundColor: "#2d1c48",
     borderWidth: 1,
     borderColor: "#a5b8b0",
     borderRadius: 8,
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   button: {
-    backgroundColor: "#dce9df",
+    backgroundColor: "#63418c",
     padding: 12,
     borderRadius: 8,
     marginVertical: 4,

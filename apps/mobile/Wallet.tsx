@@ -1,5 +1,6 @@
+import { Text } from "./Theme";
 import { useEffect, useRef, useState } from "react";
-import { Text, View, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import * as Crypto from "expo-crypto";
 import { readEconomy, buyCosmetic, equipCosmetic } from "@mench/game-client";
 import type { CosmeticSku, EconomySnapshot } from "@mench/game-protocol";
