@@ -199,6 +199,14 @@ export function Online({ t }: { t: Messages }) {
       </section>
     );
   const mine = currentPlayer(state).id === playerId && connected && !busy;
+  // Guests often keep the default nickname; colour and "(you)" keep players apart.
+  const label = (id: string | undefined) => {
+    const index = room.players.findIndex((p) => p.id === id);
+    const player = room.players[index];
+    if (!player) return "";
+    const seat = state.players[index]!.seat;
+    return `${t.names[seat]} · ${player.name}${id === playerId ? ` (${t.you})` : ""}`;
+  };
   const active = room.players.find(
     (p) => p.id === (state.winner ?? currentPlayer(state).id),
   );
@@ -208,7 +216,7 @@ export function Online({ t }: { t: Messages }) {
         <ResultDialog
           key={room.matchId ?? room.code}
           t={t}
-          winnerName={active.name}
+          winnerName={label(active.id)}
           won={state.winner === playerId}
         />
       )}
@@ -226,26 +234,37 @@ export function Online({ t }: { t: Messages }) {
       <aside className="panel game-panel">
         {connection}
         <h2>
-          {state.winner ? t.winner : t.turn}: {active?.name}
+          {state.winner ? t.winner : t.turn}: {label(active?.id)}
         </h2>
-        <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
-        <span className="timer">
-          {room.deadline
-            ? Math.max(0, Math.ceil((room.deadline - now) / 1000))
-            : 0}{" "}
-          {t.seconds}
-        </span>
-        <button
-          className="primary"
-          disabled={!mine || state.phase !== "roll" || !room.commitment}
-          onClick={() => {
-            const nonce = clientNonce();
-            online.nonces.current.set(room.commitment!.hash, nonce);
-            void send({ type: "roll", nonce, expectedVersion: state.version });
-          }}
-        >
-          {t.roll}
-        </button>
+        <div className="roll-bar">
+          <span className="roll-turn" aria-hidden="true">
+            {mine && state.phase === "move"
+              ? t.move
+              : `${state.winner ? t.winner : t.turn}: ${label(active?.id)}`}
+          </span>
+          <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
+          <span className="timer">
+            {room.deadline
+              ? Math.max(0, Math.ceil((room.deadline - now) / 1000))
+              : 0}{" "}
+            {t.seconds}
+          </span>
+          <button
+            className="primary"
+            disabled={!mine || state.phase !== "roll" || !room.commitment}
+            onClick={() => {
+              const nonce = clientNonce();
+              online.nonces.current.set(room.commitment!.hash, nonce);
+              void send({
+                type: "roll",
+                nonce,
+                expectedVersion: state.version,
+              });
+            }}
+          >
+            {t.roll}
+          </button>
+        </div>
         {mine && state.phase === "move" && <p role="status">{t.move}</p>}
         <div className="players">
           {room.players.map((p, index) => (
@@ -257,6 +276,7 @@ export function Online({ t }: { t: Messages }) {
             >
               <Avatar seat={state.players[index]!.seat} />
               {p.name}
+              {p.id === playerId ? ` (${t.you})` : ""}
               <small>
                 {state.players[index]!.pawns.filter((n) => n === FINISH).length}
                 /4

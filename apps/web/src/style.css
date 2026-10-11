@@ -659,23 +659,62 @@ html {
   display: block;
 }
 
+/* Desktop: the roll bar is transparent to the panel layout. */
+.roll-bar {
+  display: contents;
+}
+.roll-turn {
+  display: none;
+}
+/* Phones: whose turn, dice and roll button stay pinned under the thumb,
+   so the whole board and the roll button are visible together. */
 @media (max-width: 760px) {
-  .game-panel {
+  .game-layout {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  .roll-bar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
     display: grid;
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 58px minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(33, 20, 62, 0.94);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 233, 160, 0.35);
+    box-shadow: 0 -8px 24px rgba(16, 8, 34, 0.45);
   }
-  .game-panel > * {
-    grid-column: 1 / -1;
+  .roll-bar .dice {
+    margin: 0;
+    zoom: 0.7;
   }
-  .game-panel > .dice {
-    grid-column: 1;
-    grid-row: 3;
-    margin: 8px 0 12px;
-  }
-  .game-panel > .primary {
+  .roll-turn {
+    display: block;
     grid-column: 2;
-    grid-row: 3;
-    align-self: center;
-    min-height: 58px;
+    grid-row: 1;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #fff4df;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .roll-bar .timer {
+    position: absolute;
+    top: -26px;
+    inset-inline-start: 14px;
+    margin: 0;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(33, 20, 62, 0.94);
+    font-size: 12px;
+  }
+  .roll-bar .primary {
+    grid-column: 3;
+    grid-row: 1;
+    min-height: 54px;
+    margin: 0;
   }
 }

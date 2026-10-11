@@ -107,24 +107,53 @@ export function Practice({ t }: { t: Messages }) {
             }
           </span>
         </h2>
-        <Dice value={last} />
-        <button
-          className="primary"
-          disabled={state.phase !== "roll" || botTurn}
-          onClick={() => {
-            const value = randomDie();
-            setLast(value);
-            setState((s) =>
-              applyAction(s, {
-                type: "roll",
-                playerId: currentPlayer(s).id,
-                value,
-              }),
-            );
-          }}
-        >
-          {t.roll}
-        </button>
+        <div className="roll-bar">
+          <span className="roll-turn" aria-hidden="true">
+            {state.phase === "move" && !botTurn && !state.winner ? (
+              t.move
+            ) : (
+              <>
+                {state.winner ? t.winner : t.turn}:{" "}
+                <b
+                  style={{
+                    color:
+                      colors[
+                        state.players[
+                          state.winner ? Number(state.winner) : state.turn
+                        ]!.seat
+                      ],
+                  }}
+                >
+                  {
+                    t.names[
+                      state.players[
+                        state.winner ? Number(state.winner) : state.turn
+                      ]!.seat
+                    ]
+                  }
+                </b>
+              </>
+            )}
+          </span>
+          <Dice value={last} />
+          <button
+            className="primary"
+            disabled={state.phase !== "roll" || botTurn}
+            onClick={() => {
+              const value = randomDie();
+              setLast(value);
+              setState((s) =>
+                applyAction(s, {
+                  type: "roll",
+                  playerId: currentPlayer(s).id,
+                  value,
+                }),
+              );
+            }}
+          >
+            {t.roll}
+          </button>
+        </div>
         {state.phase === "move" && !botTurn && <p role="status">{t.move}</p>}
         {botTurn && <p role="status">{t.botThinking}</p>}
         <div className="players">
