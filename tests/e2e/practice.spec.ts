@@ -47,7 +47,10 @@ test("four-player setup works at mobile viewport without horizontal overflow", a
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  // On phones the language switch lives in the home menu.
+  await page.getByRole("button", { name: "منو", exact: true }).click();
   await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await page
     .getByRole("button", { name: "Play on one device", exact: true })
     .click();

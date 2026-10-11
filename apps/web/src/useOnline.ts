@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { GameClient, type ClientState, type Session } from "@mench/game-client";
 import type { Intent } from "@mench/game-protocol";
 import { EDGE } from "./backend";
-const key = "mench-session-v1";
-function load(): Session | null {
+/** Friends' rooms and quick matches keep separate resumable sessions. */
+export type SessionSlot = "friends" | "quick";
+const keys: Record<SessionSlot, string> = {
+  friends: "mench-session-v1",
+  quick: "mench-quick-session-v1",
+};
+function load(key: string): Session | null {
   try {
     const raw = sessionStorage.getItem(key);
     if (!raw) return null;
@@ -19,7 +24,8 @@ function load(): Session | null {
   }
   return null;
 }
-export function useOnline() {
+export function useOnline(slot: SessionSlot = "friends") {
+  const key = keys[slot];
   const client = useRef<GameClient | null>(null);
   const commitments = useRef(new Map<string, string>());
   const nonces = useRef(new Map<string, string>());
@@ -35,7 +41,7 @@ export function useOnline() {
     const c = new GameClient({
       requestId: () => crypto.randomUUID(),
       transport: EDGE ? "websocket" : "socket.io",
-      session: load(),
+      session: load(key),
       save: (session) =>
         session
           ? sessionStorage.setItem(key, JSON.stringify(session))
@@ -51,7 +57,7 @@ export function useOnline() {
       c.close();
       client.current = null;
     };
-  }, []);
+  }, [key]);
   return {
     ...state,
     send: (payload: Intent) => client.current?.send(payload),

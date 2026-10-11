@@ -62,7 +62,8 @@ export function RandomMatch({
   t: Messages;
   onBack: () => void;
 }) {
-  const online = useOnline();
+  // Its own session slot: a friends' room must never show up here.
+  const online = useOnline("quick");
   const live = useRef(online);
   live.current = online;
   const [round, setRound] = useState(0);

@@ -2,6 +2,14 @@
 
 - 2026-10-11: product name is **Ludo Dosti** (App Store name "Ludo Dosti: Play with Friends", home-screen name "Ludo Dosti"). "VIP Ludo" was dropped (casino connotation); "Yalla Ludo" is an existing Yalla Technology trademark. Bundle id stays com.espadna.mench, domain mench.espadna.com.
 
+## 2026-10-11 (night): TestFlight build 9 feedback
+
+- Bug: the quick online game resumed a saved friends' room (same stored session), showing a stalled private game. Quick matches now keep their own session slot (web sessionStorage / app SecureStore); an edge test reproduces the old behaviour and passes with the fix. A failed resume of an expired room no longer shows "invalid session".
+- App lobby screens now have side gutters (fields touched the screen edge on iPhone).
+- Persian name in the app/site header: «بازی منچ دوستانه» (English stays "Ludo Dosti"); "بازی آنلاین شانسی" → «بازی آنلاین رقابتی».
+- Home menu (☰, web + app): display name, language, how to play (rules matching the engine), privacy policy, support/website, app version. On phones the language switch moved into the menu so the title fits on one line.
+- Tests: check, test:db, Node E2E (12), edge E2E (8), platforms (2) pass.
+
 ## 2026-10-11 (evening): real quick match, home board, bigger board
 
 - **Quick online game** first waits in the server's casual queue (about 5–8 s). Two people searching at the same time are paired on the authoritative edge server (server dice with proofs, flag from the device time zone + saved display name). Otherwise the practice bot plays under a random international name, as before. Room names may carry one flag emoji (schema max 30). Edge test: two browsers pair with each other; hub test: flagged names, cancel leaves the queue.

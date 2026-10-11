@@ -1,4 +1,5 @@
 import { DemoBoard } from "./DemoBoard";
+import { Menu } from "./Menu";
 import React, { useEffect, useState } from "react";
 import { readEconomy } from "@mench/game-client";
 import { createRoot } from "react-dom/client";
@@ -35,6 +36,7 @@ function App() {
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
+    document.title = messages[locale].brand;
   }, [locale]);
   useEffect(() => {
     if (EDGE) return;
@@ -76,7 +78,14 @@ function App() {
                 </h1>
                 <p>{t.tagline}</p>
               </div>
-              {languageButton}
+              <div className="header-actions">
+                {languageButton}
+                <Menu
+                  t={t}
+                  rtl={locale === "fa"}
+                  onLanguage={() => setLocale(locale === "fa" ? "en" : "fa")}
+                />
+              </div>
             </header>
             <nav className="modes">
               <button

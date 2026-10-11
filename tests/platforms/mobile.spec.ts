@@ -18,7 +18,10 @@ test("Expo browser client joins a desktop private match using shared protocol", 
     await web.getByRole("button", { name: "Create room", exact: true }).click();
     const code = await web.getByTestId("room-code").innerText();
     await mobile.goto("http://127.0.0.1:3200");
+    // The app's language switch lives in the home menu.
+    await mobile.getByRole("button", { name: "منو", exact: true }).click();
     await mobile.getByRole("button", { name: "English", exact: true }).click();
+    await mobile.getByRole("button", { name: "Close", exact: true }).click();
     await mobile
       .getByRole("button", { name: "Play with friends", exact: true })
       .click();

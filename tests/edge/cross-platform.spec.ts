@@ -49,7 +49,10 @@ test("web host and app guest finish a match; the app shows the native result pop
     const code = await web.getByTestId("room-code").innerText();
 
     await app.goto(MOBILE);
+    // The app's language switch lives in the home menu.
+    await app.getByRole("button", { name: "منو", exact: true }).click();
     await app.getByRole("button", { name: "English", exact: true }).click();
+    await app.getByRole("button", { name: "Close", exact: true }).click();
     await expect(
       app.getByRole("button", { name: "Account", exact: true }),
     ).toHaveCount(0);
@@ -103,7 +106,10 @@ test("app practice ends with the native result popup and restarts cleanly", asyn
   const app = await context.newPage();
   try {
     await app.goto(MOBILE);
+    // The app's language switch lives in the home menu.
+    await app.getByRole("button", { name: "منو", exact: true }).click();
     await app.getByRole("button", { name: "English", exact: true }).click();
+    await app.getByRole("button", { name: "Close", exact: true }).click();
     await app
       .getByRole("button", { name: "Play on one device", exact: true })
       .click();

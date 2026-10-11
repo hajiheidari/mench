@@ -87,3 +87,40 @@ test("quick online game pairs two people searching at the same time", async ({
   ).toBeVisible();
   for (const { context } of players) await context.close();
 });
+
+test("a friends' game in progress never shows up in the quick online game", async ({
+  browser,
+}) => {
+  const ca = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const cb = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const a = await ca.newPage();
+  const b = await cb.newPage();
+  await a.goto("/?lang=en");
+  await a
+    .getByRole("button", { name: "Play with friends", exact: true })
+    .click();
+  await a.getByLabel("Display name").fill("Host");
+  await a.getByRole("button", { name: "Create room" }).click();
+  const code = await a.getByTestId("room-code").innerText();
+  await b.goto(`/join/${code}?lang=en`);
+  await b.getByLabel("Display name").fill("Friend");
+  await b.getByRole("button", { name: "Join room", exact: true }).click();
+  await a.getByRole("button", { name: "Start game" }).click();
+  await expect(a.locator(".board")).toBeVisible();
+  // The tab reloads (like an app restart) with the room session still saved.
+  await a.goto("/?lang=en");
+  await a
+    .getByRole("button", { name: "Quick online game", exact: true })
+    .click();
+  await expect(a.getByText("Finding an opponent…")).toBeVisible();
+  // Nobody else is searching, so a new opponent arrives, not the friend.
+  await expect(a.locator(".hud-players")).toBeVisible({ timeout: 20000 });
+  await expect(a.locator(".hud-players")).not.toContainText("Friend");
+  await expect(a.getByRole("alert")).toHaveCount(0);
+  await ca.close();
+  await cb.close();
+});

@@ -59,9 +59,10 @@ export class GameClient {
             token: this.session.token,
           }).then((reply) => {
             if (reply && !reply.ok) {
+              // An old room that ended or expired: forget it quietly.
               this.session = null;
               options.save(null);
-              this.update({ room: null, playerId: null });
+              this.update({ room: null, playerId: null, error: "" });
             }
           });
       },

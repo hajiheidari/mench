@@ -13,6 +13,7 @@ import {
   StatusBar,
   Share,
   Modal,
+  Linking,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -40,6 +41,7 @@ import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
 import { ResultModal } from "./ResultModal";
 import { DemoBoard } from "./DemoBoard";
+import Constants from "expo-constants";
 import {
   DEFAULT_SERVER,
   EDGE,
@@ -102,11 +104,13 @@ function Input({
   value,
   onChange,
   password = false,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (s: string) => void;
   password?: boolean;
+  maxLength?: number;
 }) {
   return (
     <View>
@@ -118,9 +122,74 @@ function Input({
         secureTextEntry={password}
         autoCapitalize="none"
         style={styles.input}
-        maxLength={password ? 128 : 254}
+        maxLength={maxLength ?? (password ? 128 : 254)}
       />
     </View>
+  );
+}
+/** Home menu: display name, language, how to play, privacy, support, version. */
+function Menu({
+  t,
+  visible,
+  onClose,
+  onLanguage,
+}: {
+  t: Messages;
+  visible: boolean;
+  onClose: () => void;
+  onLanguage: () => void;
+}) {
+  const [name, setName] = useState("");
+  useEffect(() => {
+    if (visible) void loadName().then((stored) => setName(stored ?? ""));
+  }, [visible]);
+  const site = `https://espadna.com/mench-app/${t === messages.fa ? "fa/" : ""}`;
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.sheetBackdrop}>
+        <View style={[styles.sheet, { maxHeight: "92%" }]}>
+          <Text style={styles.heading}>{t.menu}</Text>
+          <ScrollView contentContainerStyle={{ gap: 12 }}>
+            <Input
+              label={t.nickname}
+              value={name}
+              maxLength={24}
+              onChange={(value) => {
+                setName(value);
+                saveName(value);
+              }}
+            />
+            <Text style={styles.fine}>{t.nameHint}</Text>
+            <Button title={t.language} onPress={onLanguage} />
+            <Text style={styles.heading}>{t.howToPlay}</Text>
+            {t.howToPlaySteps.map((step, i) => (
+              <Text key={i} style={styles.step}>
+                {i + 1}. {step}
+              </Text>
+            ))}
+            <Button
+              title={t.privacy}
+              onPress={() =>
+                void Linking.openURL("https://espadna.com/mench-app/privacy/")
+              }
+            />
+            <Button
+              title={t.support}
+              onPress={() => void Linking.openURL(site)}
+            />
+            <Text style={styles.fine}>
+              {t.brand} · {t.version} {Constants.expoConfig?.version ?? ""}
+            </Text>
+          </ScrollView>
+          <Button title={t.close} primary onPress={onClose} />
+        </View>
+      </View>
+    </Modal>
   );
 }
 function Practice({
@@ -351,12 +420,17 @@ function Online({
   // Opened from a friend's invite link: only a name and "join" are needed.
   if (!room && inviteCode.length === 10)
     return (
-      <View style={{ flex: 1, width: "100%" }}>
+      <View style={styles.page}>
         <TopBar t={t} title={t.online} onBack={onBack} rtl={rtl} />
         <View style={styles.lobby}>
           {status}
           <Text style={styles.heading}>{t.join}</Text>
-          <Input label={t.nickname} value={name} onChange={setName} />
+          <Input
+            label={t.nickname}
+            value={name}
+            onChange={setName}
+            maxLength={24}
+          />
           <Button
             title={t.join}
             primary
@@ -372,11 +446,16 @@ function Online({
     );
   if (!room)
     return (
-      <View style={{ flex: 1, width: "100%" }}>
+      <View style={styles.page}>
         <TopBar t={t} title={t.online} onBack={onBack} rtl={rtl} />
         <ScrollView contentContainerStyle={styles.lobby}>
           {status}
-          <Input label={t.nickname} value={name} onChange={setName} />
+          <Input
+            label={t.nickname}
+            value={name}
+            onChange={setName}
+            maxLength={24}
+          />
           <View style={styles.row}>
             {[2, 3, 4].map((n) => (
               <Button
@@ -432,7 +511,7 @@ function Online({
     );
   if (!room.state)
     return (
-      <View style={{ flex: 1, width: "100%" }}>
+      <View style={styles.page}>
         <TopBar t={t} title={t.online} onBack={leave} rtl={rtl} />
         <ScrollView contentContainerStyle={styles.lobby}>
           {status}
@@ -596,7 +675,12 @@ function Account({
         </>
       ) : (
         <>
-          <Input label={t.nickname} value={name} onChange={setName} />
+          <Input
+            label={t.nickname}
+            value={name}
+            onChange={setName}
+            maxLength={24}
+          />
           <Input label={t.email} value={email} onChange={setEmail} />
           <Input
             label={t.password}
@@ -635,6 +719,7 @@ function Root() {
   });
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState<Mode>("home");
+  const [menu, setMenu] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [server, setServer] = useState(DEFAULT_SERVER);
   const [draft, setDraft] = useState(server);
@@ -692,11 +777,14 @@ function Root() {
       >
         {mode === "home" ? (
           <View style={styles.home}>
-            <View style={styles.row}>
-              <Text style={styles.title}>{t.brand} ✦</Text>
-              <Button
-                title={t.language}
-                onPress={() => setLocale(rtl ? "en" : "fa")}
+            <View style={styles.header}>
+              <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+                {t.brand} ✦
+              </Text>
+              <IconButton
+                label={t.menu}
+                icon="☰"
+                onPress={() => setMenu(true)}
               />
             </View>
             <Text style={styles.fine}>{t.tagline}</Text>
@@ -717,6 +805,12 @@ function Root() {
             ))}
             {storageError && <Text>{t.secureStorage}</Text>}
             <DemoBoard t={t} />
+            <Menu
+              t={t}
+              visible={menu}
+              onClose={() => setMenu(false)}
+              onLanguage={() => setLocale(rtl ? "en" : "fa")}
+            />
           </View>
         ) : mode === "practice" ? (
           <Practice t={t} rtl={rtl} onBack={home} />
@@ -738,7 +832,7 @@ function Root() {
             inviteCode={inviteCode}
           />
         ) : (
-          <View style={{ flex: 1, width: "100%" }}>
+          <View style={styles.page}>
             <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
             <ScrollView contentContainerStyle={styles.lobby}>
               <Input label={t.server} value={draft} onChange={setDraft} />
@@ -798,6 +892,8 @@ const styles = StyleSheet.create({
   modeIcon: { fontSize: 34, lineHeight: 44 },
   modeTitle: { fontSize: 18, fontWeight: "bold", color: "#fff4df" },
   modeHint: { fontSize: 12, color: "#f1e5ff" },
+  // Same side gutters as the game screen; nothing touches the screen edge.
+  page: { flex: 1, width: "100%", paddingHorizontal: 12 },
   lobby: {
     width: "100%",
     maxWidth: 540,
@@ -832,8 +928,15 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     backgroundColor: "transparent",
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  step: { fontSize: 14, lineHeight: 24, color: "#f4e9ff" },
   title: {
-    fontSize: 32,
+    flex: 1,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#ffe7a0",
     textShadowColor: "#693861",

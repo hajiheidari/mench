@@ -45,11 +45,15 @@ export function useGameClient({
   t,
   server,
   token,
+  slot = "friends",
 }: {
   t: Messages;
   server: string;
   token: string | null;
+  /** Friends' rooms and quick matches keep separate resumable sessions. */
+  slot?: "friends" | "quick";
 }): Online {
+  const key = slot === "quick" ? "mench-quick-room" : "mench-room";
   const client = useRef<GameClient | null>(null);
   const [snapshot, setSnapshot] = useState<ClientState>({
     room: null,
@@ -63,7 +67,7 @@ export function useGameClient({
   useEffect(() => {
     let live = true;
     let stop: (() => void) | undefined;
-    void getStored("mench-room")
+    void getStored(key)
       .then((raw) => {
         if (!live) return;
         let session: Session | null = null;
@@ -80,10 +84,9 @@ export function useGameClient({
           session,
           ...(token ? { token } : {}),
           save: (value) => {
-            void setStored(
-              "mench-room",
-              value ? JSON.stringify(value) : null,
-            ).catch(() => setNotice(t.secureStorage));
+            void setStored(key, value ? JSON.stringify(value) : null).catch(
+              () => setNotice(t.secureStorage),
+            );
           },
         });
         client.current = c;
@@ -97,7 +100,7 @@ export function useGameClient({
       client.current?.close();
       client.current = null;
     };
-  }, [server, token, t.error, t.secureStorage]);
+  }, [key, server, token, t.error, t.secureStorage]);
   return { snapshot, client, notice, setNotice };
 }
 

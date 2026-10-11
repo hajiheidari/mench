@@ -75,7 +75,8 @@ export function RandomMatch({
   server: string;
   token: string | null;
 }) {
-  const online = useGameClient({ t, server, token });
+  // Its own session slot: a friends' room must never show up here.
+  const online = useGameClient({ t, server, token, slot: "quick" });
   const live = useRef(online);
   live.current = online;
   const { connected, queued, room } = online.snapshot;
