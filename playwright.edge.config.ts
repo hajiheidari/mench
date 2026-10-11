@@ -16,11 +16,21 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:8787",
     launchOptions: chromium ? { executablePath: chromium } : {},
   },
-  webServer: {
-    command:
-      "VITE_BACKEND=edge npm run build -w @mench/web && npm run dev -w @mench/edge -- --port 8787 --ip 127.0.0.1",
-    url: "http://127.0.0.1:8787/healthz",
-    reuseExistingServer: !process.env.CI,
-    timeout: 180000,
-  },
+  webServer: [
+    {
+      command:
+        "VITE_BACKEND=edge npm run build -w @mench/web && npm run dev -w @mench/edge -- --port 8787 --ip 127.0.0.1 --var ALLOWED_ORIGINS:http://127.0.0.1:3200",
+      url: "http://127.0.0.1:8787/healthz",
+      reuseExistingServer: !process.env.CI,
+      timeout: 180000,
+    },
+    {
+      // The Expo client (same App.tsx as Android/iOS) built for web, pointed at the edge server.
+      command:
+        "cd apps/mobile && CI=1 EXPO_NO_TELEMETRY=1 EXPO_PUBLIC_BACKEND=edge EXPO_PUBLIC_API_URL=http://127.0.0.1:8787 npx expo export --platform web --clear && cd ../.. && python3 -m http.server 3200 --directory apps/mobile/dist --bind 127.0.0.1",
+      url: "http://127.0.0.1:3200",
+      reuseExistingServer: !process.env.CI,
+      timeout: 300000,
+    },
+  ],
 });

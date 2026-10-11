@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   ImageBackground,
   StatusBar,
+  Share,
 } from "react-native";
 import * as Crypto from "expo-crypto";
 import {
@@ -40,6 +41,15 @@ import { Rankings } from "./Rankings";
 import { Wallet } from "./Wallet";
 import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
+import { ResultModal } from "./ResultModal";
+/**
+ * Store and web builds set EXPO_PUBLIC_BACKEND=edge: casual online rooms on
+ * mench.espadna.com (Cloudflare). Accounts need the full Node API and stay hidden.
+ */
+const EDGE = process.env.EXPO_PUBLIC_BACKEND === "edge";
+const DEFAULT_SERVER =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (EDGE ? "https://mench.espadna.com" : "http://127.0.0.1:3001");
 import { chooseMove, type Difficulty } from "@mench/game-bot";
 function Button({
   title,
@@ -120,12 +130,18 @@ function Practice({ t, width }: { t: Messages; width: number }) {
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [round, setRound] = useState(0);
   const count = state.players.length;
+  const finished = state.phase === "finished";
+  const winner = state.winner
+    ? state.players.find((p) => p.id === state.winner)
+    : undefined;
   function newGame(playerCount = count) {
     setState(
       createGame(Array.from({ length: playerCount }, (_, i) => String(i))),
     );
     setLast(null);
+    setRound((r) => r + 1);
   }
   const botTurn =
     bots && state.phase !== "finished" && currentPlayer(state).id !== "0";
@@ -159,6 +175,19 @@ function Practice({ t, width }: { t: Messages; width: number }) {
   }, [botTurn, state, difficulty]);
   return (
     <>
+      {finished && winner && (
+        <ResultModal
+          key={round}
+          t={t}
+          winnerName={
+            bots && winner.id !== "0"
+              ? `${t.robotName} · ${t.names[winner.seat]}`
+              : t.names[winner.seat]!
+          }
+          won={bots ? winner.id === "0" : undefined}
+          onPlayAgain={() => newGame()}
+        />
+      )}
       <Text style={styles.heading}>
         {state.winner ? t.winner : t.turn}:{" "}
         {
@@ -171,14 +200,16 @@ function Practice({ t, width }: { t: Messages; width: number }) {
       <Board
         state={state}
         width={width}
-        interactive={!botTurn}
+        interactive={!botTurn && !finished}
         onMove={(pawn) =>
           setState((s) =>
-            applyAction(s, {
-              type: "move",
-              playerId: currentPlayer(s).id,
-              pawn,
-            }),
+            s.phase === "finished"
+              ? s
+              : applyAction(s, {
+                  type: "move",
+                  playerId: currentPlayer(s).id,
+                  pawn,
+                }),
           )
         }
         t={t}
@@ -212,11 +243,13 @@ function Practice({ t, width }: { t: Messages; width: number }) {
             n = (n % 6) + 1;
             setLast(n);
             setState((s) =>
-              applyAction(s, {
-                type: "roll",
-                playerId: currentPlayer(s).id,
-                value: n,
-              }),
+              s.phase === "roll"
+                ? applyAction(s, {
+                    type: "roll",
+                    playerId: currentPlayer(s).id,
+                    value: n,
+                  })
+                : s,
             );
           }}
         />
@@ -302,6 +335,7 @@ function Online({
           }
         const client = new GameClient({
           url: server,
+          transport: EDGE ? "websocket" : "socket.io",
           requestId: Crypto.randomUUID,
           session,
           ...(token ? { token } : {}),
@@ -373,11 +407,13 @@ function Online({
             )
           }
         />
-        <Button
-          title={`${ranked ? "✓ " : ""}${t.ranked}`}
-          disabled={queued || busy}
-          onPress={() => setRanked(!ranked)}
-        />
+        {!EDGE && (
+          <Button
+            title={`${ranked ? "✓ " : ""}${t.ranked}`}
+            disabled={queued || busy}
+            onPress={() => setRanked(!ranked)}
+          />
+        )}
         {ranked && <Text>{t.rankedHint}</Text>}
         {error && (
           <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
@@ -392,8 +428,19 @@ function Online({
     currentPlayer(state).id === playerId &&
     connected &&
     !busy;
+  const winner = state?.winner
+    ? room.players.find((p) => p.id === state.winner)
+    : undefined;
   return (
     <>
+      {state?.phase === "finished" && winner && (
+        <ResultModal
+          key={room.matchId ?? room.code}
+          t={t}
+          winnerName={winner.name}
+          won={state.winner === playerId}
+        />
+      )}
       {status}
       <Text style={styles.heading}>
         {state
@@ -414,6 +461,16 @@ function Online({
         ))}
       {!state && (
         <Button
+          title={t.copy}
+          onPress={() =>
+            void Share.share({
+              message: `${t.inviteText} ${server}/join/${room.code}`,
+            }).catch(() => setNotice(`${server}/join/${room.code}`))
+          }
+        />
+      )}
+      {!state && (
+        <Button
           title={t.start}
           disabled={
             room.hostId !== playerId ||
@@ -422,7 +479,7 @@ function Online({
           }
           onPress={() => void ref.current?.send({ type: "start" })}
         />
-      )}{" "}
+      )}
       {state && (
         <>
           <Board
@@ -631,9 +688,7 @@ export default function App() {
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState("practice");
   const [inviteCode, setInviteCode] = useState("");
-  const [server, setServer] = useState(
-    process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3001",
-  );
+  const [server, setServer] = useState(DEFAULT_SERVER);
   const [draft, setDraft] = useState(server);
   const [token, setToken] = useState<string | null>(null);
   const [theme, setTheme] = useState<CosmeticSku | null>(null);
@@ -686,7 +741,7 @@ export default function App() {
             {[
               ["practice", t.practice],
               ["online", t.online],
-              ["account", t.signIn],
+              ...(EDGE ? [] : [["account", t.signIn]]),
             ].map(([key, title]) => (
               <Button
                 key={key}
@@ -700,14 +755,18 @@ export default function App() {
             <Practice t={t} width={boardWidth} />
           ) : (
             <>
-              <Input label={t.server} value={draft} onChange={setDraft} />
-              <Button
-                title={t.reconnect}
-                onPress={() => {
-                  if (/^https?:\/\//.test(draft))
-                    setServer(draft.replace(/\/$/, ""));
-                }}
-              />
+              {!EDGE && (
+                <>
+                  <Input label={t.server} value={draft} onChange={setDraft} />
+                  <Button
+                    title={t.reconnect}
+                    onPress={() => {
+                      if (/^https?:\/\//.test(draft))
+                        setServer(draft.replace(/\/$/, ""));
+                    }}
+                  />
+                </>
+              )}
               {mode === "online" ? (
                 <Online
                   t={t}

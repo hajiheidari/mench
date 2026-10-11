@@ -2,14 +2,25 @@
   "expo": {
     "name": "Mench",
     "slug": "mench",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mench.game"
+      "bundleIdentifier": "com.espadna.mench",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "منچ",
+        "CFBundleDevelopmentRegion": "fa"
+      }
     },
     "android": {
-      "package": "com.mench.game",
+      "package": "com.espadna.mench",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4a2677"
+      },
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -29,6 +40,10 @@
           "faceIDPermission": false
         }
       ]
-    ]
+    ],
+    "icon": "./assets/icon.png",
+    "scheme": "mench",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#26164a"
   }
 }

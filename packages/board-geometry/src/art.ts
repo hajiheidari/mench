@@ -77,3 +77,23 @@ export function avatarSvg(seat: number): string {
           '" stroke-width="3"/>';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100"><defs><linearGradient id="bg" y2="1" x2=".4"><stop stop-color="${colors[seat]}"/><stop offset="1" stop-color="${depths[seat]}"/></linearGradient></defs><circle cx="50" cy="50" r="47" fill="url(#bg)" stroke="#fff0ba" stroke-width="4"/><circle cx="50" cy="73" r="26" fill="#301c4b" opacity=".2"/>${ears}<ellipse cx="50" cy="52" rx="31" ry="29" fill="${colors[seat]}"/><path d="M22 56Q34 58 50 48Q66 58 78 56Q75 80 50 80Q25 80 22 56" fill="white" fill-opacity=".35"/><ellipse cx="37" cy="46" rx="5" ry="7" fill="#302039"/><ellipse cx="63" cy="46" rx="5" ry="7" fill="#302039"/><circle cx="38" cy="44" r="1.7" fill="white"/><circle cx="64" cy="44" r="1.7" fill="white"/><path d="M45 59Q50 55 55 59L50 64Z" fill="#573344"/><path d="M40 67Q50 78 60 67" fill="none" stroke="#6b3e4b" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="29" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/><ellipse cx="71" cy="59" rx="5" ry="3" fill="#fb8a92" opacity=".5"/></svg>`;
 }
+
+/** App icon: four classic pawns on the purple arcade backdrop (full bleed, safe-zone centered). */
+export function iconSvg(transparent = false): string {
+  const spots = [
+    [33, 34],
+    [67, 34],
+    [67, 70],
+    [33, 70],
+  ];
+  const pawns = spots
+    .map(
+      ([x, y], seat) =>
+        `<g transform="translate(${x! - 12.8} ${y! - 18}) scale(.32)"><ellipse cx="40" cy="90" rx="32" ry="8" fill="#211339" opacity=".3"/><ellipse cx="40" cy="81" rx="30" ry="12" fill="${depths[seat]}" stroke="#fff" stroke-width="3"/><path d="M14 77Q29 61 29 40H51Q51 61 66 77Q40 94 14 77Z" fill="${colors[seat]}" stroke="white" stroke-opacity=".8" stroke-width="2.5"/><circle cx="40" cy="28" r="22" fill="${colors[seat]}" stroke="#fff" stroke-width="3"/><ellipse cx="32" cy="18" rx="7" ry="4" fill="white" opacity=".6"/></g>`,
+    )
+    .join("");
+  const background = transparent
+    ? ""
+    : `<rect width="100" height="100" fill="url(#ibg)"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 100 100"><defs><radialGradient id="ibg" cx=".5" cy=".3" r=".85"><stop stop-color="#8c55c5"/><stop offset=".6" stop-color="#4a2677"/><stop offset="1" stop-color="#26164a"/></radialGradient></defs>${background}<rect x="19" y="19" width="62" height="62" rx="12" fill="#3b2463" stroke="#f3c35f" stroke-width="3"/><path d="M50 26V74M26 50H74" stroke="#f3c35f" stroke-opacity=".35" stroke-width="1.5"/>${pawns}</svg>`;
+}

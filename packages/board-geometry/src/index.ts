@@ -93,6 +93,7 @@ export {
   boardSvg,
   pawnSvg,
   backdropSvg,
+  iconSvg,
   dicePips,
   depths,
 } from "./art";

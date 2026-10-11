@@ -11,7 +11,7 @@ await build({
   platform: "node",
   outfile: "/tmp/mench-game-art.mjs",
 });
-const { boardSvg, pawnSvg, backdropSvg, avatarSvg } =
+const { boardSvg, pawnSvg, backdropSvg, avatarSvg, iconSvg } =
   await import("file:///tmp/mench-game-art.mjs");
 const target = resolve(root, "apps/mobile/assets/game");
 await mkdir(target, { recursive: true });
@@ -19,9 +19,10 @@ const systemBrowser = await access("/usr/bin/chromium").then(
   () => true,
   () => false,
 );
-const browser = await chromium.launch(
-  systemBrowser ? { executablePath: "/usr/bin/chromium" } : {},
-);
+const executablePath =
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ??
+  (systemBrowser ? "/usr/bin/chromium" : undefined);
+const browser = await chromium.launch(executablePath ? { executablePath } : {});
 try {
   for (const [name, svg, width, height] of [
     ["board", boardSvg(), 1200, 1200],
@@ -39,6 +40,27 @@ try {
     await page.locator("svg").screenshot({
       path: resolve(target, `${name}.png`),
       omitBackground: true,
+    });
+    await page.close();
+  }
+  // App icons: opaque store/web icons and a transparent Android adaptive foreground.
+  const icons = [
+    ["apps/mobile/assets/icon.png", iconSvg(), 1024, false],
+    ["apps/mobile/assets/adaptive-icon.png", iconSvg(true), 1024, true],
+    ["apps/web/public/icon-512.png", iconSvg(), 512, false],
+    ["apps/web/public/icon-192.png", iconSvg(), 192, false],
+    ["apps/edge/site/mench-app/icon.png", iconSvg(), 512, false],
+  ];
+  for (const [file, svg, size, transparent] of icons) {
+    const page = await browser.newPage({
+      viewport: { width: size, height: size },
+    });
+    await page.setContent(
+      `<style>body{margin:0}svg{width:${size}px;height:${size}px;display:block}</style>${svg}`,
+    );
+    await page.locator("svg").screenshot({
+      path: resolve(root, file),
+      omitBackground: transparent,
     });
     await page.close();
   }
