@@ -50,3 +50,40 @@ test("quick online game: search, named opponent, full game, result and rematch o
   await result.getByRole("button", { name: "Play again", exact: true }).click();
   await expect(page.getByText("Finding an opponent…")).toBeVisible();
 });
+
+test("quick online game pairs two people searching at the same time", async ({
+  browser,
+}) => {
+  const players = await Promise.all(
+    ["Alice", "Bob"].map(async (name) => {
+      const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        timezoneId: "Asia/Tehran",
+      });
+      await context.addInitScript(
+        (value) => localStorage.setItem("mench-name", value),
+        name,
+      );
+      const page = await context.newPage();
+      await page.goto("/?lang=en");
+      return { context, page };
+    }),
+  );
+  for (const { page } of players)
+    await page
+      .getByRole("button", { name: "Quick online game", exact: true })
+      .click();
+  // Both land in the same server room: each sees the other's flagged name.
+  await expect(players[0]!.page.locator(".hud-players")).toContainText(
+    "🇮🇷 Bob",
+    { timeout: 15000 },
+  );
+  await expect(players[1]!.page.locator(".hud-players")).toContainText(
+    "🇮🇷 Alice",
+  );
+  // Server dice: the fair-dice history is available, unlike the bot game.
+  await expect(
+    players[0]!.page.getByRole("button", { name: /Dice history/ }),
+  ).toBeVisible();
+  for (const { context } of players) await context.close();
+});

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import {
   chooseMove,
+  flagForTimeZone,
+  matchName,
   randomOpponent,
   searchDelay,
   thinkingDelay,
@@ -20,6 +22,7 @@ import { Board } from "./Board";
 import { GameScreen, Searching } from "./GameScreen";
 import { ResultModal } from "./ResultModal";
 import { Text } from "./Theme";
+import { OnlineGame, loadName, useGameClient } from "./OnlineGame";
 
 const ME = "you";
 const BOT = "opponent";
@@ -44,55 +47,148 @@ interface Match {
   state: GameState;
 }
 
-function newMatch(): Match {
+function newMatch(opponent: Opponent): Match {
   const order = randomFloat() < 0.5 ? [ME, BOT] : [BOT, ME];
   return {
-    opponent: randomOpponent(randomFloat),
+    opponent,
     difficulty: randomFloat() < 0.6 ? "normal" : "hard",
     state: createGame(order),
   };
 }
 
 /**
- * "Random online": a two-player game against the practice bot presented as a
- * matched opponent with a random name, same rules and local dice as practice.
+ * "Quick online game": waits in the server's casual queue first, so two
+ * people searching together play each other on the authoritative server; if
+ * nobody turns up within a few seconds the practice bot plays under a random
+ * name instead.
  */
 export function RandomMatch({
   t,
   rtl,
   onBack,
+  server,
+  token,
 }: {
   t: Messages;
   rtl: boolean;
   onBack: () => void;
+  server: string;
+  token: string | null;
 }) {
-  const [match, setMatch] = useState<Match | null>(null);
-  const [found, setFound] = useState<Opponent | null>(null);
-  const [last, setLast] = useState<number | null>(null);
+  const online = useGameClient({ t, server, token });
+  const live = useRef(online);
+  live.current = online;
+  const { connected, queued, room } = online.snapshot;
   const [round, setRound] = useState(0);
-  const [deadline, setDeadline] = useState(0);
-  const [now, setNow] = useState(Date.now());
+  const [bot, setBot] = useState<Opponent | null>(null);
+  const [ready, setReady] = useState(false);
+  const [asked, setAsked] = useState(-1);
 
+  // Join the casual queue as soon as the socket is up.
   useEffect(() => {
-    setMatch(null);
-    setFound(null);
-    setLast(null);
-    const next = newMatch();
-    const wait = searchDelay(randomFloat);
-    const search = setTimeout(() => setFound(next.opponent), wait);
-    const start = setTimeout(() => setMatch(next), wait + 1400);
+    if (!connected || bot || room || queued || asked === round) return;
+    setAsked(round);
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    void loadName().then((stored) =>
+      live.current.client.current?.send({
+        type: "queue",
+        name: matchName(flagForTimeZone(zone), stored ?? t.guest, t.guest),
+      }),
+    );
+  }, [connected, bot, room, queued, asked, round, t.guest]);
+
+  // Nobody matched in time (or no connection): the bot takes the seat.
+  useEffect(() => {
+    let cancelled = false;
+    let start: ReturnType<typeof setTimeout> | undefined;
+    const search = setTimeout(
+      () => {
+        void (async () => {
+          if (live.current.snapshot.queued) {
+            await live.current.client.current?.send({ type: "cancelQueue" });
+            // A match that raced the cancel arrives first; let React render it.
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          if (cancelled || live.current.snapshot.room) return;
+          setBot(randomOpponent(randomFloat));
+          start = setTimeout(() => !cancelled && setReady(true), 1400);
+        })();
+      },
+      searchDelay(randomFloat) + 2500,
+    );
     return () => {
+      cancelled = true;
       clearTimeout(search);
       clearTimeout(start);
     };
   }, [round]);
 
-  const state = match?.state;
-  const turnId =
-    state && state.phase !== "finished" ? currentPlayer(state).id : null;
-  const version = state?.version;
+  const again = () => {
+    const c = live.current;
+    if (c.snapshot.room) void c.client.current?.send({ type: "leave" });
+    setBot(null);
+    setReady(false);
+    setRound((r) => r + 1);
+  };
+  const exit = () => {
+    const c = live.current;
+    if (c.snapshot.room) void c.client.current?.send({ type: "leave" });
+    else if (c.snapshot.queued)
+      void c.client.current?.send({ type: "cancelQueue" });
+    onBack();
+  };
+
+  if (room?.state && !bot)
+    return (
+      <OnlineGame
+        t={t}
+        rtl={rtl}
+        online={online}
+        title={t.random}
+        onExit={exit}
+        onPlayAgain={again}
+      />
+    );
+  if (bot && ready)
+    return (
+      <BotMatch
+        key={round}
+        t={t}
+        rtl={rtl}
+        opponent={bot}
+        onBack={exit}
+        onPlayAgain={again}
+      />
+    );
+  return (
+    <Searching t={t} rtl={rtl} title={t.random} onBack={exit} found={bot} />
+  );
+}
+
+/** Two-player game against the practice bot with local CSPRNG dice. */
+function BotMatch({
+  t,
+  rtl,
+  opponent,
+  onBack,
+  onPlayAgain,
+}: {
+  t: Messages;
+  rtl: boolean;
+  opponent: Opponent;
+  onBack: () => void;
+  onPlayAgain: () => void;
+}) {
+  const [match, setMatch] = useState<Match>(() => newMatch(opponent));
+  const [last, setLast] = useState<number | null>(null);
+  const [deadline, setDeadline] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  const state = match.state;
+  const turnId = state.phase !== "finished" ? currentPlayer(state).id : null;
+  const version = state.version;
   useEffect(() => {
-    if (version !== undefined) setDeadline(Date.now() + TURN_MS);
+    setDeadline(Date.now() + TURN_MS);
   }, [version]);
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 500);
@@ -100,7 +196,7 @@ export function RandomMatch({
   }, []);
 
   useEffect(() => {
-    if (!match || !state || turnId !== BOT) return;
+    if (turnId !== BOT) return;
     const timer = setTimeout(
       () => {
         let next: GameState;
@@ -115,7 +211,7 @@ export function RandomMatch({
           next = applyAction(state, { type: "move", playerId: BOT, pawn });
         }
         setMatch((m) =>
-          m && m.state.version === state.version ? { ...m, state: next } : m,
+          m.state.version === state.version ? { ...m, state: next } : m,
         );
       },
       thinkingDelay(state.phase === "roll" ? "roll" : "move", randomFloat),
@@ -124,9 +220,9 @@ export function RandomMatch({
   }, [match, state, turnId]);
 
   useEffect(() => {
-    if (!state || turnId !== ME || now < deadline) return;
+    if (turnId !== ME || now < deadline) return;
     setMatch((m) =>
-      m && m.state.version === state.version
+      m.state.version === state.version
         ? {
             ...m,
             state: applyAction(m.state, { type: "timeout", playerId: ME }),
@@ -134,17 +230,6 @@ export function RandomMatch({
         : m,
     );
   }, [now, deadline, state, turnId]);
-
-  if (!match || !state)
-    return (
-      <Searching
-        t={t}
-        rtl={rtl}
-        title={t.random}
-        onBack={onBack}
-        found={found}
-      />
-    );
 
   const opponentLabel = `${match.opponent.flag} ${match.opponent.name}`;
   const label = (id: string) => (id === ME ? t.you : opponentLabel);
@@ -165,7 +250,7 @@ export function RandomMatch({
           interactive={mine}
           onMove={(pawn) =>
             setMatch((m) =>
-              m && m.state.phase === "move" && currentPlayer(m.state).id === ME
+              m.state.phase === "move" && currentPlayer(m.state).id === ME
                 ? {
                     ...m,
                     state: applyAction(m.state, {
@@ -206,7 +291,7 @@ export function RandomMatch({
         const value = randomDie();
         setLast(value);
         setMatch((m) =>
-          m && m.state.phase === "roll" && currentPlayer(m.state).id === ME
+          m.state.phase === "roll" && currentPlayer(m.state).id === ME
             ? {
                 ...m,
                 state: applyAction(m.state, {
@@ -221,11 +306,10 @@ export function RandomMatch({
     >
       {winner && (
         <ResultModal
-          key={round}
           t={t}
           winnerName={label(winner)}
           won={winner === ME}
-          onPlayAgain={() => setRound((r) => r + 1)}
+          onPlayAgain={onPlayAgain}
         />
       )}
     </GameScreen>

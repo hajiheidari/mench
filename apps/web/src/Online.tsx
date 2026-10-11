@@ -8,24 +8,26 @@ import { GameScreen, TopBar } from "./GameScreen";
 import { ResultDialog } from "./ResultDialog";
 import { Board } from "./Board";
 import { EDGE } from "./backend";
+import { saveName, savedName } from "./nickname";
 export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
   const online = useOnline();
   const { room, playerId, connected, queued, error, busy, send } = online;
-  const [name, setName] = useState(t.guest);
+  const [name, setNameState] = useState(() => savedName(t.guest));
+  const setName = (value: string) => {
+    setNameState(value);
+    saveName(value);
+  };
   const [code, setCode] = useState(
     () =>
       location.pathname
         .match(/^\/join\/([A-F0-9]{10})$/i)?.[1]
         ?.toUpperCase() ?? "",
   );
+  // Opened from a friend's invite link: only a name and "join" are needed.
+  const [invited] = useState(() => location.pathname.startsWith("/join/"));
   const [capacity, setCapacity] = useState(2);
   const [ranked, setRanked] = useState(false);
   const [notice, setNotice] = useState("");
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
   const connection = (
     <div className="connection" role="status">
       <span
@@ -44,17 +46,35 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
     void send({ type: "leave" });
     setNotice("");
   };
-  async function verify(proof: DiceProof) {
-    const observed = online.commitments.current.get(proof.commitment);
-    if (!observed) {
-      setNotice(t.unwitnessed);
-      return;
-    }
-    const nonce = online.nonces.current.get(proof.commitment) ?? proof.nonce;
-    setNotice(
-      (await verifyProof(proof, observed, nonce)) ? t.verified : t.invalidProof,
+  if (!room && invited && code.length === 10)
+    return (
+      <div className="game-screen">
+        <TopBar t={t} title={t.online} onBack={onBack} />
+        <section className="lobby">
+          <div className="panel">
+            {connection}
+            <h2>{t.join}</h2>
+            {errorView}
+            <label>
+              {t.nickname}
+              <input
+                value={name}
+                maxLength={24}
+                autoFocus
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <button
+              className="primary"
+              disabled={!connected || busy || !name.trim()}
+              onClick={() => void send({ type: "join", name, code })}
+            >
+              {t.join}
+            </button>
+          </div>
+        </section>
+      </div>
     );
-  }
   if (!room)
     return (
       <div className="game-screen">
@@ -107,19 +127,21 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
             >
               {t.join}
             </button>
-            <button
-              className="secondary"
-              disabled={!connected || busy}
-              onClick={() =>
-                void send(
-                  queued
-                    ? { type: "cancelQueue" }
-                    : { type: "queue", name, ranked },
-                )
-              }
-            >
-              {queued ? t.cancel : t.matchmaking}
-            </button>
+            {!EDGE && (
+              <button
+                className="secondary"
+                disabled={!connected || busy}
+                onClick={() =>
+                  void send(
+                    queued
+                      ? { type: "cancelQueue" }
+                      : { type: "queue", name, ranked },
+                  )
+                }
+              >
+                {queued ? t.cancel : t.matchmaking}
+              </button>
+            )}
             {!EDGE && (
               <label>
                 <input
@@ -203,6 +225,67 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
         </section>
       </div>
     );
+  return (
+    <OnlineGame
+      t={t}
+      online={online}
+      title={t.online}
+      onExit={() => {
+        leave();
+        onBack();
+      }}
+    />
+  );
+}
+
+/** A running server-authoritative game; shared by friends' rooms and quick match. */
+export function OnlineGame({
+  t,
+  online,
+  title,
+  onExit,
+  onPlayAgain,
+}: {
+  t: Messages;
+  online: ReturnType<typeof useOnline>;
+  title: string;
+  onExit: () => void;
+  onPlayAgain?: () => void;
+}) {
+  const { room, playerId, connected, error, busy, send } = online;
+  const [notice, setNotice] = useState("");
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const connection = (
+    <div className="connection" role="status">
+      <span
+        className="player-avatar"
+        style={{ background: connected ? "#388872" : "#d3a32d" }}
+      />
+      {connected ? t.connected : t.reconnecting}
+    </div>
+  );
+  const errorView = error && (
+    <p className="error" role="alert">
+      {t.error}: {t.errors[error] ?? t.errors.REQUEST_FAILED}
+    </p>
+  );
+  async function verify(proof: DiceProof) {
+    const observed = online.commitments.current.get(proof.commitment);
+    if (!observed) {
+      setNotice(t.unwitnessed);
+      return;
+    }
+    const nonce = online.nonces.current.get(proof.commitment) ?? proof.nonce;
+    setNotice(
+      (await verifyProof(proof, observed, nonce)) ? t.verified : t.invalidProof,
+    );
+  }
+  const state = room?.state;
+  if (!room || !state) return null;
   const mine = currentPlayer(state).id === playerId && connected && !busy;
   // Guests often keep the default nickname; colour and "(you)" keep players apart.
   const label = (id: string | undefined) => {
@@ -221,11 +304,8 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
   return (
     <GameScreen
       t={t}
-      title={t.online}
-      onBack={() => {
-        leave();
-        onBack();
-      }}
+      title={title}
+      onBack={onExit}
       actions={
         <button
           className="icon-btn"
@@ -294,6 +374,7 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
           t={t}
           winnerName={label(active.id)}
           won={state.winner === playerId}
+          {...(onPlayAgain ? { onPlayAgain } : {})}
         />
       )}
       <dialog id="dice-history" className="sheet" aria-label={t.history}>

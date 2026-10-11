@@ -3,8 +3,9 @@ const name = z
   .string()
   .trim()
   .min(1)
-  .max(24)
-  .regex(/^[\p{L}\p{N} _-]+$/u);
+  .max(30)
+  // An optional country flag (two regional indicators) before the name.
+  .regex(/^(\p{Regional_Indicator}{2} )?[\p{L}\p{N} _-]+$/u);
 const code = z.string().regex(/^[A-F0-9]{10}$/);
 const version = z.number().int().min(0);
 export const commandSchema = z

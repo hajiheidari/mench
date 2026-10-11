@@ -86,3 +86,70 @@ export function thinkingDelay(
 export function searchDelay(random: () => number): number {
   return Math.round(2200 + random() * 3600);
 }
+
+const ZONES: Record<string, string> = {
+  "Asia/Tehran": "🇮🇷",
+  "Europe/Istanbul": "🇹🇷",
+  "Asia/Dubai": "🇦🇪",
+  "Asia/Riyadh": "🇸🇦",
+  "Asia/Baghdad": "🇮🇶",
+  "Asia/Kabul": "🇦🇫",
+  "Asia/Kolkata": "🇮🇳",
+  "Asia/Calcutta": "🇮🇳",
+  "Asia/Karachi": "🇵🇰",
+  "Africa/Cairo": "🇪🇬",
+  "Europe/Berlin": "🇩🇪",
+  "Europe/Paris": "🇫🇷",
+  "Europe/London": "🇬🇧",
+  "Europe/Madrid": "🇪🇸",
+  "Europe/Rome": "🇮🇹",
+  "America/Sao_Paulo": "🇧🇷",
+  "Europe/Moscow": "🇷🇺",
+  "Asia/Baku": "🇦🇿",
+  "Asia/Dushanbe": "🇹🇯",
+  "America/Toronto": "🇨🇦",
+  "America/Vancouver": "🇨🇦",
+  "Asia/Tokyo": "🇯🇵",
+  "Asia/Jakarta": "🇮🇩",
+  "Africa/Lagos": "🇳🇬",
+  "Asia/Kuwait": "🇰🇼",
+  "Asia/Qatar": "🇶🇦",
+  "Asia/Muscat": "🇴🇲",
+  "Asia/Bahrain": "🇧🇭",
+  "Europe/Amsterdam": "🇳🇱",
+  "Europe/Stockholm": "🇸🇪",
+  "Asia/Yerevan": "🇦🇲",
+  "Asia/Tbilisi": "🇬🇪",
+};
+
+/**
+ * A best-guess flag for a real player from the device time zone (no network
+ * lookup); empty when the zone is not recognised.
+ */
+export function flagForTimeZone(zone: string | undefined): string {
+  if (!zone) return "";
+  if (ZONES[zone]) return ZONES[zone];
+  if (zone.startsWith("Australia/")) return "🇦🇺";
+  if (
+    /^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit)$/.test(
+      zone,
+    )
+  )
+    return "🇺🇸";
+  return "";
+}
+
+/** "🇮🇷 Reza": the display name a matched player sees, within the server's rules. */
+export function matchName(
+  flag: string,
+  name: string,
+  fallback: string,
+): string {
+  const clean =
+    name
+      .replace(/[^\p{L}\p{N} _-]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 24) || fallback;
+  return flag ? `${flag} ${clean}` : clean;
+}

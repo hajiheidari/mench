@@ -2,6 +2,15 @@
 
 - 2026-10-11: product name is **Ludo Dosti** (App Store name "Ludo Dosti: Play with Friends", home-screen name "Ludo Dosti"). "VIP Ludo" was dropped (casino connotation); "Yalla Ludo" is an existing Yalla Technology trademark. Bundle id stays com.espadna.mench, domain mench.espadna.com.
 
+## 2026-10-11 (evening): real quick match, home board, bigger board
+
+- **Quick online game** first waits in the server's casual queue (about 5–8 s). Two people searching at the same time are paired on the authoritative edge server (server dice with proofs, flag from the device time zone + saved display name). Otherwise the practice bot plays under a random international name, as before. Room names may carry one flag emoji (schema max 30). Edge test: two browsers pair with each other; hub test: flagged names, cancel leaves the queue.
+- Invite links (`/join/CODE`, web and app) show only the display name and "Join room".
+- Home screen: an animated demo board (four bots, real engine moves, pawns walk cell by cell) fills the space under the three buttons without scrolling; respects reduced motion.
+- Board: edge-to-edge on phones, thinner frame, pawns about one cell wide, larger touch targets for movable pawns. The home areas keep the classic 6×6 of a 15×15 grid: shrinking them would make the track cells thinner (or shorten the 52-cell track), so the gain comes from the board size instead.
+- iOS: pawns appeared in the mirrored home in the Persian (RTL) layout; the native board now forces `direction: ltr`. Needs confirmation on a device (next TestFlight build).
+- Tests in this container: `npm run check`, `test:db` (24), Node E2E (12), edge E2E (7), platforms (2) all pass.
+
 ## 2026-10-11 (later): live
 
 - **Deployed**: https://mench.espadna.com (game + online rooms) and https://espadna.com/mench-app/ (landing, privacy), via the `site` workflow with the owner's Cloudflare secrets. The deploy job now runs the two-browser online acceptance against the live URL from GitHub (passed), and the same suite passed from this container against production (invite, verified roll, offline/online reconnect, reload resume, 3-player room, full match to the same winner).

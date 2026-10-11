@@ -1,3 +1,4 @@
+import { DemoBoard } from "./DemoBoard";
 import React, { useEffect, useState } from "react";
 import { readEconomy } from "@mench/game-client";
 import { createRoot } from "react-dom/client";
@@ -124,6 +125,7 @@ function App() {
                 </button>
               )}
             </nav>
+            <DemoBoard t={t} />
             <footer>{t.rules}</footer>
           </>
         ) : mode === "practice" ? (

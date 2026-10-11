@@ -26,17 +26,19 @@ export function Board({
   t: Messages;
   interactive: boolean;
 }) {
-  const size = width - 10;
+  const size = width - 6;
   const scale = size / 15;
   const moves = interactive ? legalMoves(state) : [];
   const activeBase = bases[state.players[state.turn]!.seat]!;
   return (
-    <View style={[styles.frame, { width, height: width }]}>
+    // The board is geometry, not text: in a Persian (RTL) layout iOS swaps
+    // `left`/`right`, which put every pawn in the mirrored home.
+    <View style={[styles.frame, { width, height: width, direction: "ltr" }]}>
       <View
         style={{
           position: "absolute",
-          left: 5,
-          top: 5,
+          left: 3,
+          top: 3,
           width: size,
           height: size,
         }}
@@ -44,7 +46,7 @@ export function Board({
         <Image
           source={boardArt}
           accessibilityIgnoresInvertColors
-          style={{ width: size, height: size, borderRadius: 18 }}
+          style={{ width: size, height: size, borderRadius: 13 }}
         />
         {state.phase !== "finished" && (
           <View
@@ -84,7 +86,8 @@ export function Board({
         {state.players.flatMap((p, index) =>
           p.pawns.map((position, pawn) => {
             const [x, y] = pawnLocation(p.seat, position, pawn);
-            const pawnWidth = (position === FINISH ? 0.5 : 0.85) * scale;
+            // About one cell wide: as large as the classic 15-cell grid allows.
+            const pawnWidth = (position === FINISH ? 0.55 : 0.98) * scale;
             const pawnHeight = pawnWidth * 1.25;
             const legal = index === state.turn && moves.includes(pawn);
             const stacked =
@@ -101,7 +104,7 @@ export function Board({
             return (
               <Pressable
                 key={`${p.id}-${pawn}`}
-                hitSlop={8}
+                hitSlop={legal ? 14 : 4}
                 accessibilityRole="button"
                 accessibilityLabel={`${t.names[p.seat]} ${t.pawn} ${pawn + 1}`}
                 disabled={!legal}
@@ -151,7 +154,7 @@ export function Board({
 const styles = StyleSheet.create({
   frame: {
     alignSelf: "center",
-    borderRadius: 24,
+    borderRadius: 16,
     backgroundColor: "#f6d289",
     borderBottomWidth: 3,
     borderBottomColor: "#a87538",

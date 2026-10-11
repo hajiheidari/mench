@@ -2,7 +2,7 @@ import { useFonts } from "expo-font";
 import regularFont from "../../packages/board-geometry/assets/fonts/Samim.ttf";
 import boldFont from "../../packages/board-geometry/assets/fonts/Samim-Bold.ttf";
 import { Text } from "./Theme";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -20,22 +20,15 @@ import {
 } from "react-native-safe-area-context";
 import { GameScreen, IconButton, TopBar } from "./GameScreen";
 import { RandomMatch, randomDie, randomFloat } from "./RandomMatch";
-import * as Crypto from "expo-crypto";
 import {
   applyAction,
   createGame,
   currentPlayer,
   FINISH,
 } from "@mench/game-engine";
-import {
-  GameClient,
-  readEconomy,
-  type ClientState,
-  type Session,
-} from "@mench/game-client";
+import { readEconomy } from "@mench/game-client";
 import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
-import { verifyProof } from "@mench/fair-dice/portable";
 import backdropArt from "./assets/game/backdrop.png";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
@@ -46,14 +39,15 @@ import { Wallet } from "./Wallet";
 import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
 import { ResultModal } from "./ResultModal";
-/**
- * Store and web builds set EXPO_PUBLIC_BACKEND=edge: casual online rooms on
- * mench.espadna.com (Cloudflare). Accounts need the full Node API and stay hidden.
- */
-const EDGE = process.env.EXPO_PUBLIC_BACKEND === "edge";
-const DEFAULT_SERVER =
-  process.env.EXPO_PUBLIC_API_URL ??
-  (EDGE ? "https://mench.espadna.com" : "http://127.0.0.1:3001");
+import { DemoBoard } from "./DemoBoard";
+import {
+  DEFAULT_SERVER,
+  EDGE,
+  OnlineGame,
+  loadName,
+  saveName,
+  useGameClient,
+} from "./OnlineGame";
 import { chooseMove, type Difficulty } from "@mench/game-bot";
 function Button({
   title,
@@ -331,65 +325,51 @@ function Online({
   token: string | null;
   inviteCode: string;
 }) {
-  const ref = useRef<GameClient | null>(null);
-  const [snapshot, setSnapshot] = useState<ClientState>({
-    room: null,
-    playerId: null,
-    connected: false,
-    queued: false,
-    busy: false,
-    error: "",
-  });
-  const [name, setName] = useState(t.guest);
+  const online = useGameClient({ t, server, token });
+  const { snapshot, client: ref, notice, setNotice } = online;
+  const [name, setNameState] = useState(t.guest);
+  const setName = (value: string) => {
+    setNameState(value);
+    saveName(value);
+  };
+  useEffect(() => {
+    void loadName().then((stored) => stored && setNameState(stored));
+  }, []);
   const [code, setCode] = useState(inviteCode);
   const [ranked, setRanked] = useState(false);
   const [capacity, setCapacity] = useState(2);
-  const [notice, setNotice] = useState("");
-  useEffect(() => {
-    let live = true;
-    let stop: (() => void) | undefined;
-    void getStored("mench-room")
-      .then((raw) => {
-        if (!live) return;
-        let session: Session | null = null;
-        if (raw)
-          try {
-            session = JSON.parse(raw) as Session;
-          } catch {
-            setNotice(t.error);
-          }
-        const client = new GameClient({
-          url: server,
-          transport: EDGE ? "websocket" : "socket.io",
-          requestId: Crypto.randomUUID,
-          session,
-          ...(token ? { token } : {}),
-          save: (value) => {
-            void setStored(
-              "mench-room",
-              value ? JSON.stringify(value) : null,
-            ).catch(() => setNotice(t.secureStorage));
-          },
-        });
-        ref.current = client;
-        stop = client.subscribe(setSnapshot);
-        client.connect();
-      })
-      .catch(() => setNotice(t.secureStorage));
-    return () => {
-      live = false;
-      stop?.();
-      ref.current?.close();
-      ref.current = null;
-    };
-  }, [server, token, t.error, t.secureStorage]);
   const { room, connected, busy, queued, playerId, error } = snapshot;
   const status = (
     <Text accessibilityLiveRegion="polite">
       {connected ? t.connected : t.reconnecting}
     </Text>
   );
+  const errorView = error ? (
+    <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
+  ) : null;
   const leave = () => void ref.current?.send({ type: "leave" });
+  // Opened from a friend's invite link: only a name and "join" are needed.
+  if (!room && inviteCode.length === 10)
+    return (
+      <View style={{ flex: 1, width: "100%" }}>
+        <TopBar t={t} title={t.online} onBack={onBack} rtl={rtl} />
+        <View style={styles.lobby}>
+          {status}
+          <Text style={styles.heading}>{t.join}</Text>
+          <Input label={t.nickname} value={name} onChange={setName} />
+          <Button
+            title={t.join}
+            primary
+            disabled={!connected || busy || !name.trim()}
+            onPress={() =>
+              void ref.current?.send({ type: "join", name, code: inviteCode })
+            }
+          />
+          {errorView}
+          {notice ? <Text>{notice}</Text> : null}
+        </View>
+      </View>
+    );
   if (!room)
     return (
       <View style={{ flex: 1, width: "100%" }}>
@@ -445,32 +425,12 @@ function Online({
             />
           )}
           {ranked && <Text>{t.rankedHint}</Text>}
-          {error && (
-            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
-          )}
-          {notice && <Text>{notice}</Text>}
+          {errorView}
+          {notice ? <Text>{notice}</Text> : null}
         </ScrollView>
       </View>
     );
-  const state = room.state;
-  const mine =
-    state &&
-    state.phase !== "finished" &&
-    currentPlayer(state).id === playerId &&
-    connected &&
-    !busy;
-  const winner = state?.winner
-    ? room.players.find((p) => p.id === state.winner)
-    : undefined;
-  // Guests often keep the default nickname; colour and "(you)" keep players apart.
-  const label = (id: string | null | undefined) => {
-    const index = room.players.findIndex((p) => p.id === id);
-    const player = room.players[index];
-    const seat = state?.players[index]?.seat;
-    if (!player || seat === undefined) return player?.name ?? "";
-    return `${t.names[seat]} · ${player.name}${id === playerId ? ` (${t.you})` : ""}`;
-  };
-  if (!state)
+  if (!room.state)
     return (
       <View style={{ flex: 1, width: "100%" }}>
         <TopBar t={t} title={t.online} onBack={leave} rtl={rtl} />
@@ -504,110 +464,23 @@ function Online({
             }
             onPress={() => void ref.current?.send({ type: "start" })}
           />
-          {notice && <Text>{notice}</Text>}
-          {error && (
-            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
-          )}
+          {notice ? <Text>{notice}</Text> : null}
+          {errorView}
           <Button title={t.leave} onPress={leave} />
         </ScrollView>
       </View>
     );
-  const active = state.winner ?? currentPlayer(state).id;
-  const proof = room.proofs.at(-1);
   return (
-    <GameScreen
+    <OnlineGame
       t={t}
       rtl={rtl}
+      online={online}
       title={t.online}
-      onBack={() => {
+      onExit={() => {
         leave();
         onBack();
       }}
-      actions={
-        proof ? (
-          <IconButton
-            label={t.verify}
-            icon="✔"
-            onPress={() => {
-              const observed = ref.current?.commitments.get(proof.commitment);
-              setNotice(
-                !observed
-                  ? t.unwitnessed
-                  : verifyProof(
-                        proof,
-                        observed,
-                        ref.current?.nonces.get(proof.commitment) ??
-                          proof.nonce,
-                      )
-                    ? t.verified
-                    : t.invalidProof,
-              );
-            }}
-          />
-        ) : undefined
-      }
-      board={(size) => (
-        <Board
-          state={state}
-          width={size}
-          t={t}
-          interactive={Boolean(mine)}
-          onMove={(pawn) =>
-            void ref.current?.send({
-              type: "move",
-              pawn,
-              expectedVersion: state.version,
-            })
-          }
-        />
-      )}
-      players={room.players.map((p, index) => ({
-        key: p.id,
-        seat: state.players[index]!.seat,
-        name: `${p.name}${p.id === playerId ? ` (${t.you})` : ""}`,
-        finished: state.players[index]!.pawns.filter((n) => n === FINISH)
-          .length,
-        current: p.id === active && state.phase !== "finished",
-      }))}
-      dice={state.dice ?? proof?.value ?? null}
-      status={
-        mine && state.phase === "move"
-          ? t.move
-          : `${state.winner ? t.winner : t.turn}: ${label(active)}`
-      }
-      info={
-        <>
-          {status}
-          {notice ? (
-            <Text accessibilityLiveRegion="polite">{notice}</Text>
-          ) : null}
-          {error ? (
-            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
-          ) : null}
-        </>
-      }
-      rollDisabled={!mine || state.phase !== "roll" || !room.commitment}
-      onRoll={() => {
-        const nonce = Array.from(Crypto.getRandomBytes(32), (v) =>
-          v.toString(16).padStart(2, "0"),
-        ).join("");
-        ref.current?.nonces.set(room.commitment!.hash, nonce);
-        void ref.current?.send({
-          type: "roll",
-          nonce,
-          expectedVersion: state.version,
-        });
-      }}
-    >
-      {state.phase === "finished" && winner && (
-        <ResultModal
-          key={room.matchId ?? room.code}
-          t={t}
-          winnerName={label(winner.id)}
-          won={state.winner === playerId}
-        />
-      )}
-    </GameScreen>
+    />
   );
 }
 interface Profile {
@@ -843,11 +716,18 @@ function Root() {
               </Pressable>
             ))}
             {storageError && <Text>{t.secureStorage}</Text>}
+            <DemoBoard t={t} />
           </View>
         ) : mode === "practice" ? (
           <Practice t={t} rtl={rtl} onBack={home} />
         ) : mode === "random" ? (
-          <RandomMatch t={t} rtl={rtl} onBack={home} />
+          <RandomMatch
+            t={t}
+            rtl={rtl}
+            onBack={home}
+            server={server}
+            token={token}
+          />
         ) : mode === "online" ? (
           <Online
             t={t}
@@ -889,13 +769,20 @@ function Root() {
 }
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: "center" },
-  home: { width: "100%", maxWidth: 540, paddingHorizontal: 16, gap: 14 },
+  home: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 540,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
   mode: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    minHeight: 92,
-    padding: 16,
+    minHeight: 76,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#b48acb",

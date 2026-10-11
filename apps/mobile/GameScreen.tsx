@@ -94,7 +94,7 @@ export function GameScreen({
   children?: ReactNode;
 }) {
   const [area, setArea] = useState({ width: 0, height: 0 });
-  const size = Math.floor(Math.min(area.width, area.height) - 4);
+  const size = Math.floor(Math.min(area.width, area.height) - 2);
   return (
     <View style={styles.screen}>
       <TopBar t={t} title={title} onBack={onBack} actions={actions} rtl={rtl} />
@@ -224,6 +224,8 @@ const styles = StyleSheet.create({
   boardArea: {
     flex: 1,
     minHeight: 0,
+    // Phones: the board may use the screen gutter too; width is the limit.
+    marginHorizontal: -9,
     alignItems: "center",
     justifyContent: "center",
   },

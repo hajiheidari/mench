@@ -178,6 +178,30 @@ test("quick match pairs two queued players, survives hibernation of the queue", 
   );
 });
 
+test("quick match accepts flagged names and cancelling leaves the queue", async () => {
+  const hub = new Hub(new Rooms(), new MemoryStore());
+  const a = new FakePeer("a");
+  const b = new FakePeer("b");
+  hub.open(a);
+  hub.open(b);
+  expect(await a.ask(hub, { type: "queue", name: "🇮🇷 Sara_7" })).toMatchObject({
+    ok: true,
+    queued: true,
+  });
+  expect(await a.ask(hub, { type: "cancelQueue" })).toMatchObject({
+    queued: false,
+  });
+  // Nobody is waiting any more, so the next player queues instead of matching.
+  expect(await b.ask(hub, { type: "queue", name: "🇹🇷 Emre" })).toMatchObject({
+    queued: true,
+  });
+  const matched = await a.ask(hub, { type: "queue", name: "🇮🇷 Sara_7" });
+  expect(matched.ok && matched.room?.players.map((p) => p.name)).toEqual([
+    "🇹🇷 Emre",
+    "🇮🇷 Sara_7",
+  ]);
+});
+
 test("a restart keeps the match and marks seats without sockets disconnected", async () => {
   const { store, peers, code, hub } = await lobby(2);
   await peers[0]!.ask(hub, { type: "start" });

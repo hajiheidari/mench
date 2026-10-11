@@ -68,5 +68,7 @@ export {
   randomOpponent,
   thinkingDelay,
   searchDelay,
+  flagForTimeZone,
+  matchName,
   type Opponent,
 } from "./opponents";
