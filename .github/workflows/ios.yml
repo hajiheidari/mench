@@ -87,6 +87,9 @@ jobs:
           workspace=$(ls -d *.xcworkspace | head -1)
           scheme=${workspace%.xcworkspace}
           echo "Workspace: $workspace, scheme: $scheme"
+          # Expo writes a literal CFBundleVersion; every upload needs a higher one.
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" "$scheme/Info.plist"
+          echo "Build number: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$scheme/Info.plist")"
           xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
             -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/App.xcarchive" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" ${APPLE_TEAM_ID:+DEVELOPMENT_TEAM="$APPLE_TEAM_ID"} \
