@@ -1,5 +1,13 @@
 # Project status
 
+## 2026-10-11 (later): live
+
+- **Deployed**: https://mench.espadna.com (game + online rooms) and https://espadna.com/mench-app/ (landing, privacy), via the `site` workflow with the owner's Cloudflare secrets. The deploy job now runs the two-browser online acceptance against the live URL from GitHub (passed), and the same suite passed from this container against production (invite, verified roll, offline/online reconnect, reload resume, 3-player room, full match to the same winner).
+- Live review at 390px found two problems, now fixed: the roll button sat below the board (fixed bottom roll bar on phones) and guests with the default nickname were indistinguishable (colour + "(you)" labels, web and app).
+- iOS: archive builds on GitHub's macOS 26 / Xcode 26 runner (Xcode 16.4 failed: Swift 6.2 package). Signing/TestFlight upload waits for the owner's App Store Connect secrets and app record (RELEASE.md §3).
+- Android builds are manual-only until the Bazaar release is requested; Google Play is out of scope for now (owner has no account).
+- CI (quality + edge) green on GitHub; Node E2E runs with one worker on CI.
+
 ## 2026-10-11: public deployment on espadna.com (Claude Code continuation)
 
 Target: the owner's studio site espadna.com (Cloudflare Workers; each app deploys its own Worker from GitHub Actions). See ADR 0002 and RELEASE.md (Persian release guide).
@@ -16,7 +24,7 @@ Tests run on 2026-10-11 (this container, Node 24.19.0): `npm run check` passes (
 
 Android release APK built locally on 2026-10-11 (Expo prebuild + Gradle 9.3.1, SDK 36, NDK 27.1): `com.espadna.mench` 1.0.0, arm64-v8a + armeabi-v7a, debug-signed, 16 KB zip alignment verified, bundle contains https://mench.espadna.com and no localhost (sha256 5c953413…08255). Not run on a device or emulator.
 
-Not done / not verified: nothing is deployed yet (needs the Cloudflare secrets in this repo and a merge to main); no GitHub Actions run has happened; no physical phone; iOS not built (needs macOS runner + Apple account); store submissions need the owner's accounts and signing key. Also re-run here with a local PostgreSQL 16: `npm run test:db` 24/24 passed; the original Node E2E suite 12/12 passed (accounts, social, economy, tournaments, history, Socket.IO online); platform tests 2/2 passed. On GitHub Actions (first remote runs ever) the edge job passed; the quality job showed that running the database suites in parallel inside `npm test` is flaky (shared database), reproduced locally (1 of 2 parallel runs failed, serial runs always pass), so CI now runs them serially via `npm run test:db`.
+Not done / not verified (at that point; see the later entry above): nothing was deployed yet; no physical phone; iOS not built (needs macOS runner + Apple account); store submissions need the owner's accounts and signing key. Also re-run here with a local PostgreSQL 16: `npm run test:db` 24/24 passed; the original Node E2E suite 12/12 passed (accounts, social, economy, tournaments, history, Socket.IO online); platform tests 2/2 passed. On GitHub Actions (first remote runs ever) the edge job passed; the quality job showed that running the database suites in parallel inside `npm test` is flaky (shared database), reproduced locally (1 of 2 parallel runs failed, serial runs always pass), so CI now runs them serially via `npm run test:db`.
 
 ## Earlier history (Codex milestones)
 
