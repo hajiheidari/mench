@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "VIP Ludo",
+    "name": "Ludo Dosti",
     "slug": "mench",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleDisplayName": "VIP Ludo",
+        "CFBundleDisplayName": "Ludo Dosti",
         "CFBundleDevelopmentRegion": "fa"
       }
     },

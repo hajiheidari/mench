@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "VIP Ludo",
-  "short_name": "VIP Ludo",
+  "name": "Ludo Dosti",
+  "short_name": "Ludo Dosti",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

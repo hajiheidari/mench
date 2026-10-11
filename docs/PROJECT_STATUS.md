@@ -1,5 +1,7 @@
 # Project status
 
+- 2026-10-11: product name is **Ludo Dosti** (App Store name "Ludo Dosti: Play with Friends", home-screen name "Ludo Dosti"). "VIP Ludo" was dropped (casino connotation); "Yalla Ludo" is an existing Yalla Technology trademark. Bundle id stays com.espadna.mench, domain mench.espadna.com.
+
 ## 2026-10-11 (later): live
 
 - **Deployed**: https://mench.espadna.com (game + online rooms) and https://espadna.com/mench-app/ (landing, privacy), via the `site` workflow with the owner's Cloudflare secrets. The deploy job now runs the two-browser online acceptance against the live URL from GitHub (passed), and the same suite passed from this container against production (invite, verified roll, offline/online reconnect, reload resume, 3-player room, full match to the same winner).
