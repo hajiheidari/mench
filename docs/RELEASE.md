@@ -35,7 +35,7 @@ GitHub → مخزن `hajiheidari/mench` → Settings → Secrets and variables �
 
 ## ۲) اندروید (بازار و گوگل‌پلی)
 
-با هر push روی `main` (یا Actions → android → Run workflow)، فایل APK (برای بازار یا نصب مستقیم) و AAB (برای گوگل‌پلی) ساخته و در Releases با نام `android-test-build` گذاشته می‌شود. این نسخه‌ها به mench.espadna.com وصل‌اند. شناسهٔ برنامه: `com.espadna.mench`.
+فعلاً دستی: Actions → android → Run workflow. فایل APK (برای بازار یا نصب مستقیم) و AAB (برای گوگل‌پلی) ساخته و در Releases با نام `android-test-build` گذاشته می‌شود. این نسخه‌ها به mench.espadna.com وصل‌اند. شناسهٔ برنامه: `com.espadna.mench`.
 
 بدون کلید امضا، فایل‌ها امضای آزمایشی دارند (برای نصب و تست کافی است، ولی فروشگاه‌ها قبولشان نمی‌کنند). برای انتشار فروشگاهی **یک بار** کلید بسازید و جای امنی نگه دارید (اگر گم شود دیگر نمی‌توانید برنامه را به‌روز کنید):
 
@@ -48,15 +48,23 @@ base64 -w0 mench-upload.jks   # خروجی را در سکرت MENCH_UPLOAD_KEYST
 
 سپس: بازار ← پنل توسعه‌دهندگان ← برنامهٔ جدید ← بارگذاری `mench-release.apk`؛ گوگل‌پلی ← Play Console ← `mench-release.aab`. در هر دو، نشانی حریم خصوصی را https://espadna.com/mench-app/privacy/ بدهید. شمارهٔ نسخه (versionCode) خودکار با هر ساخت بالا می‌رود.
 
-## ۳) آیفون (اپ‌استور)
+## ۳) آیفون (اپ‌استور و TestFlight)
 
-نیاز به عضویت Apple Developer دارد (هزینهٔ سالانه؛ تصمیمش با شماست). مثل عددی، بدون مک:
+ساخت iOS روی مک GitHub (Xcode 26) آزمایش شده و بدون امضا با موفقیت ساخته می‌شود. برای امضا و ارسال به TestFlight، بدون نیاز به مک:
 
-1. در App Store Connect یک برنامه با Bundle ID `com.espadna.mench` بسازید.
-2. سکرت‌ها: `APPLE_TEAM_ID`، `ASC_KEY_ID`، `ASC_ISSUER_ID`، `ASC_KEY_P8` (همان کلید API که برای عددی ساخته‌اید هم کار می‌کند).
-3. Actions → ios → Run workflow. نسخه در TestFlight ظاهر می‌شود و از همان‌جا برای بررسی اپل ارسال می‌کنید.
+1. **کلید API**: App Store Connect → Users and Access → Integrations → App Store Connect API → یک کلید با نقش **Admin** بسازید (اگر برای عددی ساخته‌اید، همان را استفاده کنید). فایل `AuthKey_XXXX.p8` فقط یک بار قابل دانلود است.
+2. **شناسهٔ برنامه**: developer.apple.com → Certificates, IDs & Profiles → Identifiers → + → App IDs → App، با Bundle ID دقیقاً `com.espadna.mench` (Explicit). قابلیت خاصی لازم نیست.
+3. **رکورد برنامه**: App Store Connect → Apps → + → New App: پلتفرم iOS، Bundle ID همان `com.espadna.mench`، SKU مثلاً `mench`، زبان اصلی فارسی. نام باید در کل اپ‌استور یکتا باشد؛ اگر «منچ» یا «Mench» گرفته شده بود، مثلاً «منچ آنلاین» یا «Mench: Ludo with Friends».
+4. **سکرت‌های مخزن mench** (Settings → Secrets → Actions):
+   - `APPLE_TEAM_ID`: در developer.apple.com → Account → Membership
+   - `ASC_KEY_ID`: شناسهٔ کلید (Key ID)
+   - `ASC_ISSUER_ID`: Issuer ID بالای صفحهٔ کلیدها
+   - `ASC_KEY_P8`: کل متن فایل `.p8` (از `-----BEGIN PRIVATE KEY-----` تا انتها)
+5. Actions → **ios** → Run workflow (گزینهٔ upload روشن). بعد از ۱۰ تا ۳۰ دقیقه پردازش اپل، نسخه در App Store Connect → TestFlight دیده می‌شود. سؤال رمزنگاری از قبل جواب داده شده (`ITSAppUsesNonExemptEncryption = false`).
+6. برای تست روی آیفون خودتان: در TestFlight → Internal Testing خودتان را اضافه کنید و برنامهٔ TestFlight را روی گوشی نصب کنید.
+7. برای انتشار: در صفحهٔ برنامه، اسکرین‌شات‌ها (آیفون ۶٫۹ اینچ)، توضیحات، نشانی حریم خصوصی `https://espadna.com/mench-app/privacy/` و نشانی پشتیبانی `https://espadna.com/mench-app/` را وارد کنید. Age Rating بدون محتوای حساس است؛ در App Privacy دقیق‌ترین اعلام این است: User Content → Other User Content (نام نمایشی که بازیکن تایپ می‌کند)، با هدف App Functionality، **Not linked to the user** و **Not used for tracking**. داده‌ی دیگری جمع نمی‌شود.
 
-بدون این سکرت‌ها، workflow فقط بررسی می‌کند که نسخهٔ iOS بدون امضا ساخته می‌شود.
+هر بار workflow را اجرا کنید، شمارهٔ build خودکار بالا می‌رود.
 
 ## اجرای محلی
 

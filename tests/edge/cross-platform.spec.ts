@@ -58,10 +58,12 @@ test("web host and app guest finish a match; the app shows the native result pop
     await app.getByRole("button", { name: "Join room", exact: true }).click();
     await expect(web.getByText("Phone", { exact: true })).toBeVisible();
     await web.getByRole("button", { name: "Start game", exact: true }).click();
-    await expect(app.getByText("Turn: Desktop", { exact: true })).toBeVisible();
+    await expect(
+      app.getByText("Turn: Red · Desktop", { exact: true }),
+    ).toBeVisible();
 
     const appResult = app.getByRole("alert", {
-      name: /Winner: (Desktop|Phone)/,
+      name: /Winner: \S+ · (Desktop|Phone)/,
     });
     const webResult = web.getByRole("dialog");
     for (let i = 0; i < 20000; i++) {
@@ -72,7 +74,7 @@ test("web host and app guest finish a match; the app shows the native result pop
     await expect(webResult).toBeVisible();
     await expect(appResult).toBeVisible();
     const label = (await appResult.getAttribute("aria-label")) ?? "";
-    const winner = /Winner: (Desktop|Phone)/.exec(label)![1]!;
+    const winner = /Winner: \S+ · (Desktop|Phone)/.exec(label)![1]!;
     await expect(webResult).toContainText(winner);
     expect(label.startsWith("Congratulations! You won")).toBe(
       winner === "Phone",

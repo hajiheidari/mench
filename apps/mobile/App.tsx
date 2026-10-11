@@ -431,13 +431,21 @@ function Online({
   const winner = state?.winner
     ? room.players.find((p) => p.id === state.winner)
     : undefined;
+  // Guests often keep the default nickname; colour and "(you)" keep players apart.
+  const label = (id: string | null | undefined) => {
+    const index = room.players.findIndex((p) => p.id === id);
+    const player = room.players[index];
+    const seat = state?.players[index]?.seat;
+    if (!player || seat === undefined) return player?.name ?? "";
+    return `${t.names[seat]} · ${player.name}${id === playerId ? ` (${t.you})` : ""}`;
+  };
   return (
     <>
       {state?.phase === "finished" && winner && (
         <ResultModal
           key={room.matchId ?? room.code}
           t={t}
-          winnerName={winner.name}
+          winnerName={label(winner.id)}
           won={state.winner === playerId}
         />
       )}
@@ -446,9 +454,7 @@ function Online({
         {state
           ? (state.winner ? t.winner : t.turn) +
             ": " +
-            (room.players.find(
-              (p) => p.id === (state.winner ?? currentPlayer(state).id),
-            )?.name ?? "")
+            label(state.winner ?? currentPlayer(state).id)
           : t.waiting}
       </Text>
       <Text selectable>{room.code}</Text>

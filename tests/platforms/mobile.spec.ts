@@ -28,7 +28,7 @@ test("Expo browser client joins a desktop private match using shared protocol", 
     await expect(web.getByText("Mobile", { exact: true })).toBeVisible();
     await web.getByRole("button", { name: "Start game", exact: true }).click();
     await expect(
-      mobile.getByText("Turn: Desktop", { exact: true }),
+      mobile.getByText("Turn: Red · Desktop", { exact: true }),
     ).toBeVisible();
     await expect(
       mobile.getByRole("button", { name: "Roll dice", exact: true }),
