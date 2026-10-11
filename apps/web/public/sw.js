@@ -31,7 +31,9 @@ self.addEventListener("fetch", (event) => {
     event.request.method !== "GET" ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api") ||
-    url.pathname.startsWith("/socket.io")
+    url.pathname.startsWith("/socket.io") ||
+    url.pathname === "/ws" ||
+    url.pathname.startsWith("/mench-app")
   )
     return;
   if (event.request.mode === "navigate") {

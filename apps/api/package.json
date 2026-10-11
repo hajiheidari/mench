@@ -15,6 +15,7 @@
     "@mench/fair-dice": "0.0.0",
     "@mench/game-engine": "0.0.0",
     "@mench/game-protocol": "0.0.0",
+    "@mench/room-core": "0.0.0",
     "@mench/tournament": "0.0.0",
     "fastify": "5.12.5",
     "pg": "8.23.1",

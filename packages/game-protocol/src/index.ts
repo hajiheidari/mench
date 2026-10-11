@@ -8,6 +8,19 @@ export const EVENTS = {
   MATCHED: "v1:matched",
   AUTH_REVOKED: "v1:auth_revoked",
 } as const;
+/**
+ * Plain WebSocket framing used by the edge server, where Socket.IO is unavailable.
+ * Text "ping" is answered with "pong" without waking the room host.
+ */
+export const WIRE = { PATH: "/ws", PING: "ping", PONG: "pong" } as const;
+export interface ClientFrame {
+  t: "cmd";
+  id: number;
+  command: unknown;
+}
+export type ServerFrame =
+  | { t: "ack"; id: number; reply: Reply }
+  | { t: "event"; name: string; data: unknown };
 export interface PublicPlayer {
   id: string;
   name: string;

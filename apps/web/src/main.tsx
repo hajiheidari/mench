@@ -6,18 +6,29 @@ import { messages } from "./messages";
 import { Account } from "./Account";
 import { Online } from "./Online";
 import { Practice } from "./Practice";
+import { EDGE } from "./backend";
 import "./style.css";
+function initialLocale(): Locale {
+  const asked = new URLSearchParams(location.search).get("lang");
+  if (asked === "fa" || asked === "en") return asked;
+  return "fa";
+}
 function App() {
-  const [locale, setLocale] = useState<Locale>("fa");
+  const [locale, setLocale] = useState<Locale>(initialLocale);
   const t = messages[locale];
   const [mode, setMode] = useState(
     location.pathname.startsWith("/join/")
       ? "online"
-      : location.pathname.startsWith("/tournament/")
+      : !EDGE && location.pathname.startsWith("/tournament/")
         ? "account"
         : "practice",
   );
   useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
+  }, [locale]);
+  useEffect(() => {
+    if (EDGE) return;
     void readEconomy()
       .then((data) => {
         document.documentElement.dataset.theme = data.active ?? "";
@@ -41,8 +52,6 @@ function App() {
           onClick={() => {
             const next = locale === "fa" ? "en" : "fa";
             setLocale(next);
-            document.documentElement.lang = next;
-            document.documentElement.dir = next === "fa" ? "rtl" : "ltr";
           }}
         >
           {t.language}
@@ -61,12 +70,14 @@ function App() {
         >
           {t.online}
         </button>
-        <button
-          className={mode === "account" ? "active" : ""}
-          onClick={() => setMode("account")}
-        >
-          {t.signIn}
-        </button>
+        {!EDGE && (
+          <button
+            className={mode === "account" ? "active" : ""}
+            onClick={() => setMode("account")}
+          >
+            {t.signIn}
+          </button>
+        )}
       </nav>
       {mode === "practice" ? (
         <Practice t={t} />

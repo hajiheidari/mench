@@ -1,0 +1,17 @@
+{
+  "name": "@mench/room-core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@mench/fair-dice": "0.0.0",
+    "@mench/game-engine": "0.0.0",
+    "@mench/game-protocol": "0.0.0",
+    "zod": "3.25.76"
+  }
+}

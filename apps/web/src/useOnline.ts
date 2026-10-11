@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GameClient, type ClientState, type Session } from "@mench/game-client";
 import type { Intent } from "@mench/game-protocol";
+import { EDGE } from "./backend";
 const key = "mench-session-v1";
 function load(): Session | null {
   try {
@@ -33,6 +34,7 @@ export function useOnline() {
   useEffect(() => {
     const c = new GameClient({
       requestId: () => crypto.randomUUID(),
+      transport: EDGE ? "websocket" : "socket.io",
       session: load(),
       save: (session) =>
         session

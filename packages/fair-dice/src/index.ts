@@ -6,13 +6,15 @@ import {
 } from "node:crypto";
 import {
   contextText,
+  toHex,
   validHex,
   type DiceContext,
   type DiceProof,
 } from "./context";
 export type { DiceContext, DiceProof } from "./context";
+export { toHex } from "./context";
 export function secureSeed(): string {
-  return randomBytes(32).toString("hex");
+  return toHex(randomBytes(32));
 }
 export function commitment(seed: string, context: DiceContext): string {
   if (!validHex(seed)) throw new Error("INVALID_SEED");

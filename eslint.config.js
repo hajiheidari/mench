@@ -7,6 +7,7 @@ export default ts.config(
       "**/dist/**",
       "**/node_modules/**",
       "**/.expo/**",
+      "**/.wrangler/**",
       "test-results/**",
       "playwright-report/**",
       "apps/mobile/android/**",

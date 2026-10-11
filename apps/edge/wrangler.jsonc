@@ -1,0 +1,30 @@
+// Cloudflare Worker for mench.espadna.com (web game + online rooms) and the
+// espadna.com/mench-app* landing pages, the same layout as Adadi and Tiaro.
+// Deployed by .github/workflows/site.yml on every push to main; never deploy by hand.
+// The game is a single page: unknown paths such as /join/CODE get index.html.
+// /ws reaches the GameHub Durable Object, the single owner of every room.
+{
+  "name": "mench",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": true,
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME_HUB", "class_name": "GameHub" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameHub"] }],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://mench.espadna.com,https://espadna.com",
+  },
+  "routes": [
+    { "pattern": "mench.espadna.com", "custom_domain": true },
+    { "pattern": "espadna.com/mench-app*", "zone_name": "espadna.com" },
+  ],
+  "observability": { "enabled": true },
+}

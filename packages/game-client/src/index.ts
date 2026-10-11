@@ -1,6 +1,12 @@
-import { io, type Socket } from "socket.io-client";
+import {
+  socketIoTransport,
+  webSocketTransport,
+  type Transport,
+  type TransportKind,
+} from "./transport";
 import {
   EVENTS,
+  type Command,
   type Intent,
   type PublicRoom,
   type Reply,
@@ -22,6 +28,8 @@ export interface ClientOptions {
   url?: string;
   session?: Session | null;
   token?: string;
+  /** "websocket" talks to the edge server; Socket.IO is the Node API default. */
+  transport?: TransportKind;
   requestId: () => string;
   save: (session: Session | null) => void;
 }
@@ -37,46 +45,43 @@ export class GameClient {
     error: "",
   };
   private readonly listeners = new Set<(state: ClientState) => void>();
-  private readonly socket: Socket;
+  private readonly socket: Transport;
   private session: Session | null;
   constructor(private readonly options: ClientOptions) {
     this.session = options.session ?? null;
-    this.socket = io(options.url, {
-      autoConnect: false,
-      ...(options.token
-        ? { extraHeaders: { Authorization: `Bearer ${options.token}` } }
-        : {}),
-    });
-    this.socket.on("connect", () => {
-      this.update({ connected: true, error: "" });
-      if (this.session)
-        void this.send({
-          type: "resume",
-          code: this.session.code,
-          token: this.session.token,
-        }).then((reply) => {
-          if (reply && !reply.ok) {
-            this.session = null;
-            options.save(null);
-            this.update({ room: null, playerId: null });
-          }
-        });
-    });
-    this.socket.on("disconnect", () =>
-      this.update({ connected: false, queued: false }),
-    );
-    this.socket.on("connect_error", () =>
-      this.update({ error: "CONNECTION_FAILED" }),
-    );
-    this.socket.on(EVENTS.SNAPSHOT, (room: PublicRoom) =>
-      this.adopt({ ok: true, room }),
-    );
-    this.socket.on(EVENTS.MATCHED, (reply: Reply) => this.adopt(reply));
-    this.socket.on(EVENTS.REPLACED, () => {
+    const handlers = {
+      connect: () => {
+        this.update({ connected: true, error: "" });
+        if (this.session)
+          void this.send({
+            type: "resume",
+            code: this.session.code,
+            token: this.session.token,
+          }).then((reply) => {
+            if (reply && !reply.ok) {
+              this.session = null;
+              options.save(null);
+              this.update({ room: null, playerId: null });
+            }
+          });
+      },
+      disconnect: () => this.update({ connected: false, queued: false }),
+      error: () => this.update({ error: "CONNECTION_FAILED" }),
+      event: (name: string, data: unknown) => this.event(name, data),
+    };
+    this.socket =
+      options.transport === "websocket"
+        ? webSocketTransport(handlers, options.url)
+        : socketIoTransport(handlers, options.url, options.token);
+  }
+  private event(name: string, data: unknown) {
+    if (name === EVENTS.SNAPSHOT)
+      this.adopt({ ok: true, room: data as PublicRoom });
+    else if (name === EVENTS.MATCHED) this.adopt(data as Reply);
+    else if (name === EVENTS.REPLACED) {
       this.socket.disconnect();
       this.update({ connected: false, error: "SESSION_REPLACED" });
-    });
-    this.socket.on(EVENTS.AUTH_REVOKED, () => {
+    } else if (name === EVENTS.AUTH_REVOKED) {
       this.session = null;
       this.options.save(null);
       this.socket.disconnect();
@@ -87,7 +92,7 @@ export class GameClient {
         playerId: null,
         error: "UNAUTHENTICATED",
       });
-    });
+    }
   }
   subscribe(listener: (state: ClientState) => void): () => void {
     this.listeners.add(listener);
@@ -98,8 +103,7 @@ export class GameClient {
     this.socket.connect();
   }
   close() {
-    this.socket.removeAllListeners();
-    this.socket.disconnect();
+    this.socket.dispose();
     this.listeners.clear();
   }
   private update(patch: Partial<ClientState>) {
@@ -150,17 +154,13 @@ export class GameClient {
     this.update({ busy: true, error: "" });
     try {
       const requestId = this.options.requestId();
-      const command = { version: 1, requestId, payload };
+      const command: Command = { version: 1, requestId, payload };
       let reply: Reply;
       try {
-        reply = (await this.socket
-          .timeout(5000)
-          .emitWithAck(EVENTS.COMMAND, command)) as Reply;
+        reply = await this.socket.request(command, 5000);
       } catch {
         if (!this.socket.connected) throw Error("CONNECTION_FAILED");
-        reply = (await this.socket
-          .timeout(5000)
-          .emitWithAck(EVENTS.COMMAND, command)) as Reply;
+        reply = await this.socket.request(command, 5000);
       }
       this.adopt(reply);
       if (reply.ok && payload.type === "leave") {
@@ -177,6 +177,7 @@ export class GameClient {
     }
   }
 }
+export { websocketUrl, type TransportKind } from "./transport";
 export { readSocial, sendSocial } from "./social";
 export { readRankings } from "./rankings";
 export { readEconomy, buyCosmetic, equipCosmetic } from "./economy";

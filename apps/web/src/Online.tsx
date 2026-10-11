@@ -8,6 +8,7 @@ import { Avatar } from "./Avatar";
 import { Dice } from "./Dice";
 import { ResultDialog } from "./ResultDialog";
 import { Board } from "./Board";
+import { EDGE } from "./backend";
 export function Online({ t }: { t: Messages }) {
   const online = useOnline();
   const { room, playerId, connected, queued, error, busy, send } = online;
@@ -118,15 +119,17 @@ export function Online({ t }: { t: Messages }) {
           >
             {queued ? t.cancel : t.matchmaking}
           </button>
-          <label>
-            <input
-              type="checkbox"
-              checked={ranked}
-              disabled={queued || busy}
-              onChange={(e) => setRanked(e.target.checked)}
-            />
-            {t.ranked}
-          </label>
+          {!EDGE && (
+            <label>
+              <input
+                type="checkbox"
+                checked={ranked}
+                disabled={queued || busy}
+                onChange={(e) => setRanked(e.target.checked)}
+              />
+              {t.ranked}
+            </label>
+          )}
           {ranked && <p className="fine">{t.rankedHint}</p>}
           {queued && <p role="status">{t.queue}</p>}
         </div>
@@ -135,6 +138,14 @@ export function Online({ t }: { t: Messages }) {
   const state = room.state;
   const invite = async () => {
     const url = new URL(`/join/${room.code}`, location.origin).href;
+    if (navigator.share && matchMedia("(pointer: coarse)").matches)
+      try {
+        await navigator.share({ title: t.brand, text: t.inviteText, url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
+      }
     try {
       await navigator.clipboard.writeText(url);
       setNotice(t.copied);
