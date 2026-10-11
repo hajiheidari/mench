@@ -9,9 +9,11 @@ export default defineConfig({
   timeout: 120000,
   use: {
     baseURL: "http://127.0.0.1:5173",
-    launchOptions: existsSync("/usr/bin/chromium")
-      ? { executablePath: "/usr/bin/chromium" }
-      : {},
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE }
+      : existsSync("/usr/bin/chromium")
+        ? { executablePath: "/usr/bin/chromium" }
+        : {},
   },
   webServer: [
     {

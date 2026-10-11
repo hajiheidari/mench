@@ -9,9 +9,11 @@ export default defineConfig({
   timeout: 90000,
   workers: 1,
   use: {
-    launchOptions: existsSync("/usr/bin/chromium")
-      ? { executablePath: "/usr/bin/chromium" }
-      : {},
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE }
+      : existsSync("/usr/bin/chromium")
+        ? { executablePath: "/usr/bin/chromium" }
+        : {},
   },
   webServer: [
     {

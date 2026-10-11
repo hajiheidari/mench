@@ -25,7 +25,11 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci
+      # Database suites share one PostgreSQL; run them serially (test:db), not in parallel with check.
       - run: npm run check
+        env:
+          TEST_DATABASE_URL: ""
+      - run: npm run test:db
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run build:mobile
