@@ -70,8 +70,16 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           if [ "$HAVE_SECRETS" = true ]; then
+            # Pasted IDs often carry stray spaces or newlines.
+            for v in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID; do
+              clean=$(printf '%s' "${!v}" | tr -d '[:space:]"')
+              export "$v=$clean"
+              echo "$v=$clean" >> "$GITHUB_ENV"
+            done
             mkdir -p "$RUNNER_TEMP/keys"
-            printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+            python3 ../../../infra/scripts/write-asc-key.py "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+            openssl pkey -in "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" -noout \
+              || { echo "::error::ASC_KEY_P8 is not a valid private key. Paste the full AuthKey_$ASC_KEY_ID.p8 text."; exit 1; }
             xcodebuild -workspace Mench.xcworkspace -scheme Mench -configuration Release \
               -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/Mench.xcarchive" \
               CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
