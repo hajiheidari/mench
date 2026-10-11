@@ -4,7 +4,7 @@
 
 - **Deployed**: https://mench.espadna.com (game + online rooms) and https://espadna.com/mench-app/ (landing, privacy), via the `site` workflow with the owner's Cloudflare secrets. The deploy job now runs the two-browser online acceptance against the live URL from GitHub (passed), and the same suite passed from this container against production (invite, verified roll, offline/online reconnect, reload resume, 3-player room, full match to the same winner).
 - Live review at 390px found two problems, now fixed: the roll button sat below the board (fixed bottom roll bar on phones) and guests with the default nickname were indistinguishable (colour + "(you)" labels, web and app).
-- iOS: archive builds on GitHub's macOS 26 / Xcode 26 runner (Xcode 16.4 failed: Swift 6.2 package). Signing/TestFlight upload waits for the owner's App Store Connect secrets and app record (RELEASE.md §3).
+- iOS: first build uploaded to App Store Connect (ios run 38131088034, build number = run number): unsigned archive on macOS 26 / Xcode 26, signed at export with Apple's cloud-managed distribution certificate via the API key (a signed archive failed for lack of a development profile; the pasted .p8 needed PEM normalisation, infra/scripts/write-asc-key.py). Not yet installed on a physical iPhone; dSYM upload warnings for prebuilt React Native frameworks are cosmetic.
 - Android builds are manual-only until the Bazaar release is requested; Google Play is out of scope for now (owner has no account).
 - CI (quality + edge) green on GitHub; Node E2E runs with one worker on CI.
 
