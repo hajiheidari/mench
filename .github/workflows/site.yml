@@ -20,6 +20,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/node_modules/.cache/ms-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,3 +58,10 @@ jobs:
           curl -fsS https://mench.espadna.com/healthz
           curl -fsS -o /dev/null https://mench.espadna.com/join/ABCDEF1234
           curl -fsS -o /dev/null https://espadna.com/mench-app/
+      - name: Live online acceptance (two browsers on the deployed game)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || exit 0
+          npx playwright install --with-deps chromium
+          npx playwright test --config playwright.production.config.ts

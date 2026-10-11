@@ -1,5 +1,5 @@
 # Android builds for testing and for the stores.
-# - Every push to main (or Actions → android → Run workflow): build the APK
+# - Actions → android → Run workflow (manual until store release): build the APK
 #   (Cafe Bazaar / direct install) and the AAB (Google Play) connected to
 #   mench.espadna.com, and publish them on the "android-test-build" pre-release.
 # - Signed with the upload key when the secrets MENCH_UPLOAD_KEYSTORE_BASE64,
@@ -8,8 +8,6 @@
 name: android
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -77,7 +75,6 @@ jobs:
           name: mench-android
           path: ${{ runner.temp }}/out/*
       - name: Publish on the android-test-build pre-release
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

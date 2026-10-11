@@ -7,6 +7,8 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= resolve(
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 120000,
+  // The tournament test drives four browsers; parallel workers starve slow CI runners.
+  workers: process.env.CI ? 1 : undefined,
   use: {
     baseURL: "http://127.0.0.1:5173",
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
