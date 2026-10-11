@@ -109,7 +109,9 @@ export function Board({
                 style={{
                   position: "absolute",
                   left: x * scale - pawnWidth / 2 + dx,
-                  top: y * scale - pawnHeight * 0.76 + dy,
+                  // Centre the body on the cell/home circle; a base anchor let
+                  // the head stick out of the white circles.
+                  top: y * scale - pawnHeight * 0.58 + dy,
                   width: pawnWidth,
                   height: pawnHeight,
                   borderRadius: pawnWidth * 0.4,

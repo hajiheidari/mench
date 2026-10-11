@@ -6,6 +6,8 @@ import { messages } from "./messages";
 import { Account } from "./Account";
 import { Online } from "./Online";
 import { Practice } from "./Practice";
+import { RandomMatch } from "./RandomMatch";
+import { LanguageToggle, TopBar } from "./GameScreen";
 import { EDGE } from "./backend";
 import "./style.css";
 function initialLocale(): Locale {
@@ -21,8 +23,14 @@ function App() {
       ? "online"
       : !EDGE && location.pathname.startsWith("/tournament/")
         ? "account"
-        : "practice",
+        : "home",
   );
+  const home = () => {
+    setMode("home");
+    // An invite link opens the friends screen once; afterwards "/" is home.
+    if (location.pathname !== "/")
+      history.replaceState(null, "", "/" + location.search);
+  };
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
@@ -37,59 +45,101 @@ function App() {
         document.documentElement.dataset.theme = "";
       });
   }, []);
+  const languageButton = (
+    <button
+      className="language"
+      onClick={() => setLocale(locale === "fa" ? "en" : "fa")}
+    >
+      {t.language}
+    </button>
+  );
   return (
-    <main dir={locale === "fa" ? "rtl" : "ltr"} lang={locale}>
-      <header>
-        <div>
-          <h1>
-            {t.brand}
-            <span className="brand-dot">✦</span>
-          </h1>
-          <p>{t.tagline}</p>
-        </div>
-        <button
-          className="language"
-          onClick={() => {
-            const next = locale === "fa" ? "en" : "fa";
-            setLocale(next);
-          }}
-        >
-          {t.language}
-        </button>
-      </header>
-      <nav className="tabs">
-        <button
-          className={mode === "practice" ? "active" : ""}
-          onClick={() => setMode("practice")}
-        >
-          {t.practice}
-        </button>
-        <button
-          className={mode === "online" ? "active" : ""}
-          onClick={() => setMode("online")}
-        >
-          {t.online}
-        </button>
-        {!EDGE && (
-          <button
-            className={mode === "account" ? "active" : ""}
-            onClick={() => setMode("account")}
-          >
-            {t.signIn}
-          </button>
+    <LanguageToggle.Provider
+      value={{
+        label: t.language,
+        toggle: () => setLocale(locale === "fa" ? "en" : "fa"),
+      }}
+    >
+      <main
+        dir={locale === "fa" ? "rtl" : "ltr"}
+        lang={locale}
+        className={mode === "home" ? "home" : "playing"}
+      >
+        {mode === "home" ? (
+          <>
+            <header>
+              <div>
+                <h1>
+                  {t.brand}
+                  <span className="brand-dot">✦</span>
+                </h1>
+                <p>{t.tagline}</p>
+              </div>
+              {languageButton}
+            </header>
+            <nav className="modes">
+              <button
+                className="mode random"
+                aria-label={t.random}
+                onClick={() => setMode("random")}
+              >
+                <span className="mode-icon" aria-hidden="true">
+                  🌍
+                </span>
+                <strong>{t.random}</strong>
+                <small>{t.randomHint}</small>
+              </button>
+              <button
+                className="mode friends"
+                aria-label={t.online}
+                onClick={() => setMode("online")}
+              >
+                <span className="mode-icon" aria-hidden="true">
+                  🔗
+                </span>
+                <strong>{t.online}</strong>
+                <small>{t.friendsHint}</small>
+              </button>
+              <button
+                className="mode local"
+                aria-label={t.practice}
+                onClick={() => setMode("practice")}
+              >
+                <span className="mode-icon" aria-hidden="true">
+                  🎲
+                </span>
+                <strong>{t.practice}</strong>
+                <small>{t.practiceHint}</small>
+              </button>
+              {!EDGE && (
+                <button
+                  className="mode"
+                  aria-label={t.signIn}
+                  onClick={() => setMode("account")}
+                >
+                  <span className="mode-icon" aria-hidden="true">
+                    👤
+                  </span>
+                  <strong>{t.signIn}</strong>
+                </button>
+              )}
+            </nav>
+            <footer>{t.rules}</footer>
+          </>
+        ) : mode === "practice" ? (
+          <Practice t={t} onBack={home} />
+        ) : mode === "random" ? (
+          <RandomMatch t={t} onBack={home} />
+        ) : mode === "online" ? (
+          <Online t={t} onBack={home} />
+        ) : (
+          <div className="game-screen scrollable">
+            <TopBar t={t} title={t.signIn} onBack={home} />
+            <Account t={t} />
+          </div>
         )}
-      </nav>
-      {mode === "practice" ? (
-        <Practice t={t} />
-      ) : mode === "online" ? (
-        <Online t={t} />
-      ) : (
-        <Account t={t} />
-      )}
-      <footer>
-        {t.rules} · {t.practice}
-      </footer>
-    </main>
+      </main>
+    </LanguageToggle.Provider>
   );
 }
 const root = document.getElementById("root");

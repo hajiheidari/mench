@@ -41,7 +41,9 @@ test("web host and app guest finish a match; the app shows the native result pop
   const app = await appContext.newPage();
   try {
     await web.goto("/?lang=en");
-    await web.getByRole("button", { name: "Play online", exact: true }).click();
+    await web
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await web.getByLabel("Display name").fill("Desktop");
     await web.getByRole("button", { name: "Create room", exact: true }).click();
     const code = await web.getByTestId("room-code").innerText();
@@ -51,7 +53,9 @@ test("web host and app guest finish a match; the app shows the native result pop
     await expect(
       app.getByRole("button", { name: "Account", exact: true }),
     ).toHaveCount(0);
-    await app.getByRole("button", { name: "Play online", exact: true }).click();
+    await app
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await expect(app.getByText("Connected", { exact: true })).toBeVisible();
     await app.getByLabel("Display name", { exact: true }).fill("Phone");
     await app.getByLabel("Room code", { exact: true }).fill(code);
@@ -100,6 +104,9 @@ test("app practice ends with the native result popup and restarts cleanly", asyn
   try {
     await app.goto(MOBILE);
     await app.getByRole("button", { name: "English", exact: true }).click();
+    await app
+      .getByRole("button", { name: "Play on one device", exact: true })
+      .click();
     const result = app.getByRole("alert", { name: /^Game over\. Winner: / });
     for (let i = 0; i < 20000 && !(await result.count()); i++)
       await step(app, true);

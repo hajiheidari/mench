@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { chooseMove, type Difficulty } from "@mench/game-bot";
 import {
   applyAction,
@@ -6,23 +6,17 @@ import {
   currentPlayer,
   FINISH,
 } from "@mench/game-engine";
-import { Avatar } from "./Avatar";
-import { Dice } from "./Dice";
 import { ResultDialog } from "./ResultDialog";
 import { Board, colors } from "./Board";
+import { GameScreen, randomDie } from "./GameScreen";
 import type { Messages } from "./messages";
-function randomDie(): number {
-  const bytes = new Uint8Array(1);
-  do {
-    crypto.getRandomValues(bytes);
-  } while (bytes[0]! >= 252);
-  return (bytes[0]! % 6) + 1;
-}
-export function Practice({ t }: { t: Messages }) {
+
+export function Practice({ t, onBack }: { t: Messages; onBack: () => void }) {
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const settings = useRef<HTMLDialogElement>(null);
   const winner = state.players.find((player) => player.id === state.winner);
   const count = state.players.length;
   function newGame(playerCount = count) {
@@ -54,8 +48,78 @@ export function Practice({ t }: { t: Messages }) {
     }, 450);
     return () => clearTimeout(timer);
   }, [botTurn, state, difficulty]);
+  const shown =
+    state.players[state.winner ? Number(state.winner) : state.turn]!;
+  const status =
+    state.phase === "move" && !botTurn && !state.winner ? (
+      t.move
+    ) : botTurn && !state.winner ? (
+      t.botThinking
+    ) : (
+      <>
+        {state.winner ? t.winner : t.turn}:{" "}
+        <b style={{ color: colors[shown.seat] }}>{t.names[shown.seat]}</b>
+      </>
+    );
   return (
-    <div className="game-layout">
+    <GameScreen
+      t={t}
+      title={t.practice}
+      onBack={onBack}
+      actions={
+        <button
+          className="icon-btn"
+          aria-label={t.settings}
+          onClick={() => settings.current?.showModal()}
+        >
+          <span aria-hidden="true">⚙</span>
+        </button>
+      }
+      board={
+        <Board
+          state={state}
+          interactive={!botTurn}
+          t={t}
+          onMove={(pawn) =>
+            setState((s) =>
+              s.phase === "finished"
+                ? s
+                : applyAction(s, {
+                    type: "move",
+                    playerId: currentPlayer(s).id,
+                    pawn,
+                  }),
+            )
+          }
+        />
+      }
+      players={state.players.map((p, index) => ({
+        key: p.id,
+        seat: p.seat,
+        name:
+          bots && index > 0
+            ? `${t.robotName} · ${t.names[p.seat]}`
+            : t.names[p.seat]!,
+        finished: p.pawns.filter((n) => n === FINISH).length,
+        current: index === state.turn && state.phase !== "finished",
+      }))}
+      dice={last}
+      status={status}
+      rollDisabled={state.phase !== "roll" || botTurn}
+      onRoll={() => {
+        const value = randomDie();
+        setLast(value);
+        setState((s) =>
+          s.phase === "roll"
+            ? applyAction(s, {
+                type: "roll",
+                playerId: currentPlayer(s).id,
+                value,
+              })
+            : s,
+        );
+      }}
+    >
       {state.phase === "finished" && winner && (
         <ResultDialog
           t={t}
@@ -68,112 +132,8 @@ export function Practice({ t }: { t: Messages }) {
           onPlayAgain={() => newGame()}
         />
       )}
-      <section>
-        <Board
-          state={state}
-          interactive={!botTurn}
-          t={t}
-          onMove={(pawn) =>
-            setState((s) =>
-              applyAction(s, {
-                type: "move",
-                playerId: currentPlayer(s).id,
-                pawn,
-              }),
-            )
-          }
-        />
-        <p className="board-hint">{t.hint}</p>
-      </section>
-      <aside className="panel game-panel">
-        <span className="eyebrow">{t.offline}</span>
-        <h2>
-          {state.winner ? t.winner : t.turn}:{" "}
-          <span
-            style={{
-              color:
-                colors[
-                  state.players[
-                    state.winner ? Number(state.winner) : state.turn
-                  ]!.seat
-                ],
-            }}
-          >
-            {
-              t.names[
-                state.players[state.winner ? Number(state.winner) : state.turn]!
-                  .seat
-              ]
-            }
-          </span>
-        </h2>
-        <div className="roll-bar">
-          <span className="roll-turn" aria-hidden="true">
-            {state.phase === "move" && !botTurn && !state.winner ? (
-              t.move
-            ) : (
-              <>
-                {state.winner ? t.winner : t.turn}:{" "}
-                <b
-                  style={{
-                    color:
-                      colors[
-                        state.players[
-                          state.winner ? Number(state.winner) : state.turn
-                        ]!.seat
-                      ],
-                  }}
-                >
-                  {
-                    t.names[
-                      state.players[
-                        state.winner ? Number(state.winner) : state.turn
-                      ]!.seat
-                    ]
-                  }
-                </b>
-              </>
-            )}
-          </span>
-          <Dice value={last} />
-          <button
-            className="primary"
-            disabled={state.phase !== "roll" || botTurn}
-            onClick={() => {
-              const value = randomDie();
-              setLast(value);
-              setState((s) =>
-                applyAction(s, {
-                  type: "roll",
-                  playerId: currentPlayer(s).id,
-                  value,
-                }),
-              );
-            }}
-          >
-            {t.roll}
-          </button>
-        </div>
-        {state.phase === "move" && !botTurn && <p role="status">{t.move}</p>}
-        {botTurn && <p role="status">{t.botThinking}</p>}
-        <div className="players">
-          {state.players.map((p) => (
-            <div
-              key={p.id}
-              className={
-                p.id === currentPlayer(state).id
-                  ? "player-card current"
-                  : "player-card"
-              }
-            >
-              <Avatar seat={p.seat} />
-              {t.names[p.seat]}
-              <small>
-                {p.pawns.filter((n) => n === FINISH).length}/4 {t.home}
-              </small>
-            </div>
-          ))}
-        </div>
+      <dialog ref={settings} className="sheet" aria-label={t.settings}>
+        <h2>{t.settings}</h2>
         <label>
           {t.players}
           <select
@@ -213,11 +173,20 @@ export function Practice({ t }: { t: Messages }) {
             <p className="fine">{t.botHint}</p>
           </>
         )}
-        <button className="secondary" onClick={() => newGame()}>
+        <button
+          className="secondary"
+          onClick={() => {
+            newGame();
+            settings.current?.close();
+          }}
+        >
           {t.newGame}
         </button>
         <p className="fine">{t.fairness}</p>
-      </aside>
-    </div>
+        <button className="primary" onClick={() => settings.current?.close()}>
+          {t.close}
+        </button>
+      </dialog>
+    </GameScreen>
   );
 }

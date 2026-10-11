@@ -11,14 +11,16 @@ test("Expo browser client joins a desktop private match using shared protocol", 
   try {
     await web.goto("http://127.0.0.1:4173");
     await web.getByRole("button", { name: "English", exact: true }).click();
-    await web.getByRole("button", { name: "Play online", exact: true }).click();
+    await web
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await web.getByLabel("Display name").fill("Desktop");
     await web.getByRole("button", { name: "Create room", exact: true }).click();
     const code = await web.getByTestId("room-code").innerText();
     await mobile.goto("http://127.0.0.1:3200");
     await mobile.getByRole("button", { name: "English", exact: true }).click();
     await mobile
-      .getByRole("button", { name: "Play online", exact: true })
+      .getByRole("button", { name: "Play with friends", exact: true })
       .click();
     await mobile.getByLabel("Display name", { exact: true }).fill("Mobile");
     await mobile.getByLabel("Room code", { exact: true }).fill(code);

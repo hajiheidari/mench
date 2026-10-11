@@ -9,17 +9,23 @@ import {
   ScrollView,
   TextInput,
   Pressable,
-  useWindowDimensions,
   ImageBackground,
   StatusBar,
   Share,
+  Modal,
 } from "react-native";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { GameScreen, IconButton, TopBar } from "./GameScreen";
+import { RandomMatch, randomDie, randomFloat } from "./RandomMatch";
 import * as Crypto from "expo-crypto";
 import {
   applyAction,
   createGame,
   currentPlayer,
-  legalMoves,
+  FINISH,
 } from "@mench/game-engine";
 import {
   GameClient,
@@ -30,9 +36,7 @@ import {
 import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
 import { verifyProof } from "@mench/fair-dice/portable";
-import { Dice } from "./Dice";
 import backdropArt from "./assets/game/backdrop.png";
-import { Avatar } from "./Avatar";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
@@ -125,12 +129,21 @@ function Input({
     </View>
   );
 }
-function Practice({ t, width }: { t: Messages; width: number }) {
+function Practice({
+  t,
+  rtl,
+  onBack,
+}: {
+  t: Messages;
+  rtl: boolean;
+  onBack: () => void;
+}) {
   const [state, setState] = useState(() => createGame(["0", "1"]));
   const [last, setLast] = useState<number | null>(null);
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [round, setRound] = useState(0);
+  const [settings, setSettings] = useState(false);
   const count = state.players.length;
   const finished = state.phase === "finished";
   const winner = state.winner
@@ -151,18 +164,14 @@ function Practice({ t, width }: { t: Messages; width: number }) {
       const playerId = currentPlayer(state).id;
       let next;
       if (state.phase === "roll") {
-        let value: number;
-        do {
-          value = Crypto.getRandomBytes(1)[0]!;
-        } while (value >= 252);
-        value = (value % 6) + 1;
+        const value = randomDie();
         setLast(value);
         next = applyAction(state, { type: "roll", playerId, value });
       } else {
         const pawn = chooseMove(
           state,
           difficulty,
-          Crypto.getRandomBytes(1)[0]!,
+          Math.floor(randomFloat() * 2 ** 31),
         );
         if (pawn === null) return;
         next = applyAction(state, { type: "move", playerId, pawn });
@@ -173,8 +182,72 @@ function Practice({ t, width }: { t: Messages; width: number }) {
     }, 450);
     return () => clearTimeout(timer);
   }, [botTurn, state, difficulty]);
+  const shown =
+    state.players[state.winner ? Number(state.winner) : state.turn]!;
+  const name = (index: number, seat: number) =>
+    bots && index > 0 ? `${t.robotName} · ${t.names[seat]}` : t.names[seat]!;
   return (
-    <>
+    <GameScreen
+      t={t}
+      rtl={rtl}
+      title={t.practice}
+      onBack={onBack}
+      actions={
+        <IconButton
+          label={t.settings}
+          icon="⚙"
+          onPress={() => setSettings(true)}
+        />
+      }
+      board={(size) => (
+        <Board
+          state={state}
+          width={size}
+          interactive={!botTurn && !finished}
+          onMove={(pawn) =>
+            setState((s) =>
+              s.phase === "finished"
+                ? s
+                : applyAction(s, {
+                    type: "move",
+                    playerId: currentPlayer(s).id,
+                    pawn,
+                  }),
+            )
+          }
+          t={t}
+        />
+      )}
+      players={state.players.map((p, index) => ({
+        key: p.id,
+        seat: p.seat,
+        name: name(index, p.seat),
+        finished: p.pawns.filter((n) => n === FINISH).length,
+        current: index === state.turn && !finished,
+      }))}
+      dice={last}
+      status={
+        state.phase === "move" && !botTurn && !finished
+          ? t.move
+          : botTurn && !finished
+            ? t.botThinking
+            : `${state.winner ? t.winner : t.turn}: ${t.names[shown.seat]}`
+      }
+      rollDisabled={state.phase !== "roll" || botTurn}
+      onRoll={() => {
+        const n = randomDie();
+        setLast(n);
+        setState((s) =>
+          s.phase === "roll"
+            ? applyAction(s, {
+                type: "roll",
+                playerId: currentPlayer(s).id,
+                value: n,
+              })
+            : s,
+        );
+      }}
+    >
       {finished && winner && (
         <ResultModal
           key={round}
@@ -188,120 +261,72 @@ function Practice({ t, width }: { t: Messages; width: number }) {
           onPlayAgain={() => newGame()}
         />
       )}
-      <Text style={styles.heading}>
-        {state.winner ? t.winner : t.turn}:{" "}
-        {
-          t.names[
-            state.players[state.winner ? Number(state.winner) : state.turn]!
-              .seat
-          ]
-        }
-      </Text>
-      <Board
-        state={state}
-        width={width}
-        interactive={!botTurn && !finished}
-        onMove={(pawn) =>
-          setState((s) =>
-            s.phase === "finished"
-              ? s
-              : applyAction(s, {
-                  type: "move",
-                  playerId: currentPlayer(s).id,
-                  pawn,
-                }),
-          )
-        }
-        t={t}
-      />
-      <View style={styles.playerCards}>
-        {state.players.map((p, index) => (
-          <View
-            key={p.id}
-            style={[
-              styles.playerCard,
-              index === state.turn && { borderColor: "#ffdf8d" },
-            ]}
-          >
-            <Avatar seat={p.seat} />
-            <Text style={styles.playerName}>{t.names[p.seat]}</Text>
+      <Modal
+        visible={settings}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSettings(false)}
+      >
+        <View style={styles.sheetBackdrop}>
+          <View style={styles.sheet}>
+            <Text style={styles.heading}>{t.settings}</Text>
+            <View style={styles.row}>
+              {[2, 3, 4].map((n) => (
+                <Button
+                  key={n}
+                  title={[t.two, t.three, t.four][n - 2]!}
+                  selected={count === n}
+                  onPress={() => newGame(n)}
+                />
+              ))}
+            </View>
+            <Button
+              title={`${bots ? "✓ " : ""}${t.bot}`}
+              onPress={() => setBots(!bots)}
+            />
+            {bots && (
+              <>
+                <Text style={styles.fine}>{t.botHint}</Text>
+                <View style={styles.row}>
+                  {(["easy", "normal", "hard"] as const).map((level) => (
+                    <Button
+                      key={level}
+                      title={`${difficulty === level ? "✓ " : ""}${t[level]}`}
+                      onPress={() => setDifficulty(level)}
+                    />
+                  ))}
+                </View>
+              </>
+            )}
+            <Button
+              title={t.newGame}
+              onPress={() => {
+                newGame();
+                setSettings(false);
+              }}
+            />
+            <Button
+              title={t.close}
+              primary
+              onPress={() => setSettings(false)}
+            />
           </View>
-        ))}
-      </View>
-      <View style={styles.rollControls}>
-        <Dice value={last} />
-        <Button
-          title={t.roll}
-          primary
-          wide
-          disabled={state.phase !== "roll" || botTurn}
-          onPress={() => {
-            let n: number;
-            do {
-              n = Crypto.getRandomBytes(1)[0]!;
-            } while (n >= 252);
-            n = (n % 6) + 1;
-            setLast(n);
-            setState((s) =>
-              s.phase === "roll"
-                ? applyAction(s, {
-                    type: "roll",
-                    playerId: currentPlayer(s).id,
-                    value: n,
-                  })
-                : s,
-            );
-          }}
-        />
-      </View>
-      {state.phase === "move" && !botTurn && (
-        <Text>
-          {t.move} ({legalMoves(state).length})
-        </Text>
-      )}
-      {botTurn && <Text>{t.botThinking}</Text>}
-      <Button
-        title={`${bots ? "✓ " : ""}${t.bot}`}
-        onPress={() => setBots(!bots)}
-      />
-      {bots && (
-        <>
-          <Text>{t.botHint}</Text>
-          <View style={styles.row}>
-            {(["easy", "normal", "hard"] as const).map((level) => (
-              <Button
-                key={level}
-                title={`${difficulty === level ? "✓ " : ""}${t[level]}`}
-                onPress={() => setDifficulty(level)}
-              />
-            ))}
-          </View>
-        </>
-      )}
-      <View style={styles.row}>
-        {[2, 3, 4].map((n) => (
-          <Button
-            key={n}
-            title={[t.two, t.three, t.four][n - 2]!}
-            selected={count === n}
-            onPress={() => newGame(n)}
-          />
-        ))}
-      </View>
-      <Button title={t.newGame} onPress={() => newGame()} />
-      <Text style={styles.fine}>{t.hint}</Text>
-    </>
+        </View>
+      </Modal>
+    </GameScreen>
   );
 }
 function Online({
   t,
-  width,
+  rtl,
+  onBack,
   server,
   token,
   inviteCode,
 }: {
   t: Messages;
-  width: number;
+  rtl: boolean;
+  onBack: () => void;
   server: string;
   token: string | null;
   inviteCode: string;
@@ -364,62 +389,68 @@ function Online({
       {connected ? t.connected : t.reconnecting}
     </Text>
   );
+  const leave = () => void ref.current?.send({ type: "leave" });
   if (!room)
     return (
-      <>
-        {status}
-        <Input label={t.nickname} value={name} onChange={setName} />
-        <View style={styles.row}>
-          {[2, 3, 4].map((n) => (
-            <Button
-              key={n}
-              title={[t.two, t.three, t.four][n - 2]!}
-              selected={capacity === n}
-              onPress={() => setCapacity(n)}
-            />
-          ))}
-        </View>
-        <Button
-          title={t.create}
-          disabled={!connected || busy || queued}
-          onPress={() =>
-            void ref.current?.send({ type: "create", name, capacity })
-          }
-        />
-        <Input
-          label={t.code}
-          value={code}
-          onChange={(s) => setCode(s.toUpperCase())}
-        />
-        <Button
-          title={t.join}
-          disabled={!connected || busy || code.length !== 10 || queued}
-          onPress={() => void ref.current?.send({ type: "join", name, code })}
-        />
-        <Button
-          title={queued ? t.cancel : t.matchmaking}
-          disabled={!connected || busy}
-          onPress={() =>
-            void ref.current?.send(
-              queued
-                ? { type: "cancelQueue" }
-                : { type: "queue", name, ranked },
-            )
-          }
-        />
-        {!EDGE && (
+      <View style={{ flex: 1, width: "100%" }}>
+        <TopBar t={t} title={t.online} onBack={onBack} rtl={rtl} />
+        <ScrollView contentContainerStyle={styles.lobby}>
+          {status}
+          <Input label={t.nickname} value={name} onChange={setName} />
+          <View style={styles.row}>
+            {[2, 3, 4].map((n) => (
+              <Button
+                key={n}
+                title={[t.two, t.three, t.four][n - 2]!}
+                selected={capacity === n}
+                onPress={() => setCapacity(n)}
+              />
+            ))}
+          </View>
           <Button
-            title={`${ranked ? "✓ " : ""}${t.ranked}`}
-            disabled={queued || busy}
-            onPress={() => setRanked(!ranked)}
+            title={t.create}
+            disabled={!connected || busy || queued}
+            onPress={() =>
+              void ref.current?.send({ type: "create", name, capacity })
+            }
           />
-        )}
-        {ranked && <Text>{t.rankedHint}</Text>}
-        {error && (
-          <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
-        )}
-        {notice && <Text>{notice}</Text>}
-      </>
+          <Input
+            label={t.code}
+            value={code}
+            onChange={(s) => setCode(s.toUpperCase())}
+          />
+          <Button
+            title={t.join}
+            disabled={!connected || busy || code.length !== 10 || queued}
+            onPress={() => void ref.current?.send({ type: "join", name, code })}
+          />
+          {!EDGE && (
+            <Button
+              title={queued ? t.cancel : t.matchmaking}
+              disabled={!connected || busy}
+              onPress={() =>
+                void ref.current?.send(
+                  queued
+                    ? { type: "cancelQueue" }
+                    : { type: "queue", name, ranked },
+                )
+              }
+            />
+          )}
+          {!EDGE && (
+            <Button
+              title={`${ranked ? "✓ " : ""}${t.ranked}`}
+              disabled={queued || busy}
+              onPress={() => setRanked(!ranked)}
+            />
+          )}
+          {ranked && <Text>{t.rankedHint}</Text>}
+          {error && (
+            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
+          )}
+          {notice && <Text>{notice}</Text>}
+        </ScrollView>
+      </View>
     );
   const state = room.state;
   const mine =
@@ -439,9 +470,136 @@ function Online({
     if (!player || seat === undefined) return player?.name ?? "";
     return `${t.names[seat]} · ${player.name}${id === playerId ? ` (${t.you})` : ""}`;
   };
+  if (!state)
+    return (
+      <View style={{ flex: 1, width: "100%" }}>
+        <TopBar t={t} title={t.online} onBack={leave} rtl={rtl} />
+        <ScrollView contentContainerStyle={styles.lobby}>
+          {status}
+          <Text style={styles.heading}>{t.waiting}</Text>
+          <Text selectable style={styles.code}>
+            {room.code}
+          </Text>
+          {room.ranked && <Text>{t.ranked}</Text>}
+          {room.players.map((p) => (
+            <Text key={p.id}>
+              {p.name} · {p.connected ? t.connected : t.disconnected}
+            </Text>
+          ))}
+          <Button
+            title={t.copy}
+            onPress={() =>
+              void Share.share({
+                message: `${t.inviteText} ${server}/join/${room.code}`,
+              }).catch(() => setNotice(`${server}/join/${room.code}`))
+            }
+          />
+          <Button
+            title={t.start}
+            primary
+            disabled={
+              room.hostId !== playerId ||
+              room.players.length !== room.capacity ||
+              busy
+            }
+            onPress={() => void ref.current?.send({ type: "start" })}
+          />
+          {notice && <Text>{notice}</Text>}
+          {error && (
+            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
+          )}
+          <Button title={t.leave} onPress={leave} />
+        </ScrollView>
+      </View>
+    );
+  const active = state.winner ?? currentPlayer(state).id;
+  const proof = room.proofs.at(-1);
   return (
-    <>
-      {state?.phase === "finished" && winner && (
+    <GameScreen
+      t={t}
+      rtl={rtl}
+      title={t.online}
+      onBack={() => {
+        leave();
+        onBack();
+      }}
+      actions={
+        proof ? (
+          <IconButton
+            label={t.verify}
+            icon="✔"
+            onPress={() => {
+              const observed = ref.current?.commitments.get(proof.commitment);
+              setNotice(
+                !observed
+                  ? t.unwitnessed
+                  : verifyProof(
+                        proof,
+                        observed,
+                        ref.current?.nonces.get(proof.commitment) ??
+                          proof.nonce,
+                      )
+                    ? t.verified
+                    : t.invalidProof,
+              );
+            }}
+          />
+        ) : undefined
+      }
+      board={(size) => (
+        <Board
+          state={state}
+          width={size}
+          t={t}
+          interactive={Boolean(mine)}
+          onMove={(pawn) =>
+            void ref.current?.send({
+              type: "move",
+              pawn,
+              expectedVersion: state.version,
+            })
+          }
+        />
+      )}
+      players={room.players.map((p, index) => ({
+        key: p.id,
+        seat: state.players[index]!.seat,
+        name: `${p.name}${p.id === playerId ? ` (${t.you})` : ""}`,
+        finished: state.players[index]!.pawns.filter((n) => n === FINISH)
+          .length,
+        current: p.id === active && state.phase !== "finished",
+      }))}
+      dice={state.dice ?? proof?.value ?? null}
+      status={
+        mine && state.phase === "move"
+          ? t.move
+          : `${state.winner ? t.winner : t.turn}: ${label(active)}`
+      }
+      info={
+        <>
+          {status}
+          {notice ? (
+            <Text accessibilityLiveRegion="polite">{notice}</Text>
+          ) : null}
+          {error ? (
+            <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>
+          ) : null}
+        </>
+      }
+      rollDisabled={!mine || state.phase !== "roll" || !room.commitment}
+      onRoll={() => {
+        const nonce = Array.from(Crypto.getRandomBytes(32), (v) =>
+          v.toString(16).padStart(2, "0"),
+        ).join("");
+        ref.current?.nonces.set(room.commitment!.hash, nonce);
+        void ref.current?.send({
+          type: "roll",
+          nonce,
+          expectedVersion: state.version,
+        });
+      }}
+    >
+      {state.phase === "finished" && winner && (
         <ResultModal
           key={room.matchId ?? room.code}
           t={t}
@@ -449,104 +607,7 @@ function Online({
           won={state.winner === playerId}
         />
       )}
-      {status}
-      <Text style={styles.heading}>
-        {state
-          ? (state.winner ? t.winner : t.turn) +
-            ": " +
-            label(state.winner ?? currentPlayer(state).id)
-          : t.waiting}
-      </Text>
-      <Text selectable>{room.code}</Text>
-      {room.ranked && <Text>{t.ranked}</Text>}
-      {!state &&
-        room.players.map((p) => (
-          <Text key={p.id}>
-            {p.name} · {p.connected ? t.connected : t.disconnected}
-          </Text>
-        ))}
-      {!state && (
-        <Button
-          title={t.copy}
-          onPress={() =>
-            void Share.share({
-              message: `${t.inviteText} ${server}/join/${room.code}`,
-            }).catch(() => setNotice(`${server}/join/${room.code}`))
-          }
-        />
-      )}
-      {!state && (
-        <Button
-          title={t.start}
-          disabled={
-            room.hostId !== playerId ||
-            room.players.length !== room.capacity ||
-            busy
-          }
-          onPress={() => void ref.current?.send({ type: "start" })}
-        />
-      )}
-      {state && (
-        <>
-          <Board
-            state={state}
-            width={width}
-            t={t}
-            interactive={Boolean(mine)}
-            onMove={(pawn) =>
-              void ref.current?.send({
-                type: "move",
-                pawn,
-                expectedVersion: state.version,
-              })
-            }
-          />
-          <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
-          <Button
-            title={t.roll}
-            disabled={!mine || state.phase !== "roll" || !room.commitment}
-            onPress={() => {
-              const nonce = Array.from(Crypto.getRandomBytes(32), (v) =>
-                v.toString(16).padStart(2, "0"),
-              ).join("");
-              ref.current?.nonces.set(room.commitment!.hash, nonce);
-              void ref.current?.send({
-                type: "roll",
-                nonce,
-                expectedVersion: state.version,
-              });
-            }}
-          />
-          {room.proofs.at(-1) && (
-            <Button
-              title={t.verify}
-              onPress={() => {
-                const proof = room.proofs.at(-1)!;
-                const observed = ref.current?.commitments.get(proof.commitment);
-                setNotice(
-                  !observed
-                    ? t.unwitnessed
-                    : verifyProof(
-                          proof,
-                          observed,
-                          ref.current?.nonces.get(proof.commitment) ??
-                            proof.nonce,
-                        )
-                      ? t.verified
-                      : t.invalidProof,
-                );
-              }}
-            />
-          )}
-        </>
-      )}
-      {notice && <Text accessibilityLiveRegion="polite">{notice}</Text>}
-      {error && <Text style={styles.error}>{t.errors[error] ?? t.error}</Text>}
-      <Button
-        title={t.leave}
-        onPress={() => void ref.current?.send({ type: "leave" })}
-      />
-    </>
+    </GameScreen>
   );
 }
 interface Profile {
@@ -687,22 +748,30 @@ function Account({
   );
 }
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Root />
+    </SafeAreaProvider>
+  );
+}
+type Mode = "home" | "random" | "online" | "practice" | "account";
+function Root() {
   const [fontsLoaded, fontError] = useFonts({
     Samim: regularFont,
     SamimBold: boldFont,
   });
   const [locale, setLocale] = useState<"fa" | "en">("fa");
-  const [mode, setMode] = useState("practice");
+  const [mode, setMode] = useState<Mode>("home");
   const [inviteCode, setInviteCode] = useState("");
   const [server, setServer] = useState(DEFAULT_SERVER);
   const [draft, setDraft] = useState(server);
   const [token, setToken] = useState<string | null>(null);
   const [theme, setTheme] = useState<CosmeticSku | null>(null);
   const [storageError, setStorageError] = useState(false);
-  const { width, height } = useWindowDimensions();
-  const contentWidth = Math.min(width - 32, 540);
-  const boardWidth = Math.min(contentWidth, Math.max(240, height * 0.43));
+  const insets = useSafeAreaInsets();
   const t = messages[locale];
+  const rtl = locale === "fa";
+  const home = () => setMode("home");
   useEffect(() => {
     void getStored("mench-account")
       .then(setToken)
@@ -718,91 +787,156 @@ export default function App() {
       .catch(() => setTheme(null));
   }, [token, server]);
   if (!fontsLoaded && !fontError) return null;
+  const modes: [Mode, string, string, string][] = [
+    ["random", "🌍", t.random, t.randomHint],
+    ["online", "🔗", t.online, t.friendsHint],
+    ["practice", "🎲", t.practice, t.practiceHint],
+    ...(EDGE
+      ? []
+      : [["account", "👤", t.signIn, ""] as [Mode, string, string, string]]),
+  ];
   return (
     <ImageBackground
       source={backdropArt}
-      style={{ flex: 1 }}
+      style={{ flex: 1, overflow: "hidden" }}
       resizeMode="cover"
     >
       <StatusBar barStyle="light-content" />
-      <ScrollView
-        contentContainerStyle={[
-          styles.screen,
-          { direction: locale === "fa" ? "rtl" : "ltr" },
+      <View
+        style={[
+          styles.root,
+          {
+            paddingTop: insets.top + 6,
+            paddingBottom: Math.max(insets.bottom, 10),
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            direction: rtl ? "rtl" : "ltr",
+          },
           theme && {
             backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
           },
         ]}
       >
-        <View style={{ width: contentWidth, gap: 12 }}>
-          <View style={styles.row}>
-            <Text style={styles.title}>{t.brand} ✦</Text>
-            <Button
-              title={t.language}
-              onPress={() => setLocale(locale === "fa" ? "en" : "fa")}
-            />
-          </View>
-          {mode !== "practice" && <Text style={styles.fine}>{t.tagline}</Text>}
-          <View style={styles.row}>
-            {[
-              ["practice", t.practice],
-              ["online", t.online],
-              ...(EDGE ? [] : [["account", t.signIn]]),
-            ].map(([key, title]) => (
+        {mode === "home" ? (
+          <View style={styles.home}>
+            <View style={styles.row}>
+              <Text style={styles.title}>{t.brand} ✦</Text>
               <Button
-                key={key}
-                title={title!}
-                selected={mode === key}
-                onPress={() => setMode(key!)}
+                title={t.language}
+                onPress={() => setLocale(rtl ? "en" : "fa")}
               />
+            </View>
+            <Text style={styles.fine}>{t.tagline}</Text>
+            {modes.map(([key, icon, title, hint]) => (
+              <Pressable
+                key={key}
+                accessibilityRole="button"
+                accessibilityLabel={title}
+                onPress={() => setMode(key)}
+                style={[styles.mode, key === "random" && styles.modeRandom]}
+              >
+                <Text style={styles.modeIcon}>{icon}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modeTitle}>{title}</Text>
+                  {hint ? <Text style={styles.modeHint}>{hint}</Text> : null}
+                </View>
+              </Pressable>
             ))}
+            {storageError && <Text>{t.secureStorage}</Text>}
           </View>
-          {mode === "practice" ? (
-            <Practice t={t} width={boardWidth} />
-          ) : (
-            <>
-              {!EDGE && (
-                <>
-                  <Input label={t.server} value={draft} onChange={setDraft} />
-                  <Button
-                    title={t.reconnect}
-                    onPress={() => {
-                      if (/^https?:\/\//.test(draft))
-                        setServer(draft.replace(/\/$/, ""));
-                    }}
-                  />
-                </>
-              )}
-              {mode === "online" ? (
-                <Online
-                  t={t}
-                  width={boardWidth}
-                  server={server}
-                  token={token}
-                  inviteCode={inviteCode}
-                />
-              ) : (
-                <Account
-                  t={t}
-                  server={server}
-                  token={token}
-                  onToken={setToken}
-                  onTheme={setTheme}
-                  onInvite={(code) => {
-                    setInviteCode(code);
-                    setMode("online");
-                  }}
-                />
-              )}
-            </>
-          )}
-          {storageError && <Text>{t.secureStorage}</Text>}
-        </View>
-      </ScrollView>
+        ) : mode === "practice" ? (
+          <Practice t={t} rtl={rtl} onBack={home} />
+        ) : mode === "random" ? (
+          <RandomMatch t={t} rtl={rtl} onBack={home} />
+        ) : mode === "online" ? (
+          <Online
+            t={t}
+            rtl={rtl}
+            onBack={home}
+            server={server}
+            token={token}
+            inviteCode={inviteCode}
+          />
+        ) : (
+          <View style={{ flex: 1, width: "100%" }}>
+            <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
+            <ScrollView contentContainerStyle={styles.lobby}>
+              <Input label={t.server} value={draft} onChange={setDraft} />
+              <Button
+                title={t.reconnect}
+                onPress={() => {
+                  if (/^https?:\/\//.test(draft))
+                    setServer(draft.replace(/\/$/, ""));
+                }}
+              />
+              <Account
+                t={t}
+                server={server}
+                token={token}
+                onToken={setToken}
+                onTheme={setTheme}
+                onInvite={(code) => {
+                  setInviteCode(code);
+                  setMode("online");
+                }}
+              />
+            </ScrollView>
+          </View>
+        )}
+      </View>
     </ImageBackground>
   );
 }
 const styles = StyleSheet.create({
+  root: { flex: 1, alignItems: "center" },
+  home: { width: "100%", maxWidth: 540, paddingHorizontal: 16, gap: 14 },
+  mode: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    minHeight: 92,
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#b48acb",
+    borderBottomWidth: 5,
+    borderBottomColor: "#33204e",
+    backgroundColor: "#56377e",
+  },
+  modeRandom: {
+    backgroundColor: "#28a477",
+    borderColor: "#a8f8bf",
+    borderBottomColor: "#145c44",
+  },
+  modeIcon: { fontSize: 34, lineHeight: 44 },
+  modeTitle: { fontSize: 18, fontWeight: "bold", color: "#fff4df" },
+  modeHint: { fontSize: 12, color: "#f1e5ff" },
+  lobby: {
+    width: "100%",
+    maxWidth: 540,
+    alignSelf: "center",
+    padding: 4,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  code: { fontSize: 28, letterSpacing: 4, textAlign: "center" },
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: "#160c26cc",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  sheet: {
+    width: "100%",
+    maxWidth: 380,
+    gap: 12,
+    backgroundColor: "#3b2463",
+    borderWidth: 2,
+    borderColor: "#f3c35f",
+    borderRadius: 24,
+    padding: 20,
+  },
   screen: {
     flexGrow: 1,
     alignItems: "center",

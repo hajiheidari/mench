@@ -1,12 +1,12 @@
 {
   "id": "/",
-  "name": "Mench",
-  "short_name": "Mench",
+  "name": "VIP Ludo",
+  "short_name": "VIP Ludo",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f1f3ed",
-  "theme_color": "#203e38",
+  "background_color": "#26164a",
+  "theme_color": "#26164a",
   "lang": "fa",
   "dir": "rtl",
   "icons": [

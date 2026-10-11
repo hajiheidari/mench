@@ -16,13 +16,18 @@ test("complete a local two-player game and switch RTL/language", async ({
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await page.getByRole("button", { name: "English", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page
+    .getByRole("button", { name: "Play on one device", exact: true })
+    .click();
   for (let i = 0; i < 5000; i++) {
-    if (await page.getByRole("heading", { name: /Winner:/ }).count()) break;
+    if (await page.locator(".roll-turn", { hasText: /Winner:/ }).count()) break;
     const roll = page.getByRole("button", { name: "Roll dice", exact: true });
     if (await roll.isEnabled()) await roll.click({ force: true });
     else await page.locator(".pawn.legal").first().click({ force: true });
   }
-  await expect(page.getByRole("heading", { name: /Winner:/ })).toBeVisible();
+  await expect(
+    page.locator(".roll-turn", { hasText: /Winner:/ }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Roll dice", exact: true }),
   ).toBeDisabled();
@@ -31,6 +36,7 @@ test("complete a local two-player game and switch RTL/language", async ({
   await expect(result).toContainText("Winner:");
   await result.getByRole("button", { name: "View board", exact: true }).click();
   await expect(result).not.toBeVisible();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "New game", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Roll dice", exact: true }),
@@ -42,11 +48,18 @@ test("four-player setup works at mobile viewport without horizontal overflow", a
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.getByRole("button", { name: "English", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Play on one device", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Players", { exact: true }).selectOption("4");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.locator(".pawn")).toHaveCount(16);
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () =>
+        document.documentElement.scrollWidth <= window.innerWidth &&
+        document.documentElement.scrollHeight <= window.innerHeight,
     ),
   ).toBe(true);
 });
@@ -56,13 +69,18 @@ test("player count immediately resets the board and all selected colors", async 
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "English", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Play on one device", exact: true })
+    .click();
   await page.getByRole("button", { name: "Roll dice", exact: true }).click();
   for (const count of [3, 4, 2, 4]) {
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page
       .getByLabel("Players", { exact: true })
       .selectOption(String(count));
+    await page.getByRole("button", { name: "Close", exact: true }).click();
     await expect(page.locator(".pawn")).toHaveCount(count * 4);
-    await expect(page.locator(".players > div")).toHaveCount(count);
+    await expect(page.locator(".hud-players .chip")).toHaveCount(count);
     const colors =
       count === 2
         ? ["Red", "Yellow"]
@@ -80,7 +98,7 @@ test("player count immediately resets the board and all selected colors", async 
       page.getByRole("button", { name: "Roll dice", exact: true }),
     ).toBeEnabled();
     await expect(
-      page.getByRole("heading", { name: "Turn: Red", exact: true }),
+      page.locator(".roll-turn", { hasText: /^Turn: Red$/ }),
     ).toBeVisible();
   }
 });

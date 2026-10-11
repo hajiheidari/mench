@@ -18,9 +18,9 @@ TEXT = {
     "en": {
         "dir": "ltr",
         "path": "/mench-app/",
-        "title": "Mench | Ludo with friends, online or on one phone",
-        "desc": "Mench is the classic Ludo board game in red, green, yellow and blue. Play with friends from a shared link, against the bot, or pass one phone around. Free, no sign-up.",
-        "name": "Mench",
+        "title": "VIP Ludo | Ludo online, with friends or on one phone",
+        "desc": "VIP Ludo is the classic Ludo board game in red, green, yellow and blue. Play with friends from a shared link, against the bot, or pass one phone around. Free, no sign-up.",
+        "name": "VIP Ludo",
         "tag": "The classic board game, now with your friends online 🎲",
         "play": "▶️ Play now",
         "play_small": "In your browser, nothing to install",
@@ -32,7 +32,7 @@ TEXT = {
         ],
         "how": "How to play with a friend",
         "steps": [
-            "Tap <b>Play online</b> and then <b>Create room</b>.",
+            "Tap <b>Play with friends</b> and then <b>Create room</b>.",
             "Tap <b>Share invitation</b> and send the link on WhatsApp, Telegram or any messenger.",
             "Your friend opens the link and taps <b>Join room</b>; no app or account needed.",
             "When everyone is in, the host taps <b>Start game</b>. Lost the connection? Open the game again and you are back in your seat.",
@@ -53,9 +53,9 @@ TEXT = {
     "fa": {
         "dir": "rtl",
         "path": "/mench-app/fa/",
-        "title": "منچ | منچ آنلاین با دوستان، با ربات یا روی یک گوشی",
-        "desc": "منچ، همان بازی نوستالژیک با مهره‌های قرمز، سبز، زرد و آبی. با یک لینک دوستانت را دعوت کن، با ربات تمرین کن یا یک گوشی را دست‌به‌دست کنید. رایگان و بدون ثبت‌نام.",
-        "name": "منچ",
+        "title": "VIP Ludo | منچ آنلاین با دوستان، با ربات یا روی یک گوشی",
+        "desc": "VIP Ludo، همان منچ نوستالژیک با مهره‌های قرمز، سبز، زرد و آبی. با یک لینک دوستانت را دعوت کن، با ربات تمرین کن یا یک گوشی را دست‌به‌دست کنید. رایگان و بدون ثبت‌نام.",
+        "name": "VIP Ludo",
         "tag": "همان منچ قدیمی، این بار با دوستانت آنلاین 🎲",
         "play": "▶️ شروع بازی",
         "play_small": "بدون نصب، همین‌جا در مرورگر",
@@ -67,7 +67,7 @@ TEXT = {
         ],
         "how": "چطور با دوستم بازی کنم؟",
         "steps": [
-            "«<b>بازی آنلاین</b>» و بعد «<b>ساخت اتاق</b>» را بزن.",
+            "«<b>بازی آنلاین با دوستان</b>» و بعد «<b>ساخت اتاق</b>» را بزن.",
             "«<b>ارسال دعوت</b>» را بزن و لینک را در واتس‌اپ، تلگرام یا هر پیام‌رسانی بفرست.",
             "دوستت لینک را باز می‌کند و «<b>ورود به اتاق</b>» را می‌زند؛ نصب برنامه یا ساخت حساب لازم نیست.",
             "وقتی همه آمدند، میزبان «<b>شروع بازی</b>» را می‌زند. اینترنت قطع شد؟ دوباره بازی را باز کن تا سر جای خودت برگردی.",
@@ -88,9 +88,9 @@ TEXT = {
     "ar": {
         "dir": "rtl",
         "path": "/mench-app/ar/",
-        "title": "منچ | لعبة لودو مع الأصدقاء عبر الإنترنت أو على هاتف واحد",
-        "desc": "منچ هي لعبة اللودو الكلاسيكية بالأحمر والأخضر والأصفر والأزرق. العب مع أصدقائك عبر رابط واحد، أو ضد الروبوت، أو على هاتف واحد. مجانية وبدون تسجيل.",
-        "name": "منچ (لودو)",
+        "title": "VIP Ludo | لعبة لودو مع الأصدقاء عبر الإنترنت أو على هاتف واحد",
+        "desc": "VIP Ludo هي لعبة اللودو الكلاسيكية بالأحمر والأخضر والأصفر والأزرق. العب مع أصدقائك عبر رابط واحد، أو ضد الروبوت، أو على هاتف واحد. مجانية وبدون تسجيل.",
+        "name": "VIP Ludo",
         "tag": "لعبة الطاولة الكلاسيكية، الآن مع أصدقائك عبر الإنترنت 🎲",
         "play": "▶️ ابدأ اللعب",
         "play_small": "في المتصفح مباشرة، بدون تثبيت",
@@ -102,7 +102,7 @@ TEXT = {
         ],
         "how": "كيف ألعب مع صديقي؟",
         "steps": [
-            "اختر <b>Play online</b> ثم <b>Create room</b> (اللعبة بالفارسية والإنجليزية).",
+            "اختر <b>Play with friends</b> ثم <b>Create room</b> (اللعبة بالفارسية والإنجليزية).",
             "اضغط <b>Share invitation</b> وأرسل الرابط عبر واتساب أو تيليجرام.",
             "يفتح صديقك الرابط ويضغط <b>Join room</b>؛ لا حاجة لتطبيق أو حساب.",
             "عندما يكتمل الجميع، يضغط المضيف <b>Start game</b>. انقطع الاتصال؟ افتح اللعبة مجددًا لتعود إلى مكانك.",
@@ -269,7 +269,7 @@ PRIVACY = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mench privacy policy</title>
+  <title>VIP Ludo privacy policy</title>
   <link rel="canonical" href="https://espadna.com/mench-app/privacy/">
   <style>{style}
     h1 {{ font-size: 36px; }} .card p, .card li {{ color: #fff4df; }}
@@ -278,26 +278,26 @@ PRIVACY = """<!DOCTYPE html>
 <body>
 <main>
   <nav class="lang"><a href="#fa">فارسی</a></nav>
-  <h1>Mench privacy policy</h1>
+  <h1>VIP Ludo privacy policy</h1>
   <div class="card">
-    <p>Updated 2026-10-11. Mench (web, Android and iOS) is made by Espadna.</p>
+    <p>Updated 2026-10-11. VIP Ludo (web, Android and iOS) is made by Espadna.</p>
     <ul>
       <li><b>No account, no ads, no tracking.</b> The game does not ask for your name, email, phone number or contacts and contains no advertising or analytics SDKs.</li>
       <li><b>Online rooms.</b> When you play online, the nickname you type, the moves and the dice rolls of that room are sent to our server (Cloudflare) so every player sees the same game. Other players in the room see your nickname. A random seat token is kept on your device so you can return to your seat after a disconnect.</li>
       <li><b>Retention.</b> Room data is deleted automatically: unused lobbies after one hour, every room at most 24 hours after it was created.</li>
       <li><b>Server logs.</b> Cloudflare processes technical request data (such as IP address) to deliver and protect the service, under its own privacy policy.</li>
-      <li><b>Practice games</b> against the bot or on one phone stay on your device.</li>
+      <li><b>Practice and quick games</b> against the computer stay on your device.</li>
       <li><b>Children.</b> The game has no chat and collects no personal information.</li>
       <li><b>Contact.</b> Questions or deletion requests: <a href="mailto:espadna.support@gmail.com">espadna.support@gmail.com</a>.</li>
     </ul>
   </div>
-  <h2 id="fa" dir="rtl" lang="fa">حریم خصوصی منچ</h2>
+  <h2 id="fa" dir="rtl" lang="fa">حریم خصوصی VIP Ludo</h2>
   <div class="card" dir="rtl" lang="fa">
     <ul>
       <li>بدون حساب کاربری، بدون تبلیغ و بدون ردیابی. نام، ایمیل، شماره یا مخاطبان شما را نمی‌خواهیم.</li>
       <li>در بازی آنلاین، نام نمایشی که وارد می‌کنید، حرکت‌ها و تاس‌های همان اتاق به سرور ما (Cloudflare) فرستاده می‌شود تا همه یک بازی را ببینند. بازیکنان همان اتاق نام نمایشی شما را می‌بینند.</li>
       <li>اطلاعات اتاق خودکار پاک می‌شود: اتاق بلااستفاده پس از یک ساعت و هر اتاق حداکثر ۲۴ ساعت پس از ساخت.</li>
-      <li>بازی تمرینی با ربات یا روی یک گوشی فقط روی دستگاه شما می‌ماند.</li>
+      <li>بازی تمرینی و بازی شانسی با کامپیوتر فقط روی دستگاه شما می‌ماند.</li>
       <li>تماس: <a href="mailto:espadna.support@gmail.com">espadna.support@gmail.com</a></li>
     </ul>
   </div>

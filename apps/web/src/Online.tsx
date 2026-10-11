@@ -4,12 +4,11 @@ import { clientNonce, verifyProof } from "@mench/fair-dice/browser";
 import type { DiceProof } from "@mench/fair-dice";
 import type { Messages } from "./messages";
 import { useOnline } from "./useOnline";
-import { Avatar } from "./Avatar";
-import { Dice } from "./Dice";
+import { GameScreen, TopBar } from "./GameScreen";
 import { ResultDialog } from "./ResultDialog";
 import { Board } from "./Board";
 import { EDGE } from "./backend";
-export function Online({ t }: { t: Messages }) {
+export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
   const online = useOnline();
   const { room, playerId, connected, queued, error, busy, send } = online;
   const [name, setName] = useState(t.guest);
@@ -58,82 +57,85 @@ export function Online({ t }: { t: Messages }) {
   }
   if (!room)
     return (
-      <section className="lobby">
-        <div className="panel">
-          {connection}
-          <h2>{t.online}</h2>
-          {errorView}
-          <label>
-            {t.nickname}
-            <input
-              value={name}
-              maxLength={24}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          <label>
-            {t.players}
-            <select
-              aria-label={t.players}
-              value={capacity}
-              onChange={(e) => setCapacity(Number(e.target.value))}
-            >
-              <option value="2">{t.two}</option>
-              <option value="3">{t.three}</option>
-              <option value="4">{t.four}</option>
-            </select>
-          </label>
-          <button
-            className="primary"
-            disabled={!connected || busy || queued}
-            onClick={() => void send({ type: "create", name, capacity })}
-          >
-            {t.create}
-          </button>
-          <label>
-            {t.code}
-            <input
-              value={code}
-              maxLength={10}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              dir="ltr"
-            />
-          </label>
-          <button
-            className="secondary"
-            disabled={!connected || busy || queued || code.length !== 10}
-            onClick={() => void send({ type: "join", name, code })}
-          >
-            {t.join}
-          </button>
-          <button
-            className="secondary"
-            disabled={!connected || busy}
-            onClick={() =>
-              void send(
-                queued
-                  ? { type: "cancelQueue" }
-                  : { type: "queue", name, ranked },
-              )
-            }
-          >
-            {queued ? t.cancel : t.matchmaking}
-          </button>
-          {!EDGE && (
+      <div className="game-screen">
+        <TopBar t={t} title={t.online} onBack={onBack} />
+        <section className="lobby">
+          <div className="panel">
+            {connection}
+            <h2>{t.online}</h2>
+            {errorView}
             <label>
+              {t.nickname}
               <input
-                type="checkbox"
-                checked={ranked}
-                disabled={queued || busy}
-                onChange={(e) => setRanked(e.target.checked)}
+                value={name}
+                maxLength={24}
+                onChange={(e) => setName(e.target.value)}
               />
-              {t.ranked}
             </label>
-          )}
-          {ranked && <p className="fine">{t.rankedHint}</p>}
-          {queued && <p role="status">{t.queue}</p>}
-        </div>
-      </section>
+            <label>
+              {t.players}
+              <select
+                aria-label={t.players}
+                value={capacity}
+                onChange={(e) => setCapacity(Number(e.target.value))}
+              >
+                <option value="2">{t.two}</option>
+                <option value="3">{t.three}</option>
+                <option value="4">{t.four}</option>
+              </select>
+            </label>
+            <button
+              className="primary"
+              disabled={!connected || busy || queued}
+              onClick={() => void send({ type: "create", name, capacity })}
+            >
+              {t.create}
+            </button>
+            <label>
+              {t.code}
+              <input
+                value={code}
+                maxLength={10}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                dir="ltr"
+              />
+            </label>
+            <button
+              className="secondary"
+              disabled={!connected || busy || queued || code.length !== 10}
+              onClick={() => void send({ type: "join", name, code })}
+            >
+              {t.join}
+            </button>
+            <button
+              className="secondary"
+              disabled={!connected || busy}
+              onClick={() =>
+                void send(
+                  queued
+                    ? { type: "cancelQueue" }
+                    : { type: "queue", name, ranked },
+                )
+              }
+            >
+              {queued ? t.cancel : t.matchmaking}
+            </button>
+            {!EDGE && (
+              <label>
+                <input
+                  type="checkbox"
+                  checked={ranked}
+                  disabled={queued || busy}
+                  onChange={(e) => setRanked(e.target.checked)}
+                />
+                {t.ranked}
+              </label>
+            )}
+            {ranked && <p className="fine">{t.rankedHint}</p>}
+            {queued && <p role="status">{t.queue}</p>}
+          </div>
+        </section>
+      </div>
     );
   const state = room.state;
   const invite = async () => {
@@ -155,48 +157,51 @@ export function Online({ t }: { t: Messages }) {
   };
   if (!state)
     return (
-      <section className="lobby">
-        <div className="panel">
-          {connection}
-          <h2>{t.waiting}</h2>
-          <div className="room-code" data-testid="room-code">
-            {room.code}
+      <div className="game-screen">
+        <TopBar t={t} title={t.online} onBack={leave} />
+        <section className="lobby">
+          <div className="panel">
+            {connection}
+            <h2>{t.waiting}</h2>
+            <div className="room-code" data-testid="room-code">
+              {room.code}
+            </div>
+            {room.ranked && <p>{t.ranked}</p>}
+            <div className="players">
+              {room.players.map((p) => (
+                <div key={p.id} className="player-card">
+                  <span
+                    className="player-avatar"
+                    style={{ background: p.connected ? "#388872" : "#d3a32d" }}
+                  />
+                  {p.name}
+                </div>
+              ))}
+            </div>
+            <button
+              className="primary"
+              disabled={
+                !connected ||
+                busy ||
+                room.hostId !== playerId ||
+                room.players.length !== room.capacity ||
+                room.players.some((p) => !p.connected)
+              }
+              onClick={() => void send({ type: "start" })}
+            >
+              {t.start}
+            </button>
+            <button className="secondary" onClick={() => void invite()}>
+              {t.copy}
+            </button>
+            <button className="secondary" onClick={leave}>
+              {t.leave}
+            </button>
+            {notice && <p className="notification">{notice}</p>}
+            {errorView}
           </div>
-          {room.ranked && <p>{t.ranked}</p>}
-          <div className="players">
-            {room.players.map((p) => (
-              <div key={p.id} className="player-card">
-                <span
-                  className="player-avatar"
-                  style={{ background: p.connected ? "#388872" : "#d3a32d" }}
-                />
-                {p.name}
-              </div>
-            ))}
-          </div>
-          <button
-            className="primary"
-            disabled={
-              !connected ||
-              busy ||
-              room.hostId !== playerId ||
-              room.players.length !== room.capacity ||
-              room.players.some((p) => !p.connected)
-            }
-            onClick={() => void send({ type: "start" })}
-          >
-            {t.start}
-          </button>
-          <button className="secondary" onClick={() => void invite()}>
-            {t.copy}
-          </button>
-          <button className="secondary" onClick={leave}>
-            {t.leave}
-          </button>
-          {notice && <p className="notification">{notice}</p>}
-          {errorView}
-        </div>
-      </section>
+        </section>
+      </div>
     );
   const mine = currentPlayer(state).id === playerId && connected && !busy;
   // Guests often keep the default nickname; colour and "(you)" keep players apart.
@@ -210,17 +215,33 @@ export function Online({ t }: { t: Messages }) {
   const active = room.players.find(
     (p) => p.id === (state.winner ?? currentPlayer(state).id),
   );
+  const seconds = room.deadline
+    ? Math.max(0, Math.ceil((room.deadline - now) / 1000))
+    : 0;
   return (
-    <div className="game-layout">
-      {state.phase === "finished" && active && (
-        <ResultDialog
-          key={room.matchId ?? room.code}
-          t={t}
-          winnerName={label(active.id)}
-          won={state.winner === playerId}
-        />
-      )}
-      <section>
+    <GameScreen
+      t={t}
+      title={t.online}
+      onBack={() => {
+        leave();
+        onBack();
+      }}
+      actions={
+        <button
+          className="icon-btn"
+          aria-label={`${t.history} (${room.proofs.length})`}
+          onClick={() =>
+            (
+              document.getElementById(
+                "dice-history",
+              ) as HTMLDialogElement | null
+            )?.showModal()
+          }
+        >
+          <span aria-hidden="true">🎲</span>
+        </button>
+      }
+      board={
         <Board
           state={state}
           t={t}
@@ -229,74 +250,57 @@ export function Online({ t }: { t: Messages }) {
             void send({ type: "move", pawn, expectedVersion: state.version })
           }
         />
-        <p className="board-hint">{t.hint}</p>
-      </section>
-      <aside className="panel game-panel">
-        {connection}
+      }
+      players={room.players.map((p, index) => ({
+        key: p.id,
+        seat: state.players[index]!.seat,
+        name: `${p.name}${p.id === playerId ? ` (${t.you})` : ""}`,
+        finished: state.players[index]!.pawns.filter((n) => n === FINISH)
+          .length,
+        current: p.id === active?.id && state.phase !== "finished",
+      }))}
+      dice={state.dice ?? room.proofs.at(-1)?.value ?? null}
+      status={
+        mine && state.phase === "move"
+          ? t.move
+          : `${state.winner ? t.winner : t.turn}: ${label(active?.id)}`
+      }
+      info={
+        <>
+          {connection}
+          {!state.winner && (
+            <span className="timer">
+              {seconds} {t.seconds}
+            </span>
+          )}
+          {errorView}
+          {notice && (
+            <span className="notification" role="status">
+              {notice}
+            </span>
+          )}
+        </>
+      }
+      rollDisabled={!mine || state.phase !== "roll" || !room.commitment}
+      onRoll={() => {
+        const nonce = clientNonce();
+        online.nonces.current.set(room.commitment!.hash, nonce);
+        void send({ type: "roll", nonce, expectedVersion: state.version });
+      }}
+    >
+      {state.phase === "finished" && active && (
+        <ResultDialog
+          key={room.matchId ?? room.code}
+          t={t}
+          winnerName={label(active.id)}
+          won={state.winner === playerId}
+        />
+      )}
+      <dialog id="dice-history" className="sheet" aria-label={t.history}>
         <h2>
-          {state.winner ? t.winner : t.turn}: {label(active?.id)}
+          {t.history} ({room.proofs.length})
         </h2>
-        <div className="roll-bar">
-          <span className="roll-turn" aria-hidden="true">
-            {mine && state.phase === "move"
-              ? t.move
-              : `${state.winner ? t.winner : t.turn}: ${label(active?.id)}`}
-          </span>
-          <Dice value={state.dice ?? room.proofs.at(-1)?.value ?? null} />
-          <span className="timer">
-            {room.deadline
-              ? Math.max(0, Math.ceil((room.deadline - now) / 1000))
-              : 0}{" "}
-            {t.seconds}
-          </span>
-          <button
-            className="primary"
-            disabled={!mine || state.phase !== "roll" || !room.commitment}
-            onClick={() => {
-              const nonce = clientNonce();
-              online.nonces.current.set(room.commitment!.hash, nonce);
-              void send({
-                type: "roll",
-                nonce,
-                expectedVersion: state.version,
-              });
-            }}
-          >
-            {t.roll}
-          </button>
-        </div>
-        {mine && state.phase === "move" && <p role="status">{t.move}</p>}
-        <div className="players">
-          {room.players.map((p, index) => (
-            <div
-              key={p.id}
-              className={
-                p.id === active?.id ? "player-card current" : "player-card"
-              }
-            >
-              <Avatar seat={state.players[index]!.seat} />
-              {p.name}
-              {p.id === playerId ? ` (${t.you})` : ""}
-              <small>
-                {state.players[index]!.pawns.filter((n) => n === FINISH).length}
-                /4
-              </small>
-            </div>
-          ))}
-        </div>
-        {errorView}
-        {notice && (
-          <p className="notification" role="status">
-            {notice}
-          </p>
-        )}
-        <button className="secondary" onClick={leave}>
-          {t.leave}
-        </button>
-        <details className="history">
-          <summary>
-            {t.history} ({room.proofs.length})
-          </summary>
+        <div className="history">
           {room.proofs.map((p) => (
             <div className="history-item" key={p.context.roll}>
               #{p.context.roll + 1} · {p.value}
@@ -306,8 +310,21 @@ export function Online({ t }: { t: Messages }) {
               <code>{p.commitment.slice(0, 16)}…</code>
             </div>
           ))}
-        </details>
-      </aside>
-    </div>
+        </div>
+        {notice && <p className="notification">{notice}</p>}
+        <button
+          className="primary"
+          onClick={() =>
+            (
+              document.getElementById(
+                "dice-history",
+              ) as HTMLDialogElement | null
+            )?.close()
+          }
+        >
+          {t.close}
+        </button>
+      </dialog>
+    </GameScreen>
   );
 }

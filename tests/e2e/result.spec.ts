@@ -22,7 +22,7 @@ for (const humanWins of [true, false]) {
           if (array instanceof Uint8Array) {
             const humanTurn =
               document
-                .querySelector(".panel h2")
+                .querySelector(".roll-turn")
                 ?.textContent?.includes("Red") ?? false;
             array[0] =
               humanTurn === humanWins ? (++rolls % 3 === 0 ? 0 : 5) : 0;
@@ -33,7 +33,12 @@ for (const humanWins of [true, false]) {
     }, humanWins);
     await page.goto("/");
     await page.getByRole("button", { name: "English", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Play on one device", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Close", exact: true }).click();
     const title = humanWins
       ? "Congratulations! You won"
       : "Your opponent won this time";
@@ -55,7 +60,7 @@ for (const humanWins of [true, false]) {
       .click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Turn: Red", exact: true }),
+      page.locator(".roll-turn", { hasText: /^Turn: Red$/ }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Roll dice", exact: true }),

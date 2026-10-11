@@ -16,7 +16,9 @@ test("invite link, start, verified roll, network loss and reload resume on the e
     await expect(
       a.getByRole("button", { name: "Account", exact: true }),
     ).toHaveCount(0);
-    await a.getByRole("button", { name: "Play online", exact: true }).click();
+    await a
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await expect(a.getByText("Connected", { exact: true })).toBeVisible();
     await expect(a.getByText("Ranked", { exact: true })).toHaveCount(0);
     await a.getByLabel("Display name").fill("Alpha");
@@ -31,9 +33,12 @@ test("invite link, start, verified roll, network loss and reload resume on the e
     await expect(b.locator(".board")).toBeVisible();
     await expect(b.getByRole("button", { name: "Roll dice" })).toBeDisabled();
     await a.getByRole("button", { name: "Roll dice" }).click();
-    await a.locator("summary").click();
+    await a.getByRole("button", { name: /^Dice history/ }).click();
     await a.getByRole("button", { name: "Verify roll" }).click();
-    await expect(a.getByText("Roll verified", { exact: true })).toBeVisible();
+    await expect(
+      a.getByText("Roll verified", { exact: true }).first(),
+    ).toBeVisible();
+    await a.getByRole("button", { name: "Close", exact: true }).click();
 
     // Guest loses the network, then comes back: same seat, same game.
     await cb.setOffline(true);
@@ -46,13 +51,19 @@ test("invite link, start, verified roll, network loss and reload resume on the e
     await expect(b.getByText("Connected", { exact: true })).toBeVisible({
       timeout: 40000,
     });
-    await expect(b.locator("summary")).toContainText("(1)");
+    await expect(
+      b.getByRole("button", { name: "Dice history (1)", exact: true }),
+    ).toBeVisible();
 
     await a.reload();
-    await a.getByRole("button", { name: "Play online", exact: true }).click();
+    await a
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await expect(a.locator(".board")).toBeVisible();
     await expect(a.getByText("Connected", { exact: true })).toBeVisible();
-    await expect(a.locator("summary")).toContainText("(1)");
+    await expect(
+      a.getByRole("button", { name: "Dice history (1)", exact: true }),
+    ).toBeVisible();
   } finally {
     await ca.close();
     await cb.close();
@@ -66,7 +77,9 @@ test("three players fill a room before the host can start", async ({
   const [a, b, c] = await Promise.all(contexts.map((x) => x.newPage()));
   try {
     await english(a!, "/");
-    await a!.getByRole("button", { name: "Play online", exact: true }).click();
+    await a!
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await a!.getByLabel("Players").selectOption("3");
     await a!.getByRole("button", { name: "Create room" }).click();
     const code = await a!.getByTestId("room-code").innerText();
@@ -95,7 +108,9 @@ test("a full online match ends with the same winner dialog on both screens", asy
   const b = await cb.newPage();
   try {
     await english(a, "/");
-    await a.getByRole("button", { name: "Play online", exact: true }).click();
+    await a
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await a.getByLabel("Display name").fill("Alpha");
     await a.getByRole("button", { name: "Create room" }).click();
     const code = await a.getByTestId("room-code").innerText();

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Mench",
+    "name": "VIP Ludo",
     "slug": "mench",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleDisplayName": "منچ",
+        "CFBundleDisplayName": "VIP Ludo",
         "CFBundleDevelopmentRegion": "fa"
       }
     },

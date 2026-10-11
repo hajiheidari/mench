@@ -11,7 +11,7 @@ const chromium =
 // the same Worker, Durable Object and static files that deploy to mench.espadna.com.
 export default defineConfig({
   testDir: "tests/edge",
-  timeout: 600000,
+  timeout: 900000,
   use: {
     baseURL: "http://127.0.0.1:8787",
     launchOptions: chromium ? { executablePath: chromium } : {},

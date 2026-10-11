@@ -64,3 +64,9 @@ export function chooseMove(
   const candidates = scored.filter((candidate) => candidate.score === best);
   return candidates[entropy % candidates.length]!.pawn;
 }
+export {
+  randomOpponent,
+  thinkingDelay,
+  searchDelay,
+  type Opponent,
+} from "./opponents";

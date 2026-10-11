@@ -9,7 +9,9 @@ test("invite link, authoritative online start, verify roll and reload reconnect"
   try {
     await a.goto("/");
     await a.getByRole("button", { name: "English", exact: true }).click();
-    await a.getByRole("button", { name: "Play online", exact: true }).click();
+    await a
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await a.getByLabel("Display name").fill("Alpha");
     await a.getByRole("button", { name: "Create room" }).click();
     const code = await a.getByTestId("room-code").innerText();
@@ -23,15 +25,22 @@ test("invite link, authoritative online start, verify roll and reload reconnect"
     await expect(b.locator(".board")).toBeVisible();
     await expect(b.getByRole("button", { name: "Roll dice" })).toBeDisabled();
     await a.getByRole("button", { name: "Roll dice" }).click();
-    await a.locator("summary").click();
+    await a.getByRole("button", { name: /^Dice history/ }).click();
     await a.getByRole("button", { name: "Verify roll" }).click();
-    await expect(a.getByText("Roll verified", { exact: true })).toBeVisible();
+    await expect(
+      a.getByText("Roll verified", { exact: true }).first(),
+    ).toBeVisible();
+    await a.getByRole("button", { name: "Close", exact: true }).click();
     await a.reload();
     await a.getByRole("button", { name: "English", exact: true }).click();
-    await a.getByRole("button", { name: "Play online", exact: true }).click();
+    await a
+      .getByRole("button", { name: "Play with friends", exact: true })
+      .click();
     await expect(a.locator(".board")).toBeVisible();
     await expect(a.getByText("Connected", { exact: true })).toBeVisible();
-    await expect(a.locator("summary")).toContainText("(1)");
+    await expect(
+      a.getByRole("button", { name: "Dice history (1)", exact: true }),
+    ).toBeVisible();
   } finally {
     await ca.close();
     await cb.close();
