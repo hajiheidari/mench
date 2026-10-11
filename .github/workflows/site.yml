@@ -1,0 +1,58 @@
+# Publishes mench.espadna.com (web game + online rooms) and espadna.com/mench-app
+# (landing pages) on every push to main, like Adadi's and Tiaro's Workers.
+# Built from apps/web (VITE_BACKEND=edge) + apps/edge/site, deployed with apps/edge/wrangler.jsonc.
+# Needs the repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
+# (the same values as in espadna-site). Never run `wrangler deploy` by hand.
+name: site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - name: Landing pages are up to date
+        run: |
+          python3 apps/edge/landing_pages.py
+          git diff --exit-code -- apps/edge/site || { echo "Run python3 apps/edge/landing_pages.py and commit the result."; exit 1; }
+      - run: npm run typecheck -w @mench/edge
+      - run: npx vitest run apps/edge packages/room-core
+      - name: Build
+        run: |
+          VITE_BACKEND=edge npm run build -w @mench/web
+          npm run assemble -w @mench/edge
+      - name: Deploy
+        working-directory: apps/edge
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Site built but not deployed: add the secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (same values as espadna-site)."
+            exit 0
+          fi
+          npx wrangler deploy
+      - name: Smoke test
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || exit 0
+          sleep 15
+          curl -fsS https://mench.espadna.com/healthz
+          curl -fsS -o /dev/null https://mench.espadna.com/join/ABCDEF1234
+          curl -fsS -o /dev/null https://espadna.com/mench-app/

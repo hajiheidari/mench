@@ -1,0 +1,87 @@
+# Android builds for testing and for the stores.
+# - Every push to main (or Actions → android → Run workflow): build the APK
+#   (Cafe Bazaar / direct install) and the AAB (Google Play) connected to
+#   mench.espadna.com, and publish them on the "android-test-build" pre-release.
+# - Signed with the upload key when the secrets MENCH_UPLOAD_KEYSTORE_BASE64,
+#   MENCH_UPLOAD_STORE_PASSWORD, MENCH_UPLOAD_KEY_ALIAS and MENCH_UPLOAD_KEY_PASSWORD
+#   exist (docs/RELEASE.md); otherwise debug-signed test builds.
+name: android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EXPO_NO_TELEMETRY: "1"
+      EXPO_PUBLIC_BACKEND: edge
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+      - run: python3 ../../../infra/scripts/verify-gradle-wrapper.py gradle/wrapper/gradle-wrapper.properties
+        working-directory: apps/mobile/android
+      - name: Upload key (if the secrets exist)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MENCH_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "MENCH_UPLOAD_STORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "SIGNED=release" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No upload key secrets: building debug-signed test files (not accepted by the stores)."
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+          fi
+      - name: Build APK and AAB
+        working-directory: apps/mobile/android
+        env:
+          MENCH_UPLOAD_STORE_PASSWORD: ${{ secrets.MENCH_UPLOAD_STORE_PASSWORD }}
+          MENCH_UPLOAD_KEY_ALIAS: ${{ secrets.MENCH_UPLOAD_KEY_ALIAS }}
+          MENCH_UPLOAD_KEY_PASSWORD: ${{ secrets.MENCH_UPLOAD_KEY_PASSWORD }}
+        run: |
+          # Version code grows with every CI build so store uploads are never rejected.
+          ./gradlew app:assembleRelease app:bundleRelease --no-daemon --max-workers=4 \
+            -PreactNativeArchitectures=arm64-v8a,armeabi-v7a \
+            -Pandroid.injected.version.code=$((100 + GITHUB_RUN_NUMBER))
+          mkdir -p "$RUNNER_TEMP/out"
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/out/mench-$SIGNED.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/out/mench-$SIGNED.aab"
+      - name: Bundle contains the production server
+        run: unzip -p "$RUNNER_TEMP/out/mench-$SIGNED.apk" assets/index.android.bundle | grep -q "mench.espadna.com"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mench-android
+          path: ${{ runner.temp }}/out/*
+      - name: Publish on the android-test-build pre-release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-test-build >/dev/null 2>&1 || \
+            gh release create android-test-build --prerelease --title "Android test build" \
+              --notes "Latest Android build from CI. APK: install directly or upload to Cafe Bazaar. AAB: Google Play."
+          gh release upload android-test-build "$RUNNER_TEMP"/out/* --clobber

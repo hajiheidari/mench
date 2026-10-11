@@ -11,3 +11,7 @@ Vite builds the static web application. PWA caches only shell/static assets; acc
 Deployment begins with one API and PostgreSQL. Horizontal match ownership, production operations, sustained abuse/capacity testing and native/store delivery remain release work. Local tests and prepared CI workflows do not establish production availability or remote execution.
 
 Completed results retain independently replay-verified full transcripts; live/checkpoint snapshots contain16 recent proofs and an offset. Consistent PostgreSQL event reconstruction restores full histories. Restart connection changes are persisted as replay actions. Account-only history endpoints expose no private account IDs or pending material. See HARDENING.md.
+
+## Public deployment on espadna.com (2026-10-11)
+
+The public web game runs on Cloudflare, like the studio's other apps (ADR 0002): the `mench` Worker in `apps/edge` serves the edge web build on mench.espadna.com and the landing pages on espadna.com/mench-app, and its `GameHub` Durable Object owns all casual rooms using `packages/room-core` (the same Rooms class and schema the Node API uses). Clients choose the transport: plain WebSocket for the edge (`transport: "websocket"`), Socket.IO for the Node API. Android/iOS store builds set `EXPO_PUBLIC_BACKEND=edge` and connect to https://mench.espadna.com. The Node API remains the home of accounts, ranked, social, economy, tournaments and moderation, and is not deployed publicly.

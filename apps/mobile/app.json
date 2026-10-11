@@ -39,11 +39,11 @@
         {
           "faceIDPermission": false
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning"
     ],
     "icon": "./assets/icon.png",
     "scheme": "mench",
-    "userInterfaceStyle": "dark",
     "backgroundColor": "#26164a"
   }
 }
