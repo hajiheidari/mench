@@ -12,6 +12,9 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "Ludo Dosti",
         "CFBundleDevelopmentRegion": "fa"
+      },
+      "entitlements": {
+        "com.apple.developer.ubiquity-kvstore-identifier": "$(TeamIdentifierPrefix)$(CFBundleIdentifier)"
       }
     },
     "android": {
@@ -40,7 +43,8 @@
           "faceIDPermission": false
         }
       ],
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      "./plugins/withWalletBackup"
     ],
     "icon": "./assets/icon.png",
     "scheme": "mench",

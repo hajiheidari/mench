@@ -20,3 +20,32 @@ test("daily coins, shop and designs survive a reload", async ({ page }) => {
   await expect(page.locator(".coin-chip")).toContainText("50");
   await expect(daily).toBeHidden();
 });
+
+test("the recovery code brings the coins to another browser", async ({
+  browser,
+}) => {
+  const first = await (
+    await browser.newContext({ viewport: { width: 390, height: 844 } })
+  ).newPage();
+  await first.goto("/?lang=en");
+  await first.getByRole("button", { name: "Collect +50" }).click();
+  await expect(first.locator(".coin-chip")).toContainText("50");
+  await first.getByRole("button", { name: "Menu", exact: true }).click();
+  const code = (await first.locator(".recovery-code").innerText()).trim();
+  expect(code).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
+
+  const second = await (
+    await browser.newContext({ viewport: { width: 390, height: 844 } })
+  ).newPage();
+  await second.goto("/?lang=en");
+  await second.getByRole("button", { name: "Later" }).click();
+  await expect(second.locator(".coin-chip")).toContainText("0");
+  await second.getByRole("button", { name: "Menu", exact: true }).click();
+  await second.getByLabel("Restore with a code").fill(code.toLowerCase());
+  await second.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(second.locator(".recovery [role=status]")).toContainText(
+    "coins and designs are back",
+  );
+  await expect(second.locator(".coin-chip")).toContainText("50");
+  await expect(second.locator(".recovery-code")).toHaveText(code);
+});

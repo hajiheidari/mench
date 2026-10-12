@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
+import { Dice } from "./Dice";
 import type { Locale } from "@mench/shared-types";
 import type { Messages } from "./messages";
 import { TopBar } from "./GameScreen";
@@ -74,7 +79,7 @@ export function Shop({
   wallet: Wallet;
   onBack: () => void;
 }) {
-  const [tab, setTab] = useState<"board" | "pawns">("board");
+  const [tab, setTab] = useState<"board" | "pawns" | "dice">("board");
   const [notice, setNotice] = useState("");
   const w = wallet.wallet;
   const items = (w?.catalog ?? []).filter((i) => i.kind === tab);
@@ -87,7 +92,7 @@ export function Shop({
         actions={<CoinChip t={t} coins={w?.coins ?? null} onClick={() => {}} />}
       />
       <div className="shop-tabs" role="tablist">
-        {(["board", "pawns"] as const).map((kind) => (
+        {(["board", "pawns", "dice"] as const).map((kind) => (
           <button
             key={kind}
             role="tab"
@@ -95,7 +100,11 @@ export function Shop({
             className={tab === kind ? "selected" : ""}
             onClick={() => setTab(kind)}
           >
-            {kind === "board" ? t.boardsTab : t.pawnsTab}
+            {kind === "board"
+              ? t.boardsTab
+              : kind === "pawns"
+                ? t.pawnsTab
+                : t.diceTab}
           </button>
         ))}
       </div>
@@ -120,11 +129,15 @@ export function Shop({
                   alt=""
                   className="shop-board"
                 />
-              ) : (
+              ) : item.kind === "pawns" ? (
                 <div className="shop-pawns">
                   {pawnArt(item.id as PawnSetId).map((src, seat) => (
                     <img key={seat} src={src} alt="" />
                   ))}
+                </div>
+              ) : (
+                <div className="shop-dice" aria-hidden="true">
+                  <Dice value={5} skin={item.id as DiceSkinId} />
                 </div>
               )}
               <h3>{item.name[locale]}</h3>

@@ -41,9 +41,13 @@ import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
 import { ResultModal } from "./ResultModal";
 import { DemoBoard } from "./DemoBoard";
-import { Appearance, useWallet } from "./coins";
+import { Appearance, useWallet, type Wallet as WalletState } from "./coins";
 import { CoinChip, DailyModal, Shop } from "./Shop";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
 import Constants from "expo-constants";
 import {
   DEFAULT_SERVER,
@@ -136,12 +140,16 @@ function Menu({
   visible,
   onClose,
   onLanguage,
+  wallet,
 }: {
   t: Messages;
   visible: boolean;
   onClose: () => void;
   onLanguage: () => void;
+  wallet?: WalletState;
 }) {
+  const [restoreCode, setRestoreCode] = useState("");
+  const [codeNotice, setCodeNotice] = useState("");
   const [name, setName] = useState("");
   useEffect(() => {
     if (visible) void loadName().then((stored) => setName(stored ?? ""));
@@ -169,6 +177,50 @@ function Menu({
             />
             <Text style={styles.fine}>{t.nameHint}</Text>
             <Button title={t.language} onPress={onLanguage} />
+            {wallet?.code ? (
+              <View style={{ gap: 10 }}>
+                <Text style={styles.heading}>{t.recoveryTitle}</Text>
+                <Text style={styles.fine}>{t.recoveryHint}</Text>
+                <Text selectable style={styles.recoveryCode}>
+                  {wallet.code}
+                </Text>
+                <Button
+                  title={t.shareCode}
+                  onPress={() =>
+                    void Share.share({
+                      message: `${t.recoveryTitle}: ${wallet.code}`,
+                    }).catch(() => undefined)
+                  }
+                />
+                <Input
+                  label={t.restoreLabel}
+                  value={restoreCode}
+                  maxLength={24}
+                  onChange={setRestoreCode}
+                />
+                <Button
+                  title={t.restore}
+                  disabled={wallet.busy || restoreCode.trim().length < 16}
+                  onPress={() =>
+                    void wallet.recover(restoreCode).then((ok) => {
+                      if (ok) setRestoreCode("");
+                      setCodeNotice(ok ? t.restored : "");
+                    })
+                  }
+                />
+                {codeNotice ||
+                wallet.error === "CODE_NOT_FOUND" ||
+                wallet.error === "BAD_CODE" ? (
+                  <Text style={styles.fine}>
+                    {wallet.error === "CODE_NOT_FOUND"
+                      ? t.codeNotFound
+                      : wallet.error === "BAD_CODE"
+                        ? t.badCode
+                        : codeNotice}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
             <Text style={styles.heading}>{t.howToPlay}</Text>
             {t.howToPlaySteps.map((step, i) => (
               <Text key={i} style={styles.step}>
@@ -726,6 +778,7 @@ function Root() {
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
     pawns: (wallet.wallet?.equipped.pawns ?? "classic") as PawnSetId,
+    dice: (wallet.wallet?.equipped.dice ?? "classic") as DiceSkinId,
   };
   const [menu, setMenu] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -831,6 +884,7 @@ function Root() {
                 visible={menu}
                 onClose={() => setMenu(false)}
                 onLanguage={() => setLocale(rtl ? "en" : "fa")}
+                {...(wallet.enabled ? { wallet } : {})}
               />
             </View>
           ) : mode === "practice" ? (
@@ -958,6 +1012,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   step: { fontSize: 14, lineHeight: 24, color: "#f4e9ff" },
+  recoveryCode: {
+    fontSize: 22,
+    letterSpacing: 2,
+    textAlign: "center",
+    color: "#ffe7a0",
+    backgroundColor: "#2c1a48",
+    borderRadius: 14,
+    padding: 12,
+    writingDirection: "ltr",
+  },
   title: {
     flex: 1,
     fontSize: 28,

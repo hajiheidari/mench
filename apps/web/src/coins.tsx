@@ -4,16 +4,22 @@ import {
   WalletRequestError,
   type WalletView,
 } from "@mench/game-client";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
 import { EDGE, SERVER } from "./backend";
 
 /** The designs the board draws with; classic until the wallet says otherwise. */
 export const Appearance = createContext<{
   board: BoardThemeId;
   pawns: PawnSetId;
-}>({ board: "classic", pawns: "classic" });
+  dice: DiceSkinId;
+}>({ board: "classic", pawns: "classic", dice: "classic" });
 
-const CREDENTIALS = "mench-wallet";
+/** The recovery code (the wallet's only secret) on this browser. */
+const CODE = "mench-wallet-code";
 const CACHE = "mench-wallet-view";
 
 function read<T>(key: string): T | null {
@@ -49,12 +55,22 @@ export function useWallet() {
     const c = new WalletClient(
       SERVER ?? location.origin,
       {
-        load: async () => read(CREDENTIALS),
-        save: async (credentials) => write(CREDENTIALS, credentials),
+        load: async () => read<string>(CODE),
+        save: async (code) => write(CODE, code),
       },
       {
-        uuid: () => crypto.randomUUID(),
         bytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
+        sha256Hex: async (text) =>
+          [
+            ...new Uint8Array(
+              await crypto.subtle.digest(
+                "SHA-256",
+                new TextEncoder().encode(text),
+              ),
+            ),
+          ]
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join(""),
       },
     );
     client.current = c;
@@ -87,7 +103,11 @@ export function useWallet() {
     error,
     busy,
     enabled: EDGE,
+    code: client.current?.code ?? null,
     claim: () => run(async (c) => (await c.daily()).wallet),
+    /** Credits a rewarded ad that the ad network reported as watched. */
+    adReward: () => run(async (c) => (await c.ad()).wallet),
+    recover: (code: string) => run((c) => c.recover(code)),
     buy: (sku: string) => run((c) => c.buy(sku)),
     equip: (sku: string) => run((c) => c.equip(sku)),
   };

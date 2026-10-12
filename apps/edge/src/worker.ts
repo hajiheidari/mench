@@ -8,6 +8,8 @@ import {
   claimDaily,
   equip,
   newWallet,
+  rewardAd,
+  upgrade,
   sameHash,
   sha256Hex,
   view,
@@ -174,6 +176,7 @@ export class Wallet extends DurableObject<Env> {
     }
     if (!state || !sameHash(state.tokenHash, hash))
       return Response.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+    upgrade(state);
     let granted = 0;
     try {
       const body =
@@ -181,6 +184,7 @@ export class Wallet extends DurableObject<Env> {
           ? ((await request.json().catch(() => ({}))) as { sku?: unknown })
           : {};
       if (action === "daily") granted = claimDaily(state, now);
+      else if (action === "ad") granted = rewardAd(state, now);
       else if (action === "buy") buy(state, body.sku);
       else if (action === "equip") equip(state, body.sku);
       else if (action !== "wallet")
@@ -198,7 +202,14 @@ export class Wallet extends DurableObject<Env> {
   }
 }
 
-const WALLET_ACTIONS = new Set(["wallet", "create", "daily", "buy", "equip"]);
+const WALLET_ACTIONS = new Set([
+  "wallet",
+  "create",
+  "daily",
+  "ad",
+  "buy",
+  "equip",
+]);
 
 /**
  * /api/wallet/<action>. Headers X-Wallet-Id (UUID) and X-Wallet-Token (64 hex,

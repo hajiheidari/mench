@@ -197,5 +197,6 @@ export {
   type WalletView,
   type WalletItem,
   type WalletStore,
-  type WalletCredentials,
+  normalizeRecoveryCode,
+  formatRecoveryCode,
 } from "./wallet";

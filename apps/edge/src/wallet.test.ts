@@ -4,7 +4,9 @@ import {
   claimDaily,
   equip,
   newWallet,
+  rewardAd,
   sameHash,
+  upgrade,
   sha256Hex,
   tehranDay,
   view,
@@ -28,12 +30,16 @@ test("daily coins once per Tehran day", () => {
 
 test("buying needs coins, equips the new design, and cannot repeat", () => {
   const w = newWallet("h", 0);
-  expect(w.owned).toEqual(["board:classic", "pawns:classic"]);
+  expect(w.owned).toEqual(["board:classic", "pawns:classic", "dice:classic"]);
   expect(() => buy(w, "board:wood")).toThrow("INSUFFICIENT_COINS");
   w.coins = 300;
   buy(w, "board:wood");
   expect(w.coins).toBe(50);
-  expect(w.equipped).toEqual({ board: "wood", pawns: "classic" });
+  expect(w.equipped).toEqual({
+    board: "wood",
+    pawns: "classic",
+    dice: "classic",
+  });
   expect(() => buy(w, "board:wood")).toThrow("ALREADY_OWNED");
   expect(() => buy(w, "board:nope")).toThrow("UNKNOWN_ITEM");
   expect(() => equip(w, "pawns:gold")).toThrow("NOT_OWNED");
@@ -46,4 +52,37 @@ test("token hashes compare in constant time", async () => {
   expect(a).toMatch(/^[a-f0-9]{64}$/);
   expect(sameHash(a, a)).toBe(true);
   expect(sameHash(a, await sha256Hex("b".repeat(64)))).toBe(false);
+});
+
+test("rewarded ads: 20 coins, 30 s apart, five a Tehran day", () => {
+  const w = newWallet("h", EVENING);
+  let t = EVENING - 10 * 60_000;
+  for (let i = 0; i < 5; i++) {
+    expect(rewardAd(w, t)).toBe(20);
+    expect(() => rewardAd(w, t + 1000)).toThrow(
+      i < 4 ? "AD_TOO_SOON" : "AD_LIMIT",
+    );
+    t += 31_000;
+  }
+  expect(w.coins).toBe(100);
+  expect(view(w, t).adsLeft).toBe(0);
+  expect(() => rewardAd(w, t)).toThrow("AD_LIMIT");
+  expect(view(w, AFTER_MIDNIGHT_TEHRAN).adsLeft).toBe(5);
+  expect(rewardAd(w, AFTER_MIDNIGHT_TEHRAN)).toBe(20);
+});
+
+test("older wallets get the dice they did not have yet", () => {
+  const old = {
+    ...newWallet("h", 0),
+    owned: ["board:classic", "pawns:classic"],
+    equipped: { board: "wood", pawns: "classic" },
+  } as unknown as Parameters<typeof upgrade>[0];
+  upgrade(old);
+  expect(old.owned).toContain("dice:classic");
+  expect(old.equipped).toEqual({
+    board: "wood",
+    pawns: "classic",
+    dice: "classic",
+  });
+  buy({ ...old, coins: 150 }, "dice:wood");
 });

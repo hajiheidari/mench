@@ -2,7 +2,11 @@ import { DemoBoard } from "./DemoBoard";
 import { Menu } from "./Menu";
 import { Appearance, useWallet } from "./coins";
 import { CoinChip, DailyDialog, Shop } from "./Shop";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
 import React, { useEffect, useState } from "react";
 import { readEconomy } from "@mench/game-client";
 import { createRoot } from "react-dom/client";
@@ -34,6 +38,7 @@ function App() {
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
     pawns: (wallet.wallet?.equipped.pawns ?? "classic") as PawnSetId,
+    dice: (wallet.wallet?.equipped.dice ?? "classic") as DiceSkinId,
   };
   const home = () => {
     setMode("home");
@@ -100,6 +105,7 @@ function App() {
                     t={t}
                     rtl={locale === "fa"}
                     onLanguage={() => setLocale(locale === "fa" ? "en" : "fa")}
+                    {...(wallet.enabled ? { wallet } : {})}
                   />
                 </div>
               </header>

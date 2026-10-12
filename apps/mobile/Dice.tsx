@@ -1,14 +1,32 @@
 import { View, Text, StyleSheet } from "react-native";
-import { dicePips } from "@mench/board-geometry";
-export function Dice({ value }: { value: number | null }) {
+import { useContext } from "react";
+import { DICE_STYLES, dicePips, type DiceSkinId } from "@mench/board-geometry";
+import { Appearance } from "./appearance";
+export function Dice({
+  value,
+  skin,
+}: {
+  value: number | null;
+  /** Shop previews pass a design; the game uses the player's chosen one. */
+  skin?: DiceSkinId;
+}) {
+  const chosen = useContext(Appearance).dice;
+  const look = DICE_STYLES[skin ?? chosen] ?? DICE_STYLES.classic;
   return (
     <View
-      style={styles.dice}
+      style={[
+        styles.dice,
+        {
+          backgroundColor: look.faceTop,
+          borderColor: look.rim,
+          borderBottomColor: look.edge,
+        },
+      ]}
       accessible
       accessibilityLabel={String(value ?? "✦")}
     >
       {value === null ? (
-        <Text style={styles.idle}>✦</Text>
+        <Text style={[styles.idle, { color: look.pip }]}>✦</Text>
       ) : (
         <View style={styles.face}>
           {Array.from({ length: 9 }, (_, i) => (
@@ -18,7 +36,7 @@ export function Dice({ value }: { value: number | null }) {
                 styles.pip,
                 {
                   backgroundColor: dicePips[value]?.some((pip) => pip === i)
-                    ? "#473060"
+                    ? look.pip
                     : "transparent",
                 },
               ]}

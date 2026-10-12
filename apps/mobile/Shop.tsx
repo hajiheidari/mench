@@ -7,7 +7,13 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
+import { Dice } from "./Dice";
+import { rewardedAds } from "./ads";
 import type { Messages } from "@mench/localization";
 import { TopBar } from "./GameScreen";
 import { Text } from "./Theme";
@@ -125,7 +131,7 @@ export function Shop({
   wallet: Wallet;
   onBack: () => void;
 }) {
-  const [tab, setTab] = useState<"board" | "pawns">("board");
+  const [tab, setTab] = useState<"board" | "pawns" | "dice">("board");
   const [notice, setNotice] = useState("");
   const w = wallet.wallet;
   const locale = rtl ? "fa" : "en";
@@ -140,7 +146,7 @@ export function Shop({
         actions={<CoinChip t={t} coins={w?.coins ?? null} onPress={() => {}} />}
       />
       <View style={styles.tabs}>
-        {(["board", "pawns"] as const).map((kind) => (
+        {(["board", "pawns", "dice"] as const).map((kind) => (
           <Pressable
             key={kind}
             accessibilityRole="tab"
@@ -151,12 +157,44 @@ export function Shop({
             <Text
               style={[styles.tabText, tab === kind && { color: "#3b2463" }]}
             >
-              {kind === "board" ? t.boardsTab : t.pawnsTab}
+              {kind === "board"
+                ? t.boardsTab
+                : kind === "pawns"
+                  ? t.pawnsTab
+                  : t.diceTab}
             </Text>
           </Pressable>
         ))}
       </View>
       {!w && <Text style={styles.notice}>{t.shopOffline}</Text>}
+      {w && rewardedAds && (
+        <View style={styles.adRow}>
+          <ActionButton
+            title={t.watchAd.replace("{n}", String(w.adCoins))}
+            primary
+            disabled={wallet.busy || w.adsLeft === 0}
+            onPress={() =>
+              void rewardedAds!
+                .show()
+                .then((earned) =>
+                  earned ? wallet.adReward() : Promise.resolve(false),
+                )
+                .then((ok) =>
+                  setNotice(
+                    ok
+                      ? t.adThanks.replace("{n}", String(w.adCoins))
+                      : t.adFailed,
+                  ),
+                )
+            }
+          />
+          <Text style={styles.notice}>
+            {w.adsLeft > 0
+              ? t.adsLeft.replace("{n}", String(w.adsLeft))
+              : t.adsDone}
+          </Text>
+        </View>
+      )}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       <ScrollView contentContainerStyle={styles.grid}>
         {items.map((item) => {
@@ -166,6 +204,10 @@ export function Shop({
             <View key={item.sku} style={[styles.card, inUse && styles.inUse]}>
               {item.kind === "board" ? (
                 <BoardPreview theme={item.id as BoardThemeId} />
+              ) : item.kind === "dice" ? (
+                <View style={[styles.preview, styles.dicePreview]}>
+                  <Dice value={5} skin={item.id as DiceSkinId} />
+                </View>
               ) : (
                 <View style={[styles.preview, styles.pawns]}>
                   {PAWN_ART[item.id as PawnSetId].map((src, seat) => (
@@ -296,6 +338,12 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
   },
   inUse: { borderWidth: 2, borderColor: "#ffd36b" },
+  dicePreview: {
+    backgroundColor: "#2c1a48",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adRow: { gap: 4, marginBottom: 8 },
   preview: {
     width: "100%",
     aspectRatio: 1,

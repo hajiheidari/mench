@@ -1,4 +1,6 @@
 import {
+  AD_COINS,
+  AD_DAILY_LIMIT,
   CATALOG,
   DAILY_COINS,
   FREE_SKUS,
@@ -14,18 +16,24 @@ export interface WalletState {
   tokenHash: string;
   coins: number;
   owned: string[];
-  equipped: { board: string; pawns: string };
+  equipped: { board: string; pawns: string; dice: string };
   /** Asia/Tehran calendar day of the last daily reward (YYYY-MM-DD). */
   lastDaily: string | null;
+  /** Rewarded ads watched on adDay, and when the last one paid out. */
+  adDay?: string;
+  adCount?: number;
+  adAt?: number;
   created: number;
 }
 
 export interface WalletView {
   coins: number;
   owned: string[];
-  equipped: { board: string; pawns: string };
+  equipped: { board: string; pawns: string; dice: string };
   dailyAvailable: boolean;
   daily: number;
+  adCoins: number;
+  adsLeft: number;
   catalog: readonly CatalogItem[];
 }
 
@@ -46,10 +54,29 @@ export function newWallet(tokenHash: string, now: number): WalletState {
     tokenHash,
     coins: 0,
     owned: [...FREE_SKUS],
-    equipped: { board: "classic", pawns: "classic" },
+    equipped: { board: "classic", pawns: "classic", dice: "classic" },
     lastDaily: null,
     created: now,
   };
+}
+
+/** Wallets made before a new kind of design existed get its free item. */
+export function upgrade(state: WalletState): WalletState {
+  for (const sku of FREE_SKUS)
+    if (!state.owned.includes(sku)) state.owned.push(sku);
+  const worn = state.equipped as Partial<WalletState["equipped"]>;
+  state.equipped = {
+    board: worn.board ?? "classic",
+    pawns: worn.pawns ?? "classic",
+    dice: worn.dice ?? "classic",
+  };
+  return state;
+}
+
+function adsLeft(state: WalletState, now: number): number {
+  return state.adDay === tehranDay(now)
+    ? Math.max(0, AD_DAILY_LIMIT - (state.adCount ?? 0))
+    : AD_DAILY_LIMIT;
 }
 
 export function view(state: WalletState, now: number): WalletView {
@@ -59,8 +86,27 @@ export function view(state: WalletState, now: number): WalletView {
     equipped: state.equipped,
     dailyAvailable: state.lastDaily !== tehranDay(now),
     daily: DAILY_COINS,
+    adCoins: AD_COINS,
+    adsLeft: adsLeft(state, now),
     catalog: CATALOG,
   };
+}
+
+/**
+ * Coins for a rewarded ad watched in the shop. The ad network cannot be
+ * verified from here, so it is capped: AD_DAILY_LIMIT a day, 30 s apart.
+ * Coins only buy looks, which keeps the incentive to cheat small.
+ */
+export function rewardAd(state: WalletState, now: number): number {
+  if (adsLeft(state, now) === 0) throw new WalletError("AD_LIMIT");
+  if (state.adAt && now - state.adAt < 30_000)
+    throw new WalletError("AD_TOO_SOON");
+  const today = tehranDay(now);
+  state.adCount = state.adDay === today ? (state.adCount ?? 0) + 1 : 1;
+  state.adDay = today;
+  state.adAt = now;
+  state.coins += AD_COINS;
+  return AD_COINS;
 }
 
 /** Grants the daily coins once per Tehran day; returns the coins granted. */
