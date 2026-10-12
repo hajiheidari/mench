@@ -93,14 +93,26 @@ jobs:
           xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
             -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/App.xcarchive" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" ${APPLE_TEAM_ID:+DEVELOPMENT_TEAM="$APPLE_TEAM_ID"} \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER= -quiet archive
+            CODE_SIGNING_ALLOWED=NO -quiet archive
           test -d "$RUNNER_TEMP/App.xcarchive"
-          # Ad-hoc signed so the entitlements (iCloud key-value store) travel
-          # into the archive; the export re-signs it for the App Store.
+          # xcodebuild refuses ad-hoc signing for iOS, so sign the archived app
+          # here: its entitlements (iCloud key-value store for the coin wallet
+          # backup) must be in the signature for the export to keep them.
           app=$(ls -d "$RUNNER_TEMP"/App.xcarchive/Products/Applications/*.app | head -1)
-          codesign -d --entitlements :- "$app" 2>/dev/null | tee "$RUNNER_TEMP/entitlements.plist"
-          grep -q ubiquity-kvstore-identifier "$RUNNER_TEMP/entitlements.plist"
+          bundle=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist")
+          sed -e "s/\$(TeamIdentifierPrefix)/${APPLE_TEAM_ID:-UNSIGNED}./g" \
+            -e "s/\$(CFBundleIdentifier)/$bundle/g" \
+            "$scheme/$scheme.entitlements" > "$RUNNER_TEMP/app.entitlements"
+          cat "$RUNNER_TEMP/app.entitlements"
+          grep -q ubiquity-kvstore-identifier "$RUNNER_TEMP/app.entitlements"
+          if grep -q '\$(' "$RUNNER_TEMP/app.entitlements"; then
+            echo "::error::Unresolved build variable in the entitlements"; exit 1
+          fi
+          find "$app" -depth \( -name '*.framework' -o -name '*.dylib' -o -name '*.appex' \) \
+            -exec codesign --force --sign - --timestamp=none {} \;
+          codesign --force --sign - --timestamp=none \
+            --entitlements "$RUNNER_TEMP/app.entitlements" "$app"
+          codesign -d --entitlements :- "$app" 2>/dev/null | grep -q ubiquity-kvstore-identifier
       - name: App ID capabilities (iCloud for the coin wallet backup)
         if: env.HAVE_SECRETS == 'true'
         run: |
