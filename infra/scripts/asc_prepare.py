@@ -252,8 +252,15 @@ def _():
         detail = None
     if detail:
         call("PATCH", f"/v1/appStoreReviewDetails/{detail['id']}", {"data": {"type": "appStoreReviewDetails", "id": detail["id"], "attributes": attrs}})
-    else:
+        return "ok"
+    try:
         call("POST", "/v1/appStoreReviewDetails", {"data": {"type": "appStoreReviewDetails", "attributes": attrs, "relationships": {"appStoreVersion": {"data": {"type": "appStoreVersions", "id": VERSION_ID}}}}})
+    except RuntimeError as error:
+        # Apple needs the owner's name and phone before it stores the notes.
+        if "contactPhone" in str(error):
+            return "TODO owner: enter contact name + phone, then paste the notes from apps/mobile/store/metadata.json"
+        raise
+    return "ok"
 
 
 @step("build")
