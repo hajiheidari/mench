@@ -20,7 +20,7 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameHub"] }],
   "vars": {
-    "ALLOWED_ORIGINS": "https://mench.espadna.com,https://espadna.com",
+    "ALLOWED_ORIGINS": "https://mench.espadna.com,https://espadna.com,https://mench.espadna.ir",
   },
   "routes": [
     { "pattern": "mench.espadna.com", "custom_domain": true },

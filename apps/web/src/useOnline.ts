@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GameClient, type ClientState, type Session } from "@mench/game-client";
 import type { Intent } from "@mench/game-protocol";
-import { EDGE } from "./backend";
+import { EDGE, SERVER } from "./backend";
 /** Friends' rooms and quick matches keep separate resumable sessions. */
 export type SessionSlot = "friends" | "quick";
 const keys: Record<SessionSlot, string> = {
@@ -41,6 +41,7 @@ export function useOnline(slot: SessionSlot = "friends") {
     const c = new GameClient({
       requestId: () => crypto.randomUUID(),
       transport: EDGE ? "websocket" : "socket.io",
+      ...(SERVER ? { url: SERVER } : {}),
       session: load(key),
       save: (session) =>
         session
