@@ -45,6 +45,8 @@ session = requests.Session()
 def call(method: str, path: str, body: dict | None = None, params: dict | None = None) -> dict:
     session.headers["Authorization"] = f"Bearer {token()}"
     r = session.request(method, API + path, json=body, params=params, timeout=60)
+    if r.status_code == 404 and method == "GET" and path.endswith("/gameCenterDetail"):
+        return {}
     if r.status_code >= 400:
         raise RuntimeError(f"{method} {path} -> {r.status_code}: {r.text[:1500]}")
     return r.json() if r.text else {}
@@ -221,15 +223,23 @@ def _():
     call("PATCH", f"/v1/appStoreVersionLocalizations/{VLOC}", {"data": {"type": "appStoreVersionLocalizations", "id": VLOC, "attributes": {
         "description": META["description"], "keywords": META["keywords"], "promotionalText": META["promotionalText"],
         "supportUrl": META["supportUrl"], "marketingUrl": META["marketingUrl"]}}})
+    if META.get("whatsNew"):
+        try:
+            call("PATCH", f"/v1/appStoreVersionLocalizations/{VLOC}", {"data": {"type": "appStoreVersionLocalizations", "id": VLOC, "attributes": {"whatsNew": META["whatsNew"]}}})
+        except RuntimeError as error:
+            if "whatsNew" not in str(error):
+                raise
+            return "ok (no What's New on a first version)"
 
 
-@step("iPhone 6.7\" screenshots")
-def _():
-    files = sorted((STORE / "screenshots").glob("iphone-67-*.png"))
+def upload_screenshots(pattern: str, display_type: str) -> str:
+    files = sorted((STORE / "screenshots").glob(pattern))
+    if not files:
+        return "no files"
     sets = call("GET", f"/v1/appStoreVersionLocalizations/{VLOC}/appScreenshotSets")["data"]
-    shot_set = next((s for s in sets if s["attributes"]["screenshotDisplayType"] == "APP_IPHONE_67"), None)
+    shot_set = next((s for s in sets if s["attributes"]["screenshotDisplayType"] == display_type), None)
     if shot_set is None:
-        shot_set = call("POST", "/v1/appScreenshotSets", {"data": {"type": "appScreenshotSets", "attributes": {"screenshotDisplayType": "APP_IPHONE_67"}, "relationships": {"appStoreVersionLocalization": {"data": {"type": "appStoreVersionLocalizations", "id": VLOC}}}}})["data"]
+        shot_set = call("POST", "/v1/appScreenshotSets", {"data": {"type": "appScreenshotSets", "attributes": {"screenshotDisplayType": display_type}, "relationships": {"appStoreVersionLocalization": {"data": {"type": "appStoreVersionLocalizations", "id": VLOC}}}}})["data"]
     for old in call("GET", f"/v1/appScreenshotSets/{shot_set['id']}/appScreenshots")["data"]:
         call("DELETE", f"/v1/appScreenshots/{old['id']}")
     for f in files:
@@ -241,6 +251,16 @@ def _():
             requests.request(op["method"], op["url"], data=chunk, headers=headers, timeout=120).raise_for_status()
         call("PATCH", f"/v1/appScreenshots/{shot['id']}", {"data": {"type": "appScreenshots", "id": shot["id"], "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}})
     return f"{len(files)} uploaded"
+
+
+@step("iPhone 6.7\" screenshots")
+def _():
+    return upload_screenshots("iphone-67-*.png", "APP_IPHONE_67")
+
+
+@step("iPad 13\" screenshots")
+def _():
+    return upload_screenshots("ipad-13-*.png", "APP_IPAD_PRO_3GEN_129")
 
 
 @step("App Review notes and contact email")
@@ -279,6 +299,21 @@ def _():
         build = max(valid, key=lambda b: int(b["attributes"]["version"]))
         call("PATCH", f"/v1/appStoreVersions/{VERSION_ID}/relationships/build", {"data": {"type": "builds", "id": build["id"]}})
         return "build " + build["attributes"]["version"]
+
+
+@step("Game Center on this version")
+def _():
+    detail = call("GET", f"/v1/apps/{APP_ID}/gameCenterDetail").get("data")
+    if not detail:
+        return "Game Center not set up (run asc_gamecenter.py)"
+    try:
+        current = call("GET", f"/v1/appStoreVersions/{VERSION_ID}/gameCenterAppVersion").get("data")
+    except RuntimeError:
+        current = None
+    if current:
+        return "already on"
+    call("POST", "/v1/gameCenterAppVersions", {"data": {"type": "gameCenterAppVersions", "relationships": {"appStoreVersion": {"data": {"type": "appStoreVersions", "id": VERSION_ID}}}}})
+    return "on (check its leaderboard and achievements on the version page)"
 
 
 print()

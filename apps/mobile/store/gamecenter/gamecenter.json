@@ -1,0 +1,95 @@
+{
+  "bundleId": "com.espadna.mench",
+  "leaderboards": [
+    {
+      "id": "com.espadna.mench.online_wins",
+      "reference": "Online wins (all time)",
+      "locales": {
+        "en-US": {
+          "name": "Online wins",
+          "formatterSuffix": " wins",
+          "formatterSuffixSingular": " win"
+        },
+        "fa": {
+          "name": "بردهای آنلاین",
+          "formatterSuffix": " برد",
+          "formatterSuffixSingular": " برد"
+        }
+      }
+    }
+  ],
+  "achievements": [
+    {
+      "id": "com.espadna.mench.first_win",
+      "reference": "First win",
+      "points": 10,
+      "image": "first_win.png",
+      "locales": {
+        "en-US": {
+          "name": "First win",
+          "beforeEarnedDescription": "Win a game online or against the bot.",
+          "afterEarnedDescription": "You won your first game."
+        },
+        "fa": {
+          "name": "اولین برد",
+          "beforeEarnedDescription": "یک بازی آنلاین یا مقابل ربات را ببر.",
+          "afterEarnedDescription": "اولین بازی‌ات را بردی."
+        }
+      }
+    },
+    {
+      "id": "com.espadna.mench.online_wins_10",
+      "reference": "10 online wins",
+      "points": 30,
+      "image": "online_wins_10.png",
+      "locales": {
+        "en-US": {
+          "name": "Ten online wins",
+          "beforeEarnedDescription": "Win 10 online games against people.",
+          "afterEarnedDescription": "You won 10 online games."
+        },
+        "fa": {
+          "name": "ده برد آنلاین",
+          "beforeEarnedDescription": "۱۰ بازی آنلاین مقابل آدم‌ها را ببر.",
+          "afterEarnedDescription": "۱۰ بازی آنلاین را بردی."
+        }
+      }
+    },
+    {
+      "id": "com.espadna.mench.online_wins_50",
+      "reference": "50 online wins",
+      "points": 50,
+      "image": "online_wins_50.png",
+      "locales": {
+        "en-US": {
+          "name": "Ludo champion",
+          "beforeEarnedDescription": "Win 50 online games against people.",
+          "afterEarnedDescription": "You won 50 online games."
+        },
+        "fa": {
+          "name": "قهرمان منچ",
+          "beforeEarnedDescription": "۵۰ بازی آنلاین مقابل آدم‌ها را ببر.",
+          "afterEarnedDescription": "۵۰ بازی آنلاین را بردی."
+        }
+      }
+    },
+    {
+      "id": "com.espadna.mench.first_design",
+      "reference": "First design",
+      "points": 10,
+      "image": "first_design.png",
+      "locales": {
+        "en-US": {
+          "name": "New look",
+          "beforeEarnedDescription": "Buy a board, pawn or dice design in the shop.",
+          "afterEarnedDescription": "You bought your first design."
+        },
+        "fa": {
+          "name": "ظاهر تازه",
+          "beforeEarnedDescription": "یک صفحه، مهره یا تاس از فروشگاه بخر.",
+          "afterEarnedDescription": "اولین طرحت را خریدی."
+        }
+      }
+    }
+  ]
+}

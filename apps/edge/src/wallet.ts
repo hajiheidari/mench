@@ -32,6 +32,9 @@ export interface WalletState {
   wins?: number;
   botWins?: number;
   botWinAt?: number;
+  /** All-time paid wins, for the Game Center leaderboard and achievements. */
+  onlineWinsTotal?: number;
+  botWinsTotal?: number;
   created: number;
 }
 
@@ -47,6 +50,8 @@ export interface WalletView {
   winsLeft: number;
   botWinCoins: number;
   botWinsLeft: number;
+  onlineWins: number;
+  botWins: number;
   catalog: readonly CatalogItem[];
 }
 
@@ -105,6 +110,8 @@ export function view(state: WalletState, now: number): WalletView {
     winsLeft: winsLeft(state, now, "online"),
     botWinCoins: BOT_WIN_COINS,
     botWinsLeft: winsLeft(state, now, "bot"),
+    onlineWins: state.onlineWinsTotal ?? 0,
+    botWins: state.botWinsTotal ?? 0,
     catalog: CATALOG,
   };
 }
@@ -151,9 +158,12 @@ export function rewardWin(state: WalletState, now: number, kind: WinKind) {
     state.botWins = 0;
   }
   const coins = kind === "online" ? WIN_COINS : BOT_WIN_COINS;
-  if (kind === "online") state.wins = (state.wins ?? 0) + 1;
-  else {
+  if (kind === "online") {
+    state.wins = (state.wins ?? 0) + 1;
+    state.onlineWinsTotal = (state.onlineWinsTotal ?? 0) + 1;
+  } else {
     state.botWins = (state.botWins ?? 0) + 1;
+    state.botWinsTotal = (state.botWinsTotal ?? 0) + 1;
     state.botWinAt = now;
   }
   state.coins += coins;

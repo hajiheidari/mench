@@ -12,6 +12,7 @@ import {
   Image,
   ImageBackground,
   StatusBar,
+  useWindowDimensions,
   Share,
   Modal,
   Linking,
@@ -59,6 +60,7 @@ import type {
 } from "@mench/board-geometry";
 import Constants from "expo-constants";
 import * as Network from "expo-network";
+import { useGameCenter } from "./gameCenter";
 import {
   DEFAULT_SERVER,
   EDGE,
@@ -157,12 +159,15 @@ function Menu({
   onClose,
   onLanguage,
   wallet,
+  onGameCenter,
 }: {
   t: Messages;
   visible: boolean;
   onClose: () => void;
   onLanguage: () => void;
   wallet?: WalletState;
+  /** iOS with Game Center signed in: opens its dashboard. */
+  onGameCenter?: (() => void) | null;
 }) {
   const [restoreCode, setRestoreCode] = useState("");
   const [codeNotice, setCodeNotice] = useState("");
@@ -197,6 +202,9 @@ function Menu({
             />
             <Text style={styles.fine}>{t.nameHint}</Text>
             <Button title={t.language} onPress={onLanguage} />
+            {onGameCenter ? (
+              <Button title={t.gameCenter} onPress={onGameCenter} />
+            ) : null}
             {wallet?.code ? (
               <View style={{ gap: 10 }}>
                 <Text style={styles.heading}>{t.recoveryTitle}</Text>
@@ -814,15 +822,29 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+const LOCALE_KEY = "mench-locale";
 type Mode = "home" | "random" | "online" | "practice" | "account" | "shop";
 function Root() {
   const [fontsLoaded, fontError] = useFonts({
     Samim: regularFont,
     SamimBold: boldFont,
   });
-  const [locale, setLocale] = useState<"fa" | "en">("fa");
+  const [locale, setLocaleState] = useState<"fa" | "en">("fa");
+  // The chosen language survives restarts.
+  useEffect(() => {
+    void getStored(LOCALE_KEY)
+      .then((saved) => {
+        if (saved === "en" || saved === "fa") setLocaleState(saved);
+      })
+      .catch(() => undefined);
+  }, []);
+  const setLocale = (next: "fa" | "en") => {
+    setLocaleState(next);
+    void setStored(LOCALE_KEY, next).catch(() => undefined);
+  };
   const [mode, setMode] = useState<Mode>("home");
   const wallet = useWallet();
+  const gameCenter = useGameCenter(wallet.wallet);
   // Online modes need the network; say so instead of a screen that never connects.
   const network = Network.useNetworkState();
   const offline =
@@ -864,6 +886,9 @@ function Root() {
   const [theme, setTheme] = useState<CosmeticSku | null>(null);
   const [storageError, setStorageError] = useState(false);
   const insets = useSafeAreaInsets();
+  // iPad and an unfolded foldable iPhone: a wider column and larger type.
+  const window = useWindowDimensions();
+  const wide = Math.min(window.width, window.height) >= 600;
   const t = messages[locale];
   const rtl = locale === "fa";
   const home = () => setMode("home");
@@ -896,7 +921,12 @@ function Root() {
         <Appearance.Provider value={look}>
           <ImageBackground
             source={backdropArt}
-            style={{ flex: 1, overflow: "hidden" }}
+            style={{
+              flex: 1,
+              width: "100%",
+              overflow: "hidden",
+              backgroundColor: "#26164a",
+            }}
             resizeMode="cover"
           >
             <StatusBar barStyle="light-content" />
@@ -917,16 +947,19 @@ function Root() {
               ]}
             >
               {mode === "home" ? (
-                <View style={styles.home}>
+                <View style={[styles.home, wide && styles.homeWide]}>
                   <View style={styles.header}>
                     <View style={styles.brand}>
                       <Image
                         source={brandPawn}
-                        style={styles.brandPawn}
+                        style={[
+                          styles.brandPawn,
+                          wide && { width: 32, height: 40 },
+                        ]}
                         accessibilityIgnoresInvertColors
                       />
                       <Text
-                        style={styles.title}
+                        style={[styles.title, wide && { fontSize: 38 }]}
                         numberOfLines={1}
                         adjustsFontSizeToFit
                       >
@@ -946,7 +979,9 @@ function Root() {
                       onPress={() => setMenu(true)}
                     />
                   </View>
-                  <Text style={styles.fine}>{t.tagline}</Text>
+                  <Text style={[styles.fine, wide && { fontSize: 15 }]}>
+                    {t.tagline}
+                  </Text>
                   {modes.map(([key, icon, title, hint]) => (
                     <Pressable
                       key={key}
@@ -955,6 +990,7 @@ function Root() {
                       onPress={() => openMode(key)}
                       style={[
                         styles.mode,
+                        wide && { minHeight: 100, paddingHorizontal: 22 },
                         key === "random" && styles.modeRandom,
                         offline &&
                           (key === "random" || key === "online") && {
@@ -962,11 +998,23 @@ function Root() {
                           },
                       ]}
                     >
-                      <Text style={styles.modeIcon}>{icon}</Text>
+                      <Text
+                        style={[styles.modeIcon, wide && styles.modeIconWide]}
+                      >
+                        {icon}
+                      </Text>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.modeTitle}>{title}</Text>
+                        <Text
+                          style={[styles.modeTitle, wide && { fontSize: 24 }]}
+                        >
+                          {title}
+                        </Text>
                         {hint ? (
-                          <Text style={styles.modeHint}>{hint}</Text>
+                          <Text
+                            style={[styles.modeHint, wide && { fontSize: 16 }]}
+                          >
+                            {hint}
+                          </Text>
                         ) : null}
                       </View>
                     </Pressable>
@@ -987,6 +1035,7 @@ function Root() {
                     onClose={() => setMenu(false)}
                     onLanguage={() => setLocale(rtl ? "en" : "fa")}
                     {...(wallet.enabled ? { wallet } : {})}
+                    onGameCenter={gameCenter}
                   />
                 </View>
               ) : mode === "practice" ? (
@@ -1055,6 +1104,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
+  homeWide: { maxWidth: 720, gap: 18 },
+  modeIconWide: { fontSize: 46, lineHeight: 58 },
   mode: {
     flexDirection: "row",
     alignItems: "center",
@@ -1081,7 +1132,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, width: "100%", paddingHorizontal: 12 },
   lobby: {
     width: "100%",
-    maxWidth: 540,
+    maxWidth: 640,
     alignSelf: "center",
     padding: 4,
     paddingBottom: 24,

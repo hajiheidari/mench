@@ -126,6 +126,7 @@ export const messages = {
     noInternet:
       "اینترنت قطع است. بازی آنلاین به اینترنت نیاز دارد؛ تا وصل شود، بازی آفلاین را امتحان کن.",
     checkingInternet: "در حال بررسی اینترنت…",
+    gameCenter: "جدول برترین‌ها و دستاوردها",
     retry: "دوباره امتحان کن",
     winReward: "+{n} سکه برای این برد",
     winLimit: "سکهٔ بردهای امروز تمام شد؛ فردا دوباره.",
@@ -366,6 +367,7 @@ export const messages = {
     noInternet:
       "No internet connection. Online games need the internet; meanwhile, try the offline game.",
     checkingInternet: "Checking the internet…",
+    gameCenter: "Leaderboard and achievements",
     retry: "Try again",
     winReward: "+{n} coins for this win",
     winLimit: "Today's win coins are used up; more tomorrow.",

@@ -18,6 +18,9 @@ export interface WalletView {
   winsLeft: number;
   botWinCoins: number;
   botWinsLeft: number;
+  /** All-time paid wins (Game Center leaderboard and achievements). */
+  onlineWins: number;
+  botWins: number;
   catalog: WalletItem[];
 }
 /** Where the recovery code is kept on the device (and its cloud backups). */

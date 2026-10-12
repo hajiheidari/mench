@@ -103,6 +103,8 @@ test("wins: 10 coins five times a day online, 5 coins three times against the bo
   }
   expect(() => rewardWin(w, t, "bot")).toThrow("WIN_LIMIT");
   expect(w.coins).toBe(65);
+  expect(view(w, t).onlineWins).toBe(5);
+  expect(view(w, t).botWins).toBe(3);
   expect(view(w, AFTER_MIDNIGHT_TEHRAN).winsLeft).toBe(5);
   expect(view(w, AFTER_MIDNIGHT_TEHRAN).botWinsLeft).toBe(3);
   expect(rewardWin(w, AFTER_MIDNIGHT_TEHRAN, "online")).toBe(10);

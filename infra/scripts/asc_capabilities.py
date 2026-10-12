@@ -2,7 +2,7 @@
 """Turns on the App ID capabilities the app's entitlements need (idempotent).
 
 iCloud key-value storage keeps the coin wallet's recovery code across
-reinstalls. Uses the same App Store Connect API key as the release.
+reinstalls; Game Center carries the online-wins leaderboard and achievements. Uses the same App Store Connect API key as the release.
 Environment: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH, BUNDLE_ID.
 """
 import os
@@ -49,3 +49,13 @@ else:
     if r.status_code >= 400:
         sys.exit(f"Could not enable iCloud: {r.status_code} {r.text[:800]}")
     print("iCloud turned on")
+
+if "GAME_CENTER" in have:
+    print("Game Center already on")
+else:
+    body = {"data": {"type": "bundleIdCapabilities", "attributes": {"capabilityType": "GAME_CENTER"},
+                     "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bid}}}}}
+    r = requests.post(f"{API}/v1/bundleIdCapabilities", json=body, headers=headers(), timeout=60)
+    if r.status_code >= 400:
+        sys.exit(f"Could not enable Game Center: {r.status_code} {r.text[:800]}")
+    print("Game Center turned on")

@@ -2,6 +2,13 @@
 
 - 2026-10-11: product name is **Ludo Dosti** (App Store name "Ludo Dosti: Play with Friends", home-screen name "Ludo Dosti"). "VIP Ludo" was dropped (casino connotation); "Yalla Ludo" is an existing Yalla Technology trademark. Bundle id stays com.espadna.mench, domain mench.espadna.com.
 
+## 2026-10-13: next update (1.1.0) — Game Center, iPad, foldable iPhone
+
+- Game Center (iOS): local module `apps/mobile/modules/game-center` (GameKit sign-in, leaderboard score, achievements, dashboard from the menu). The score is the wallet's all-time server-verified online wins (`onlineWins`); achievements: first win, 10 and 50 online wins, first design. App Store Connect setup: `gamecenter` workflow (`infra/scripts/asc_gamecenter.py`, texts and images in `apps/mobile/store/gamecenter/`); `asc_capabilities.py` turns the capability on; `asc_prepare.py` attaches Game Center to the version.
+- iPad (`supportsTablet`, full screen, portrait) and the unfolded foldable iPhone: wider home column and larger type when the short side is 600 pt or more. iPad 13" screenshots and refreshed iPhone screenshots come from `scripts/store-screenshots.mjs` (web build of the app + `scripts/frame-screenshot.py`).
+- The app now remembers the chosen language.
+- Not yet on a device: Game Center sign-in and the iPad layout are checked only in the browser build and by the iOS CI compile.
+
 ## 2026-10-12: coins and shop
 
 - Daily coins (20 per Tehran calendar day; was 50), shop with six boards (classic, wood, desert night, turquoise inlay, Isfahan tiles, khatam) and six pawn sets (classic, wood, crystal, copper, turquoise, gold); every design keeps the four player colours. Coins buy looks only; dice and rules are untouched.
