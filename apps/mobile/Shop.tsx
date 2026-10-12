@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Image,
   Modal,
@@ -7,10 +7,11 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import type {
-  BoardThemeId,
-  DiceSkinId,
-  PawnSetId,
+import {
+  DAILY_COINS,
+  type BoardThemeId,
+  type DiceSkinId,
+  type PawnSetId,
 } from "@mench/board-geometry";
 import { Dice } from "./Dice";
 import { rewardedAds } from "./ads";
@@ -19,6 +20,36 @@ import { TopBar } from "./GameScreen";
 import { Text, useDirection } from "./Theme";
 import { BOARD_ART, PAWN_ART } from "./themeArt";
 import type { Wallet } from "./coins";
+
+/** A gold coin, drawn so it looks the same on every phone (the 🪙 emoji is silver on iOS). */
+export function Coin({ size = 18 }: { size?: number }) {
+  return (
+    <View
+      accessible={false}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: "#f2b51f",
+        borderWidth: Math.max(1, size / 12),
+        borderColor: "#b9790b",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <View
+        style={{
+          width: size * 0.62,
+          height: size * 0.62,
+          borderRadius: size,
+          backgroundColor: "#ffd659",
+          borderWidth: Math.max(1, size / 16),
+          borderColor: "#fff0a8",
+        }}
+      />
+    </View>
+  );
+}
 
 export function CoinChip({
   t,
@@ -36,18 +67,23 @@ export function CoinChip({
       onPress={onPress}
       style={styles.chip}
     >
-      <Text style={styles.chipText}>🪙 {coins ?? "…"}</Text>
+      <Coin size={20} />
+      <Text style={styles.chipText}>{coins ?? "…"}</Text>
     </Pressable>
   );
 }
 
 function ActionButton({
   title,
+  icon,
+  label,
   onPress,
   primary,
   disabled,
 }: {
   title: string;
+  icon?: ReactNode;
+  label?: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
@@ -55,7 +91,7 @@ function ActionButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={label ?? title}
       disabled={disabled}
       onPress={onPress}
       style={[
@@ -64,6 +100,7 @@ function ActionButton({
         disabled && { opacity: 0.5 },
       ]}
     >
+      {icon}
       <Text style={[styles.actionText, primary && { color: "#2c1f33" }]}>
         {title}
       </Text>
@@ -93,7 +130,7 @@ function BoardPreview({ theme }: { theme: BoardThemeId }) {
 export function DailyModal({ t, wallet }: { t: Messages; wallet: Wallet }) {
   const [dismissed, setDismissed] = useState(false);
   const dir = useDirection();
-  const daily = wallet.wallet?.daily ?? 50;
+  const daily = wallet.wallet?.daily ?? DAILY_COINS;
   return (
     <Modal
       visible={Boolean(wallet.wallet?.dailyAvailable) && !dismissed}
@@ -103,7 +140,9 @@ export function DailyModal({ t, wallet }: { t: Messages; wallet: Wallet }) {
     >
       <View style={[styles.backdrop, { direction: dir }]}>
         <View style={styles.sheet}>
-          <Text style={styles.bigCoin}>🪙</Text>
+          <View style={styles.bigCoin}>
+            <Coin size={64} />
+          </View>
           <Text style={styles.heading}>{t.dailyTitle}</Text>
           <Text style={styles.body}>
             {t.dailyBody.replace("{n}", String(daily))}
@@ -236,7 +275,9 @@ export function Shop({
                 />
               ) : (
                 <ActionButton
-                  title={`🪙 ${item.price}`}
+                  title={String(item.price)}
+                  icon={<Coin />}
+                  label={`${t.buy} ${item.name[locale]} ${item.price} ${t.coins}`}
                   primary
                   disabled={wallet.busy || !w}
                   onPress={() => {
@@ -260,6 +301,8 @@ export function Shop({
 
 const styles = StyleSheet.create({
   chip: {
+    flexDirection: "row",
+    gap: 6,
     height: 44,
     paddingHorizontal: 14,
     borderRadius: 22,
@@ -288,7 +331,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "stretch",
   },
-  bigCoin: { fontSize: 56, textAlign: "center", lineHeight: 68 },
+  bigCoin: { alignItems: "center", paddingVertical: 4 },
   heading: {
     fontSize: 20,
     fontWeight: "bold",
@@ -297,6 +340,8 @@ const styles = StyleSheet.create({
   },
   body: { color: "#f4e9ff", textAlign: "center", lineHeight: 24 },
   action: {
+    flexDirection: "row",
+    gap: 6,
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,

@@ -21,11 +21,11 @@ test("daily coins once per Tehran day", () => {
   expect(tehranDay(AFTER_MIDNIGHT_TEHRAN)).toBe("2026-10-13");
   const w = newWallet("h", EVENING);
   expect(view(w, EVENING).dailyAvailable).toBe(true);
-  expect(claimDaily(w, EVENING)).toBe(50);
+  expect(claimDaily(w, EVENING)).toBe(20);
   expect(claimDaily(w, EVENING + 60_000)).toBe(0);
   expect(view(w, EVENING).dailyAvailable).toBe(false);
-  expect(claimDaily(w, AFTER_MIDNIGHT_TEHRAN)).toBe(50);
-  expect(w.coins).toBe(100);
+  expect(claimDaily(w, AFTER_MIDNIGHT_TEHRAN)).toBe(20);
+  expect(w.coins).toBe(40);
 });
 
 test("buying needs coins, equips the new design, and cannot repeat", () => {

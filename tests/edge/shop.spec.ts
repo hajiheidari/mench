@@ -5,19 +5,19 @@ test("daily coins, shop and designs survive a reload", async ({ page }) => {
   await page.goto("/?lang=en");
   const daily = page.getByRole("dialog", { name: "Today's reward" });
   await expect(daily).toBeVisible();
-  await daily.getByRole("button", { name: "Collect +50" }).click();
+  await daily.getByRole("button", { name: "Collect +20" }).click();
   await expect(daily).toBeHidden();
   const chip = page.locator(".coin-chip");
-  await expect(chip).toContainText("50");
+  await expect(chip).toContainText("20");
   await chip.click();
   // Boards are 250+ coins: not enough yet, and nothing is taken.
   await page.getByRole("button", { name: /^Buy Wooden 250 coins$/i }).click();
   await expect(page.getByRole("status")).toContainText("Not enough coins");
   await expect(page.locator(".shop-item.in-use")).toContainText("Classic");
-  await expect(page.locator(".coin-chip")).toContainText("50");
+  await expect(page.locator(".coin-chip")).toContainText("20");
   // Same wallet after a reload (stored on this device), and no second popup today.
   await page.goto("/?lang=en");
-  await expect(page.locator(".coin-chip")).toContainText("50");
+  await expect(page.locator(".coin-chip")).toContainText("20");
   await expect(daily).toBeHidden();
 });
 
@@ -28,8 +28,8 @@ test("the recovery code brings the coins to another browser", async ({
     await browser.newContext({ viewport: { width: 390, height: 844 } })
   ).newPage();
   await first.goto("/?lang=en");
-  await first.getByRole("button", { name: "Collect +50" }).click();
-  await expect(first.locator(".coin-chip")).toContainText("50");
+  await first.getByRole("button", { name: "Collect +20" }).click();
+  await expect(first.locator(".coin-chip")).toContainText("20");
   await first.getByRole("button", { name: "Menu", exact: true }).click();
   const code = (await first.locator(".recovery-code").innerText()).trim();
   expect(code).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
@@ -46,6 +46,6 @@ test("the recovery code brings the coins to another browser", async ({
   await expect(second.locator(".recovery [role=status]")).toContainText(
     "coins and designs are back",
   );
-  await expect(second.locator(".coin-chip")).toContainText("50");
+  await expect(second.locator(".coin-chip")).toContainText("20");
   await expect(second.locator(".recovery-code")).toHaveText(code);
 });

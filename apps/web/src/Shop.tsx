@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type {
-  BoardThemeId,
-  DiceSkinId,
-  PawnSetId,
+import {
+  DAILY_COINS,
+  type BoardThemeId,
+  type DiceSkinId,
+  type PawnSetId,
 } from "@mench/board-geometry";
 import { Dice } from "./Dice";
 import type { Locale } from "@mench/shared-types";
@@ -26,7 +27,7 @@ export function CoinChip({
       aria-label={`${t.shop} · ${coins ?? 0} ${t.coins}`}
       onClick={onClick}
     >
-      <span aria-hidden="true">🪙</span>
+      <span className="coin" aria-hidden="true" />
       <strong>{coins ?? "…"}</strong>
     </button>
   );
@@ -50,16 +51,21 @@ export function DailyDialog({ t, wallet }: { t: Messages; wallet: Wallet }) {
       onClose={() => setDismissed(true)}
     >
       <div className="daily-coin" aria-hidden="true">
-        🪙
+        <span className="coin" />
       </div>
       <h2>{t.dailyTitle}</h2>
-      <p>{t.dailyBody.replace("{n}", String(wallet.wallet?.daily ?? 50))}</p>
+      <p>
+        {t.dailyBody.replace(
+          "{n}",
+          String(wallet.wallet?.daily ?? DAILY_COINS),
+        )}
+      </p>
       <button
         className="primary"
         disabled={wallet.busy}
         onClick={() => void wallet.claim().then(() => setDismissed(true))}
       >
-        {t.collect} +{wallet.wallet?.daily ?? 50}
+        {t.collect} +{wallet.wallet?.daily ?? DAILY_COINS}
       </button>
       <button className="secondary" onClick={() => setDismissed(true)}>
         {t.later}
@@ -166,7 +172,7 @@ export function Shop({
                       .then((ok) => setNotice(ok ? t.bought : t.notEnough));
                   }}
                 >
-                  🪙 {item.price}
+                  <span className="coin" aria-hidden="true" /> {item.price}
                 </button>
               )}
             </article>

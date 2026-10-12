@@ -1,5 +1,10 @@
 import { createContext, useContext } from "react";
-import { Text as NativeText, StyleSheet, type TextProps } from "react-native";
+import {
+  Text as NativeText,
+  Platform,
+  StyleSheet,
+  type TextProps,
+} from "react-native";
 
 /**
  * The layout direction of the chosen language. The app turns off the
@@ -9,6 +14,15 @@ import { Text as NativeText, StyleSheet, type TextProps } from "react-native";
  */
 export const Direction = createContext<"ltr" | "rtl">("ltr");
 export const useDirection = () => useContext(Direction);
+
+/**
+ * textAlign for the start of a line. On iOS and Android "left" already means
+ * the start of the layout direction (React Native swaps it under rtl);
+ * react-native-web takes it literally.
+ */
+export function startAlign(dir: "ltr" | "rtl"): "left" | "right" {
+  return Platform.OS === "web" && dir === "rtl" ? "right" : "left";
+}
 
 export function Text({ style, ...props }: TextProps) {
   const dir = useDirection();
@@ -20,7 +34,7 @@ export function Text({ style, ...props }: TextProps) {
       style={[
         {
           color: "#fff4df",
-          textAlign: dir === "rtl" ? "right" : "left",
+          textAlign: startAlign(dir),
           writingDirection: dir,
         },
         style,

@@ -155,7 +155,7 @@ export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
   },
 };
 
-export const DAILY_COINS = 50;
+export const DAILY_COINS = 20;
 export const FREE_SKUS = [
   "board:classic",
   "pawns:classic",

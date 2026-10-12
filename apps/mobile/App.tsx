@@ -1,7 +1,7 @@
 import { useFonts } from "expo-font";
 import regularFont from "../../packages/board-geometry/assets/fonts/Samim.ttf";
 import boldFont from "../../packages/board-geometry/assets/fonts/Samim-Bold.ttf";
-import { Direction, Text, useDirection } from "./Theme";
+import { Direction, Text, startAlign, useDirection } from "./Theme";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -134,7 +134,7 @@ function Input({
         style={[
           styles.input,
           {
-            textAlign: dir === "rtl" ? "right" : "left",
+            textAlign: startAlign(dir),
             writingDirection: dir,
           },
         ]}
