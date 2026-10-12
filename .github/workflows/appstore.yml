@@ -1,0 +1,35 @@
+# Fills in the App Store listing through the App Store Connect API
+# (infra/scripts/asc_prepare.py, texts and screenshots in apps/mobile/store/).
+# It never submits for review; the owner does that in App Store Connect.
+name: appstore
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: appstore-metadata
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyjwt==2.10.1 cryptography==45.0.7 requests==2.32.5
+      - name: App Store Connect key
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          python3 infra/scripts/write-asc-key.py "$RUNNER_TEMP/keys/AuthKey.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey.p8" >> "$GITHUB_ENV"
+      - run: python3 infra/scripts/asc_prepare.py

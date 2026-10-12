@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.espadna.mench",
       "buildNumber": "1",
       "infoPlist": {
