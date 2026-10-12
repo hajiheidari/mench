@@ -39,7 +39,7 @@ TEXT = {
         ],
         "faq": "Questions",
         "qa": [
-            ("Is it free?", "Yes. There are no ads, purchases or sign-up."),
+            ("Is it free?", "Yes, with no purchases or sign-up. The only ads are optional ones in the app’s shop, watched for free coins."),
             ("Are the dice fair?", "In online games the server commits to each roll before you roll and your device adds its own random number, so every result can be checked under “Dice history”. The bot never changes the dice."),
             ("Can I install it?", "On Android open the Chrome menu <b>⋮</b> and choose “Install app”; on iPhone tap <b>⬆️</b> in Safari and choose “Add to Home Screen”."),
         ],
@@ -74,7 +74,7 @@ TEXT = {
         ],
         "faq": "پرسش‌ها",
         "qa": [
-            ("رایگان است؟", "بله. تبلیغ، خرید درون‌برنامه‌ای و ثبت‌نام ندارد."),
+            ("رایگان است؟", "بله؛ خرید و ثبت‌نام ندارد. تنها تبلیغ، تبلیغ اختیاری داخل فروشگاه برنامه است که با دیدنش سکهٔ رایگان می‌گیری."),
             ("تاس منصفانه است؟", "در بازی آنلاین، سرور پیش از هر پرتاب به نتیجه متعهد می‌شود و دستگاه خودت هم یک عدد تصادفی اضافه می‌کند؛ پس هر نتیجه را می‌توانی در «سابقهٔ تاس» بررسی کنی. ربات هیچ‌وقت تاس را تغییر نمی‌دهد."),
             ("می‌شود نصبش کرد؟", "در اندروید منوی <b>⋮</b> کروم را بزن و «نصب برنامه» را انتخاب کن؛ در آیفون دکمهٔ <b>⬆️</b> سافاری و بعد «Add to Home Screen»."),
         ],
@@ -282,13 +282,14 @@ PRIVACY = """<!DOCTYPE html>
   <div class="card">
     <p>Updated 2026-10-12. Ludo Dosti (web, Android and iOS) is made by Espadna.</p>
     <ul>
-      <li><b>No account, no ads, no tracking.</b> The game does not ask for your name, email, phone number or contacts and contains no advertising or analytics SDKs.</li>
+      <li><b>No account, no tracking.</b> The game does not ask for your name, email, phone number or contacts, contains no analytics SDKs and never asks to track you across apps.</li>
       <li><b>Online rooms.</b> When you play online, the nickname you type, the moves and the dice rolls of that room are sent to our server (Cloudflare) so every player sees the same game. Other players in the room see your nickname. A random seat token is kept on your device so you can return to your seat after a disconnect.</li>
       <li><b>Retention.</b> Room data is deleted automatically: unused lobbies after one hour, every room at most 24 hours after it was created.</li>
       <li><b>Server logs.</b> Cloudflare processes technical request data (such as IP address) to deliver and protect the service, under its own privacy policy.</li>
       <li><b>Competitive online games</b> send your nickname and a country flag (guessed on your device from its time zone; the time zone itself is not sent) to the server to find an opponent; the room is then handled like any online room. If nobody is free, the computer plays and the game stays on your device.</li>
       <li><b>Practice games</b> against the computer stay on your device.</li>
       <li><b>Coins and designs.</b> Your coin balance, the boards and pawns you own and the ones you use are kept on our server under a random wallet number made on your device; it is not linked to your name or any account. That number comes from a recovery code shown in the menu; the app also keeps the code in your own iCloud (iPhone) or Google backup (Android) so a reinstall finds your coins. Coins have no money value, cannot be bought and cannot be cashed out; you can earn extra coins by choosing to watch an ad in the shop.</li>
+      <li><b>Ads.</b> Ads appear only in the shop of the iOS and Android apps, and only when you tap “Watch an ad”; the web game has none. They are served by Appodeal and the networks it works with (iOS) and by Adivery (Android), which receive technical data such as IP address, device model and system version to deliver the ad and count it, under their own privacy policies. The advertising identifier is not shared on iOS because the app never asks for tracking permission.</li>
       <li><b>Children.</b> The game has no chat and collects no personal information.</li>
       <li><b>Contact.</b> Questions or deletion requests: <a href="mailto:espadna.support@gmail.com">espadna.support@gmail.com</a>.</li>
     </ul>
@@ -296,12 +297,13 @@ PRIVACY = """<!DOCTYPE html>
   <h2 id="fa" dir="rtl" lang="fa">حریم خصوصی Ludo Dosti</h2>
   <div class="card" dir="rtl" lang="fa">
     <ul>
-      <li>بدون حساب کاربری، بدون تبلیغ و بدون ردیابی. نام، ایمیل، شماره یا مخاطبان شما را نمی‌خواهیم.</li>
+      <li>بدون حساب کاربری و بدون ردیابی. نام، ایمیل، شماره یا مخاطبان شما را نمی‌خواهیم و ابزار آمار و تحلیل در برنامه نیست.</li>
       <li>در بازی آنلاین، نام نمایشی که وارد می‌کنید، حرکت‌ها و تاس‌های همان اتاق به سرور ما (Cloudflare) فرستاده می‌شود تا همه یک بازی را ببینند. بازیکنان همان اتاق نام نمایشی شما را می‌بینند.</li>
       <li>اطلاعات اتاق خودکار پاک می‌شود: اتاق بلااستفاده پس از یک ساعت و هر اتاق حداکثر ۲۴ ساعت پس از ساخت.</li>
       <li>در بازی آنلاین رقابتی، نام نمایشی و یک پرچم کشور (که روی دستگاه از منطقهٔ زمانی حدس زده می‌شود؛ خود منطقهٔ زمانی ارسال نمی‌شود) برای پیدا کردن حریف به سرور فرستاده می‌شود و بعد مثل هر اتاق آنلاین دیگری رفتار می‌شود. اگر حریفی نباشد، کامپیوتر بازی می‌کند و بازی روی دستگاه شما می‌ماند.</li>
       <li>بازی تمرینی با کامپیوتر فقط روی دستگاه شما می‌ماند.</li>
       <li>تعداد سکه‌ها و صفحه و مهره‌هایی که خریده‌اید یا انتخاب کرده‌اید روی سرور ما نگه داشته می‌شود، با یک شماره‌ی تصادفی که گوشی خودتان می‌سازد و به نام یا حسابی وصل نیست. این شماره از «کد بازیابی» داخل منو ساخته می‌شود و برنامه همین کد را در iCloud (آیفون) یا پشتیبان گوگل (اندروید) خودتان هم نگه می‌دارد تا بعد از نصب دوباره، سکه‌ها برگردد. سکه ارزش پولی ندارد، خریدنی نیست و قابل نقد کردن نیست؛ در فروشگاه می‌توانید با دیدن تبلیغ، به انتخاب خودتان، سکه‌ی بیشتر بگیرید.</li>
+      <li>تبلیغ فقط در فروشگاه برنامهٔ آیفون و اندروید و فقط وقتی «دیدن تبلیغ» را بزنید نشان داده می‌شود؛ نسخهٔ وب تبلیغ ندارد. تبلیغ‌ها را Appodeal و شبکه‌های همکارش (آیفون) و Adivery (اندروید) نشان می‌دهند و برای نمایش و شمارش تبلیغ اطلاعات فنی مثل آدرس IP، مدل گوشی و نسخهٔ سیستم‌عامل را طبق سیاست حریم خصوصی خودشان دریافت می‌کنند. در آیفون شناسهٔ تبلیغاتی فرستاده نمی‌شود، چون برنامه هیچ‌وقت اجازهٔ ردیابی نمی‌خواهد.</li>
       <li>تماس: <a href="mailto:espadna.support@gmail.com">espadna.support@gmail.com</a></li>
     </ul>
   </div>

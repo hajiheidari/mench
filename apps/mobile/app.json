@@ -44,7 +44,8 @@
         }
       ],
       "./plugins/withReleaseSigning",
-      "./plugins/withWalletBackup"
+      "./plugins/withWalletBackup",
+      "./plugins/withRewardedAds"
     ],
     "icon": "./assets/icon.png",
     "scheme": "mench",

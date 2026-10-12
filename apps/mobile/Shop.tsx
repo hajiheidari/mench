@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -133,7 +133,9 @@ export function Shop({
 }) {
   const [tab, setTab] = useState<"board" | "pawns" | "dice">("board");
   const [notice, setNotice] = useState("");
+  const [watching, setWatching] = useState(false);
   const w = wallet.wallet;
+  useEffect(() => rewardedAds?.prepare(), []);
   const locale = rtl ? "fa" : "en";
   const items = (w?.catalog ?? []).filter((i) => i.kind === tab);
   return (
@@ -172,21 +174,23 @@ export function Shop({
           <ActionButton
             title={t.watchAd.replace("{n}", String(w.adCoins))}
             primary
-            disabled={wallet.busy || w.adsLeft === 0}
-            onPress={() =>
+            disabled={wallet.busy || watching || w.adsLeft === 0}
+            onPress={() => {
+              setWatching(true);
+              setNotice("");
               void rewardedAds!
                 .show()
-                .then((earned) =>
-                  earned ? wallet.adReward() : Promise.resolve(false),
-                )
-                .then((ok) =>
+                .then((earned) => (earned ? wallet.adReward() : false))
+                .catch(() => false)
+                .then((ok) => {
+                  setWatching(false);
                   setNotice(
                     ok
                       ? t.adThanks.replace("{n}", String(w.adCoins))
                       : t.adFailed,
-                  ),
-                )
-            }
+                  );
+                });
+            }}
           />
           <Text style={styles.notice}>
             {w.adsLeft > 0

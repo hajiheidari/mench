@@ -6,7 +6,8 @@
 
 - Daily coins (50 per Tehran calendar day), shop with six boards (classic, wood, desert night, turquoise inlay, Isfahan tiles, khatam) and six pawn sets (classic, wood, crystal, copper, turquoise, gold); every design keeps the four player colours. Coins buy looks only; dice and rules are untouched.
 - Server: anonymous `Wallet` Durable Object per wallet (`/api/wallet/{create,daily,buy,equip}`), device-made id + secret, only the secret's SHA-256 stored; CORS for the .ir copy. Web and app share `WalletClient` (game-client).
-- Not yet: buying coins (Bazaar in-app payment) and a rewarded ad for free coins (Adivery) — they need the owner's Bazaar product ids/key and Adivery ids.
+- Buying coins was dropped by the owner. Coins come from the daily reward and from rewarded ads offered only in the app's shop (20 coins, 5 a day, 30 s apart, enforced by the server).
+- Rewarded ads: local Expo module `apps/mobile/modules/rewarded-ads` — Appodeal 4.3.0 on iOS (adapters: IAB, BidMachine, AppLovin, Unity, Mintegral; no AdMob; no ATT prompt; SKAdNetwork ids from AppLovin's published list via `plugins/withRewardedAds.js`, which also adds Appodeal's pod spec repo), Adivery 4.9.0 on Android (Bazaar). Ids live in `apps/mobile/ads.ts`. Web has no ads.
 - Tests: wallet unit tests, edge E2E incl. the shop (9/9).
 
 ## 2026-10-11 (night): TestFlight build 9 feedback

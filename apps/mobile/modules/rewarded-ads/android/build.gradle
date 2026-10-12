@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.espadna.mench'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.rewardedads"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // Adivery: the ad network for the Cafe Bazaar build.
+  implementation 'com.adivery:sdk:4.9.0'
+}
