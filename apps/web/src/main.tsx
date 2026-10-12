@@ -9,7 +9,7 @@ import type {
   PawnSetId,
 } from "@mench/board-geometry";
 import React, { useEffect, useState } from "react";
-import { readEconomy } from "@mench/game-client";
+import { readEconomy, serverReachable } from "@mench/game-client";
 import { createRoot } from "react-dom/client";
 import type { Locale } from "@mench/shared-types";
 import { messages } from "./messages";
@@ -18,7 +18,7 @@ import { Online } from "./Online";
 import { Practice } from "./Practice";
 import { RandomMatch } from "./RandomMatch";
 import { LanguageToggle, TopBar } from "./GameScreen";
-import { EDGE } from "./backend";
+import { EDGE, HEALTH_URL } from "./backend";
 import "./style.css";
 function initialLocale(): Locale {
   const asked = new URLSearchParams(location.search).get("lang");
@@ -51,9 +51,23 @@ function App() {
       removeEventListener("offline", update);
     };
   }, []);
+  const [checking, setChecking] = useState(false);
   const openOnline = (next: "random" | "online") => {
-    if (navigator.onLine) setMode(next);
-    else setNoInternet(true);
+    if (!navigator.onLine) {
+      setNoInternet(true);
+      return;
+    }
+    if (!HEALTH_URL) {
+      setMode(next);
+      return;
+    }
+    // Wi-Fi without internet still reads as online: ask the game server.
+    setChecking(true);
+    void serverReachable(HEALTH_URL).then((reachable) => {
+      setChecking(false);
+      setNoInternet(!reachable);
+      if (reachable) setMode(next);
+    });
   };
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
@@ -183,11 +197,15 @@ function App() {
                     </button>
                   )}
                 </nav>
-                {noInternet && (
-                  <p className="notification" role="alert">
+                {checking ? (
+                  <p className="notification" role="status">
+                    {t.checkingInternet}
+                  </p>
+                ) : noInternet ? (
+                  <p className="notification no-internet" role="alert">
                     {t.noInternet}
                   </p>
-                )}
+                ) : null}
                 <DemoBoard t={t} />
                 <footer>{t.rules}</footer>
                 {wallet.enabled && <DailyDialog t={t} wallet={wallet} />}

@@ -30,10 +30,13 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
   const [ranked, setRanked] = useState(false);
   const [notice, setNotice] = useState("");
   const connection = (
-    <div className="connection" role="status">
+    <div
+      className={connected ? "connection" : "connection offline"}
+      role="status"
+    >
       <span
         className="player-avatar"
-        style={{ background: connected ? "#388872" : "#d3a32d" }}
+        style={{ background: connected ? "#388872" : "#e04848" }}
       />
       {connected ? t.connected : t.reconnecting}
     </div>
@@ -195,7 +198,7 @@ export function Online({ t, onBack }: { t: Messages; onBack: () => void }) {
                 <div key={p.id} className="player-card">
                   <span
                     className="player-avatar"
-                    style={{ background: p.connected ? "#388872" : "#d3a32d" }}
+                    style={{ background: p.connected ? "#388872" : "#e04848" }}
                   />
                   {p.name}
                 </div>
@@ -261,10 +264,13 @@ export function OnlineGame({
     return () => clearInterval(id);
   }, []);
   const connection = (
-    <div className="connection" role="status">
+    <div
+      className={connected ? "connection" : "connection offline"}
+      role="status"
+    >
       <span
         className="player-avatar"
-        style={{ background: connected ? "#388872" : "#d3a32d" }}
+        style={{ background: connected ? "#388872" : "#e04848" }}
       />
       {connected ? t.connected : t.reconnecting}
     </div>

@@ -44,7 +44,9 @@ test("invite link, start, verified roll, network loss and reload resume on the e
     // Guest loses the network, then comes back: same seat, same game.
     await cb.setOffline(true);
     await b.evaluate(() => window.dispatchEvent(new Event("offline")));
-    await expect(b.getByText("Reconnecting", { exact: true })).toBeVisible({
+    await expect(
+      b.getByText("No internet connection; reconnecting…", { exact: true }),
+    ).toBeVisible({
       timeout: 40000,
     });
     await cb.setOffline(false);

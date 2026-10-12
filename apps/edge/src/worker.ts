@@ -335,7 +335,16 @@ export default {
       return env.GAME_HUB.get(env.GAME_HUB.idFromName("global")).fetch(request);
     }
     if (url.pathname === "/healthz")
-      return Response.json({ ok: true, service: "mench-edge" });
+      // Read cross-origin by the espadna.ir copy to tell "no internet" apart.
+      return Response.json(
+        { ok: true, service: "mench-edge" },
+        {
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "no-store",
+          },
+        },
+      );
     const response = await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
     for (const [key, value] of Object.entries(SECURITY_HEADERS))

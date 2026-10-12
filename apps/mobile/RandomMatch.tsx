@@ -19,7 +19,8 @@ import {
 } from "@mench/game-engine";
 import type { Messages } from "@mench/localization";
 import { Board } from "./Board";
-import { GameScreen, Searching } from "./GameScreen";
+import { GameScreen, Searching, TopBar } from "./GameScreen";
+import { Pressable, StyleSheet, View } from "react-native";
 import { ResultModal } from "./ResultModal";
 import { newGameId, useWinCoins } from "./coins";
 import { Text } from "./Theme";
@@ -85,6 +86,7 @@ export function RandomMatch({
   const [bot, setBot] = useState<Opponent | null>(null);
   const [ready, setReady] = useState(false);
   const [asked, setAsked] = useState(-1);
+  const [noInternet, setNoInternet] = useState(false);
 
   // Join the casual queue as soon as the socket is up.
   useEffect(() => {
@@ -99,7 +101,8 @@ export function RandomMatch({
     );
   }, [connected, bot, room, queued, asked, round, t.guest]);
 
-  // Nobody matched in time (or no connection): the bot takes the seat.
+  // Nobody matched in time: the bot takes the seat. Without a connection to
+  // the server there is no online game at all, so say so instead.
   useEffect(() => {
     let cancelled = false;
     let start: ReturnType<typeof setTimeout> | undefined;
@@ -112,6 +115,10 @@ export function RandomMatch({
             await new Promise((resolve) => setTimeout(resolve, 50));
           }
           if (cancelled || live.current.snapshot.room) return;
+          if (!live.current.snapshot.connected) {
+            setNoInternet(true);
+            return;
+          }
           setBot(randomOpponent(randomFloat));
           start = setTimeout(() => !cancelled && setReady(true), 1400);
         })();
@@ -128,6 +135,7 @@ export function RandomMatch({
   const again = () => {
     const c = live.current;
     if (c.snapshot.room) void c.client.current?.send({ type: "leave" });
+    setNoInternet(false);
     setBot(null);
     setReady(false);
     setRound((r) => r + 1);
@@ -140,6 +148,25 @@ export function RandomMatch({
     onBack();
   };
 
+  if (noInternet)
+    return (
+      <View style={{ flex: 1, width: "100%", paddingHorizontal: 12 }}>
+        <TopBar t={t} title={t.random} onBack={exit} rtl={rtl} />
+        <View style={styles.noInternetBox}>
+          <Text style={styles.noInternet} accessibilityRole="alert">
+            {t.noInternet}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t.retry}
+            onPress={again}
+            style={styles.retry}
+          >
+            <Text style={styles.retryText}>{t.retry}</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
   if (room?.state && !bot)
     return (
       <OnlineGame
@@ -324,3 +351,26 @@ function BotMatch({
     </GameScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  noInternetBox: { flex: 1, justifyContent: "center", gap: 16 },
+  noInternet: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    lineHeight: 26,
+    textAlign: "center",
+    backgroundColor: "#a8323a",
+    borderRadius: 14,
+    padding: 14,
+    overflow: "hidden",
+  },
+  retry: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: "#35be88",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  retryText: { color: "#2c1f33", fontWeight: "bold", fontSize: 16 },
+});

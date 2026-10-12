@@ -56,6 +56,7 @@ test("without internet the online modes say so; the offline game still opens", a
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?lang=en");
+  await page.getByRole("button", { name: "Later" }).click();
   await context.setOffline(true);
   await page
     .getByRole("button", { name: "Quick online game", exact: true })
@@ -73,4 +74,24 @@ test("without internet the online modes say so; the offline game still opens", a
     .click();
   await expect(page.getByRole("button", { name: "Roll dice" })).toBeVisible();
   await context.setOffline(false);
+});
+
+test("a network that cannot reach the game server counts as no internet", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?lang=en");
+  await page.getByRole("button", { name: "Later" }).click();
+  // Wi-Fi without internet: the browser says online, the server never answers.
+  await page.route("**/healthz", (route) => route.abort());
+  await page
+    .getByRole("button", { name: "Quick online game", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("No internet connection");
+  await expect(page.getByText("Finding an opponent…")).toHaveCount(0);
+  await page.unroute("**/healthz");
+  await page
+    .getByRole("button", { name: "Quick online game", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

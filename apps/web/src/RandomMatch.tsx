@@ -71,6 +71,7 @@ export function RandomMatch({
   const [bot, setBot] = useState<Opponent | null>(null);
   const [ready, setReady] = useState(false);
   const [asked, setAsked] = useState(-1);
+  const [noInternet, setNoInternet] = useState(false);
   const { connected, queued, room, send } = online;
   const realGame = !!room?.state;
 
@@ -85,7 +86,8 @@ export function RandomMatch({
     });
   }, [connected, bot, room, queued, asked, round, send, t.guest]);
 
-  // Nobody matched in time (or no connection): the bot takes the seat.
+  // Nobody matched in time: the bot takes the seat. Without a connection to
+  // the server there is no online game at all, so say so instead.
   useEffect(() => {
     let cancelled = false;
     let start: ReturnType<typeof setTimeout> | undefined;
@@ -97,6 +99,10 @@ export function RandomMatch({
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
         if (cancelled || live.current.room) return;
+        if (!live.current.connected) {
+          setNoInternet(true);
+          return;
+        }
         setBot(randomOpponent(randomFloat));
         start = setTimeout(() => !cancelled && setReady(true), 1400);
       })();
@@ -110,6 +116,7 @@ export function RandomMatch({
 
   const again = () => {
     if (live.current.room) void live.current.send({ type: "leave" });
+    setNoInternet(false);
     setBot(null);
     setReady(false);
     setRound((r) => r + 1);
@@ -121,6 +128,20 @@ export function RandomMatch({
     onBack();
   };
 
+  if (noInternet)
+    return (
+      <div className="game-screen">
+        <TopBar t={t} title={t.random} onBack={exit} />
+        <div className="searching">
+          <p className="notification no-internet" role="alert">
+            {t.noInternet}
+          </p>
+          <button className="primary" onClick={again}>
+            {t.retry}
+          </button>
+        </div>
+      </div>
+    );
   if (realGame && !bot)
     return (
       <OnlineGame

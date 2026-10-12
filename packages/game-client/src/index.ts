@@ -204,3 +204,27 @@ export {
   normalizeRecoveryCode,
   formatRecoveryCode,
 } from "./wallet";
+
+/**
+ * True when the game server answers within the timeout. A phone on Wi-Fi
+ * without internet still reports itself as connected, so the online modes ask
+ * the server itself before opening.
+ */
+export async function serverReachable(
+  url: string,
+  timeoutMs = 4000,
+): Promise<boolean> {
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: abort.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}

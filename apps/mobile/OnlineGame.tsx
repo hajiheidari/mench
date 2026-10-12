@@ -225,7 +225,20 @@ export function OnlineGame({
         <>
           <Text
             accessibilityLiveRegion="polite"
-            style={{ fontSize: 12, color: "#dbc9ed" }}
+            style={
+              connected
+                ? { fontSize: 12, color: "#dbc9ed" }
+                : {
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    color: "#fff",
+                    backgroundColor: "#a8323a",
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    overflow: "hidden",
+                  }
+            }
           >
             {connected ? t.connected : t.reconnecting}
             {!state.winner && room.deadline ? ` · ${seconds} ${t.seconds}` : ""}

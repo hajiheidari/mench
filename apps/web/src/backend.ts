@@ -12,3 +12,9 @@ export const SERVER =
   EDGE && /(^|\.)espadna\.ir$/.test(location.hostname)
     ? "https://mench.espadna.com"
     : undefined;
+
+/**
+ * Answers when the game server is reachable; the online modes check it first.
+ * Edge builds only (the Node development server has no such route here).
+ */
+export const HEALTH_URL = EDGE ? `${SERVER ?? ""}/healthz` : null;

@@ -1235,3 +1235,12 @@ dialog.daily button {
 .mode.offline {
   opacity: 0.55;
 }
+.connection.offline {
+  color: #ff8d8d;
+  font-weight: bold;
+}
+.notification.no-internet {
+  color: #fff;
+  background: #a8323acc;
+  border: 1px solid #ff8d8d;
+}

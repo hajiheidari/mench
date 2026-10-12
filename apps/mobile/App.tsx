@@ -28,7 +28,7 @@ import {
   currentPlayer,
   FINISH,
 } from "@mench/game-engine";
-import { readEconomy } from "@mench/game-client";
+import { readEconomy, serverReachable } from "@mench/game-client";
 import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
 import backdropArt from "./assets/game/backdrop.png";
@@ -503,7 +503,10 @@ function Online({
   const [capacity, setCapacity] = useState(2);
   const { room, connected, busy, queued, playerId, error } = snapshot;
   const status = (
-    <Text accessibilityLiveRegion="polite">
+    <Text
+      accessibilityLiveRegion="polite"
+      style={connected ? undefined : styles.disconnected}
+    >
       {connected ? t.connected : t.reconnecting}
     </Text>
   );
@@ -828,9 +831,25 @@ function Root() {
   useEffect(() => {
     if (!offline) setNoInternet(false);
   }, [offline]);
+  const [checking, setChecking] = useState(false);
   const openMode = (key: Mode) => {
-    if ((key === "random" || key === "online") && offline) setNoInternet(true);
-    else setMode(key);
+    if (key !== "random" && key !== "online") {
+      setMode(key);
+      return;
+    }
+    if (offline) {
+      setNoInternet(true);
+      return;
+    }
+    // Wi-Fi without internet still reads as connected: ask the game server.
+    setChecking(true);
+    void serverReachable(
+      `${DEFAULT_SERVER}${EDGE ? "/healthz" : "/health"}`,
+    ).then((reachable) => {
+      setChecking(false);
+      setNoInternet(!reachable);
+      if (reachable) setMode(key);
+    });
   };
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
@@ -952,11 +971,13 @@ function Root() {
                       </View>
                     </Pressable>
                   ))}
-                  {noInternet && (
+                  {checking ? (
+                    <Text style={styles.fine}>{t.checkingInternet}</Text>
+                  ) : noInternet ? (
                     <Text style={styles.noInternet} accessibilityRole="alert">
                       {t.noInternet}
                     </Text>
-                  )}
+                  ) : null}
                   {storageError && <Text>{t.secureStorage}</Text>}
                   <DemoBoard t={t} />
                   {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
@@ -1098,9 +1119,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   step: { fontSize: 14, lineHeight: 24, color: "#f4e9ff" },
+  disconnected: {
+    color: "#fff",
+    fontWeight: "bold",
+    backgroundColor: "#a8323a",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    overflow: "hidden",
+  },
   noInternet: {
-    color: "#ffe7a0",
-    backgroundColor: "#2c1a48",
+    color: "#fff",
+    fontWeight: "bold",
+    backgroundColor: "#a8323a",
     borderRadius: 14,
     padding: 12,
     textAlign: "center",
