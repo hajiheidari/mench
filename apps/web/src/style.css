@@ -279,9 +279,11 @@ h1 {
     0 3px #8c4c38,
     0 8px 22px #180f37;
 }
-.brand-dot {
-  color: #ffcf69;
-  margin-inline-start: 12px;
+.brand-pawn {
+  height: 0.95em;
+  width: auto;
+  margin-inline-end: 10px;
+  vertical-align: -0.1em;
 }
 header p,
 footer {

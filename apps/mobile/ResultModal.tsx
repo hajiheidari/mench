@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import type { Messages } from "@mench/localization";
-import { Text } from "./Theme";
+import { Text, useDirection } from "./Theme";
 
 /** Native counterpart of the web ResultDialog: who won, congratulations, play again. */
 export function ResultModal({
@@ -17,6 +17,7 @@ export function ResultModal({
 }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => setVisible(true), [winnerName]);
+  const dir = useDirection();
   const title =
     won === true
       ? t.congratulations
@@ -30,7 +31,7 @@ export function ResultModal({
       animationType="fade"
       onRequestClose={() => setVisible(false)}
     >
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { direction: dir }]}>
         <View
           style={styles.card}
           accessibilityViewIsModal

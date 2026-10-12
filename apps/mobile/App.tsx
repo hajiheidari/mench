@@ -1,7 +1,7 @@
 import { useFonts } from "expo-font";
 import regularFont from "../../packages/board-geometry/assets/fonts/Samim.ttf";
 import boldFont from "../../packages/board-geometry/assets/fonts/Samim-Bold.ttf";
-import { Text } from "./Theme";
+import { Direction, Text, useDirection } from "./Theme";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   TextInput,
   Pressable,
+  Image,
   ImageBackground,
   StatusBar,
   Share,
@@ -31,6 +32,7 @@ import { readEconomy } from "@mench/game-client";
 import type { CosmeticSku } from "@mench/game-protocol";
 import { messages, type Messages } from "@mench/localization";
 import backdropArt from "./assets/game/backdrop.png";
+import brandPawn from "./assets/game/pawn-0.png";
 import { Board } from "./Board";
 import { getStored, setStored } from "./storage";
 import { Social } from "./Social";
@@ -119,6 +121,7 @@ function Input({
   password?: boolean;
   maxLength?: number;
 }) {
+  const dir = useDirection();
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
@@ -128,7 +131,13 @@ function Input({
         onChangeText={onChange}
         secureTextEntry={password}
         autoCapitalize="none"
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            textAlign: dir === "rtl" ? "right" : "left",
+            writingDirection: dir,
+          },
+        ]}
         maxLength={maxLength ?? (password ? 128 : 254)}
       />
     </View>
@@ -155,6 +164,7 @@ function Menu({
     if (visible) void loadName().then((stored) => setName(stored ?? ""));
   }, [visible]);
   const site = `https://espadna.com/mench-app/${t === messages.fa ? "fa/" : ""}`;
+  const dir = useDirection();
   return (
     <Modal
       visible={visible}
@@ -162,7 +172,7 @@ function Menu({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.sheetBackdrop}>
+      <View style={[styles.sheetBackdrop, { direction: dir }]}>
         <View style={[styles.sheet, { maxHeight: "92%" }]}>
           <Text style={styles.heading}>{t.menu}</Text>
           <ScrollView contentContainerStyle={{ gap: 12 }}>
@@ -181,7 +191,12 @@ function Menu({
               <View style={{ gap: 10 }}>
                 <Text style={styles.heading}>{t.recoveryTitle}</Text>
                 <Text style={styles.fine}>{t.recoveryHint}</Text>
-                <Text selectable style={styles.recoveryCode}>
+                <Text
+                  selectable
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={styles.recoveryCode}
+                >
                   {wallet.code}
                 </Text>
                 <Button
@@ -262,6 +277,7 @@ function Practice({
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [round, setRound] = useState(0);
   const [settings, setSettings] = useState(false);
+  const dir = useDirection();
   const count = state.players.length;
   const finished = state.phase === "finished";
   const winner = state.winner
@@ -385,7 +401,7 @@ function Practice({
         animationType="fade"
         onRequestClose={() => setSettings(false)}
       >
-        <View style={styles.sheetBackdrop}>
+        <View style={[styles.sheetBackdrop, { direction: dir }]}>
           <View style={styles.sheet}>
             <Text style={styles.heading}>{t.settings}</Text>
             <View style={styles.row}>
@@ -815,128 +831,139 @@ function Root() {
       : [["account", "👤", t.signIn, ""] as [Mode, string, string, string]]),
   ];
   return (
-    <Appearance.Provider value={look}>
-      <ImageBackground
-        source={backdropArt}
-        style={{ flex: 1, overflow: "hidden" }}
-        resizeMode="cover"
-      >
-        <StatusBar barStyle="light-content" />
-        <View
-          style={[
-            styles.root,
-            {
-              paddingTop: insets.top + 6,
-              paddingBottom: Math.max(insets.bottom, 10),
-              paddingLeft: insets.left,
-              paddingRight: insets.right,
-              direction: rtl ? "rtl" : "ltr",
-            },
-            theme && {
-              backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
-            },
-          ]}
+    <Direction.Provider value={rtl ? "rtl" : "ltr"}>
+      <Appearance.Provider value={look}>
+        <ImageBackground
+          source={backdropArt}
+          style={{ flex: 1, overflow: "hidden" }}
+          resizeMode="cover"
         >
-          {mode === "home" ? (
-            <View style={styles.home}>
-              <View style={styles.header}>
-                <Text
-                  style={styles.title}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {t.brand} ✦
-                </Text>
-                {wallet.enabled && (
-                  <CoinChip
-                    t={t}
-                    coins={wallet.wallet?.coins ?? null}
-                    onPress={() => setMode("shop")}
+          <StatusBar barStyle="light-content" />
+          <View
+            style={[
+              styles.root,
+              {
+                paddingTop: insets.top + 6,
+                paddingBottom: Math.max(insets.bottom, 10),
+                paddingLeft: insets.left,
+                paddingRight: insets.right,
+                direction: rtl ? "rtl" : "ltr",
+              },
+              theme && {
+                backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
+              },
+            ]}
+          >
+            {mode === "home" ? (
+              <View style={styles.home}>
+                <View style={styles.header}>
+                  <View style={styles.brand}>
+                    <Image
+                      source={brandPawn}
+                      style={styles.brandPawn}
+                      accessibilityIgnoresInvertColors
+                    />
+                    <Text
+                      style={styles.title}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                    >
+                      {t.brand}
+                    </Text>
+                  </View>
+                  {wallet.enabled && (
+                    <CoinChip
+                      t={t}
+                      coins={wallet.wallet?.coins ?? null}
+                      onPress={() => setMode("shop")}
+                    />
+                  )}
+                  <IconButton
+                    label={t.menu}
+                    icon="☰"
+                    onPress={() => setMenu(true)}
                   />
-                )}
-                <IconButton
-                  label={t.menu}
-                  icon="☰"
-                  onPress={() => setMenu(true)}
+                </View>
+                <Text style={styles.fine}>{t.tagline}</Text>
+                {modes.map(([key, icon, title, hint]) => (
+                  <Pressable
+                    key={key}
+                    accessibilityRole="button"
+                    accessibilityLabel={title}
+                    onPress={() => setMode(key)}
+                    style={[styles.mode, key === "random" && styles.modeRandom]}
+                  >
+                    <Text style={styles.modeIcon}>{icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.modeTitle}>{title}</Text>
+                      {hint ? (
+                        <Text style={styles.modeHint}>{hint}</Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                ))}
+                {storageError && <Text>{t.secureStorage}</Text>}
+                <DemoBoard t={t} />
+                {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
+                <Menu
+                  t={t}
+                  visible={menu}
+                  onClose={() => setMenu(false)}
+                  onLanguage={() => setLocale(rtl ? "en" : "fa")}
+                  {...(wallet.enabled ? { wallet } : {})}
                 />
               </View>
-              <Text style={styles.fine}>{t.tagline}</Text>
-              {modes.map(([key, icon, title, hint]) => (
-                <Pressable
-                  key={key}
-                  accessibilityRole="button"
-                  accessibilityLabel={title}
-                  onPress={() => setMode(key)}
-                  style={[styles.mode, key === "random" && styles.modeRandom]}
-                >
-                  <Text style={styles.modeIcon}>{icon}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.modeTitle}>{title}</Text>
-                    {hint ? <Text style={styles.modeHint}>{hint}</Text> : null}
-                  </View>
-                </Pressable>
-              ))}
-              {storageError && <Text>{t.secureStorage}</Text>}
-              <DemoBoard t={t} />
-              {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
-              <Menu
+            ) : mode === "practice" ? (
+              <Practice t={t} rtl={rtl} onBack={home} />
+            ) : mode === "random" ? (
+              <RandomMatch
                 t={t}
-                visible={menu}
-                onClose={() => setMenu(false)}
-                onLanguage={() => setLocale(rtl ? "en" : "fa")}
-                {...(wallet.enabled ? { wallet } : {})}
+                rtl={rtl}
+                onBack={home}
+                server={server}
+                token={token}
               />
-            </View>
-          ) : mode === "practice" ? (
-            <Practice t={t} rtl={rtl} onBack={home} />
-          ) : mode === "random" ? (
-            <RandomMatch
-              t={t}
-              rtl={rtl}
-              onBack={home}
-              server={server}
-              token={token}
-            />
-          ) : mode === "shop" ? (
-            <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
-          ) : mode === "online" ? (
-            <Online
-              t={t}
-              rtl={rtl}
-              onBack={home}
-              server={server}
-              token={token}
-              inviteCode={inviteCode}
-            />
-          ) : (
-            <View style={styles.page}>
-              <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
-              <ScrollView contentContainerStyle={styles.lobby}>
-                <Input label={t.server} value={draft} onChange={setDraft} />
-                <Button
-                  title={t.reconnect}
-                  onPress={() => {
-                    if (/^https?:\/\//.test(draft))
-                      setServer(draft.replace(/\/$/, ""));
-                  }}
-                />
-                <Account
-                  t={t}
-                  server={server}
-                  token={token}
-                  onToken={setToken}
-                  onTheme={setTheme}
-                  onInvite={(code) => {
-                    setInviteCode(code);
-                    setMode("online");
-                  }}
-                />
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      </ImageBackground>
-    </Appearance.Provider>
+            ) : mode === "shop" ? (
+              <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
+            ) : mode === "online" ? (
+              <Online
+                t={t}
+                rtl={rtl}
+                onBack={home}
+                server={server}
+                token={token}
+                inviteCode={inviteCode}
+              />
+            ) : (
+              <View style={styles.page}>
+                <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
+                <ScrollView contentContainerStyle={styles.lobby}>
+                  <Input label={t.server} value={draft} onChange={setDraft} />
+                  <Button
+                    title={t.reconnect}
+                    onPress={() => {
+                      if (/^https?:\/\//.test(draft))
+                        setServer(draft.replace(/\/$/, ""));
+                    }}
+                  />
+                  <Account
+                    t={t}
+                    server={server}
+                    token={token}
+                    onToken={setToken}
+                    onTheme={setTheme}
+                    onInvite={(code) => {
+                      setInviteCode(code);
+                      setMode("online");
+                    }}
+                  />
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </ImageBackground>
+      </Appearance.Provider>
+    </Direction.Provider>
   );
 }
 const styles = StyleSheet.create({
@@ -1013,8 +1040,8 @@ const styles = StyleSheet.create({
   },
   step: { fontSize: 14, lineHeight: 24, color: "#f4e9ff" },
   recoveryCode: {
-    fontSize: 22,
-    letterSpacing: 2,
+    fontSize: 20,
+    letterSpacing: 1,
     textAlign: "center",
     color: "#ffe7a0",
     backgroundColor: "#2c1a48",
@@ -1022,8 +1049,10 @@ const styles = StyleSheet.create({
     padding: 12,
     writingDirection: "ltr",
   },
+  brand: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
+  brandPawn: { width: 24, height: 30 },
   title: {
-    flex: 1,
+    flexShrink: 1,
     fontSize: 28,
     fontWeight: "bold",
     color: "#ffe7a0",

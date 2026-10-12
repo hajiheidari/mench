@@ -16,7 +16,7 @@ import { Dice } from "./Dice";
 import { rewardedAds } from "./ads";
 import type { Messages } from "@mench/localization";
 import { TopBar } from "./GameScreen";
-import { Text } from "./Theme";
+import { Text, useDirection } from "./Theme";
 import { BOARD_ART, PAWN_ART } from "./themeArt";
 import type { Wallet } from "./coins";
 
@@ -92,6 +92,7 @@ function BoardPreview({ theme }: { theme: BoardThemeId }) {
 /** Once a day on the home screen: collect the free coins. */
 export function DailyModal({ t, wallet }: { t: Messages; wallet: Wallet }) {
   const [dismissed, setDismissed] = useState(false);
+  const dir = useDirection();
   const daily = wallet.wallet?.daily ?? 50;
   return (
     <Modal
@@ -100,7 +101,7 @@ export function DailyModal({ t, wallet }: { t: Messages; wallet: Wallet }) {
       animationType="fade"
       onRequestClose={() => setDismissed(true)}
     >
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { direction: dir }]}>
         <View style={styles.sheet}>
           <Text style={styles.bigCoin}>🪙</Text>
           <Text style={styles.heading}>{t.dailyTitle}</Text>

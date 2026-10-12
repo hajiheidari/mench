@@ -43,6 +43,12 @@
           "faceIDPermission": false
         }
       ],
+      [
+        "expo-localization",
+        {
+          "supportsRTL": false
+        }
+      ],
       "./plugins/withReleaseSigning",
       "./plugins/withWalletBackup",
       "./plugins/withRewardedAds"

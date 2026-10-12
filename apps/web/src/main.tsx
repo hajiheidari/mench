@@ -1,5 +1,6 @@
 import { DemoBoard } from "./DemoBoard";
 import { Menu } from "./Menu";
+import { pawnArt } from "./Board";
 import { Appearance, useWallet } from "./coins";
 import { CoinChip, DailyDialog, Shop } from "./Shop";
 import type {
@@ -87,8 +88,12 @@ function App() {
               <header>
                 <div>
                   <h1>
+                    <img
+                      className="brand-pawn"
+                      src={pawnArt("classic")[0]}
+                      alt=""
+                    />
                     {t.brand}
-                    <span className="brand-dot">✦</span>
                   </h1>
                   <p>{t.tagline}</p>
                 </div>
