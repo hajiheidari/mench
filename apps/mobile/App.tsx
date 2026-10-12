@@ -135,7 +135,6 @@ function Input({
           styles.input,
           {
             textAlign: startAlign(dir),
-            writingDirection: dir,
           },
         ]}
         maxLength={maxLength ?? (password ? 128 : 254)}
@@ -175,7 +174,10 @@ function Menu({
       <View style={[styles.sheetBackdrop, { direction: dir }]}>
         <View style={[styles.sheet, { maxHeight: "92%" }]}>
           <Text style={styles.heading}>{t.menu}</Text>
-          <ScrollView contentContainerStyle={{ gap: 12 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
             <Input
               label={t.nickname}
               value={name}
@@ -519,7 +521,10 @@ function Online({
     return (
       <View style={styles.page}>
         <TopBar t={t} title={t.online} onBack={onBack} rtl={rtl} />
-        <ScrollView contentContainerStyle={styles.lobby}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.lobby}
+        >
           {status}
           <Input
             label={t.nickname}
@@ -584,7 +589,10 @@ function Online({
     return (
       <View style={styles.page}>
         <TopBar t={t} title={t.online} onBack={leave} rtl={rtl} />
-        <ScrollView contentContainerStyle={styles.lobby}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.lobby}
+        >
           {status}
           <Text style={styles.heading}>{t.waiting}</Text>
           <Text selectable style={styles.code}>
@@ -937,7 +945,10 @@ function Root() {
             ) : (
               <View style={styles.page}>
                 <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
-                <ScrollView contentContainerStyle={styles.lobby}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.lobby}
+                >
                   <Input label={t.server} value={draft} onChange={setDraft} />
                   <Button
                     title={t.reconnect}

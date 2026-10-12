@@ -240,7 +240,10 @@ export function Shop({
         </View>
       )}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      <ScrollView contentContainerStyle={styles.grid}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.grid}
+      >
         {items.map((item) => {
           const owned = w?.owned.includes(item.sku) ?? false;
           const inUse = w?.equipped[item.kind] === item.id;

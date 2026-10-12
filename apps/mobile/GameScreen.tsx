@@ -30,7 +30,8 @@ export function IconButton({
       onPress={onPress}
       style={styles.icon}
     >
-      <Text style={styles.iconText}>{icon}</Text>
+      {/* ltr: under rtl text the › and ‹ glyphs would be mirrored. */}
+      <Text style={[styles.iconText, { writingDirection: "ltr" }]}>{icon}</Text>
     </Pressable>
   );
 }
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 16,
   },
-  searchText: { fontSize: 18 },
+  searchText: { fontSize: 18, textAlign: "center" },
   flag: { fontSize: 64, lineHeight: 80 },
   foundName: { fontSize: 22, fontWeight: "bold", color: "#ffe7a0" },
   spinner: { transform: [{ scale: 1.1 }] },

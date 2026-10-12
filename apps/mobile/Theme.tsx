@@ -35,7 +35,6 @@ export function Text({ style, ...props }: TextProps) {
         {
           color: "#fff4df",
           textAlign: startAlign(dir),
-          writingDirection: dir,
         },
         style,
         { fontFamily: bold ? "SamimBold" : "Samim", fontWeight: "normal" },
