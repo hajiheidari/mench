@@ -61,9 +61,9 @@ jobs:
           MENCH_UPLOAD_KEY_PASSWORD: ${{ secrets.MENCH_UPLOAD_KEY_PASSWORD }}
         run: |
           # Version code grows with every CI build so store uploads are never rejected.
+          export MENCH_VERSION_CODE=$((100 + GITHUB_RUN_NUMBER))
           ./gradlew app:assembleRelease app:bundleRelease --no-daemon --max-workers=4 \
-            -PreactNativeArchitectures=arm64-v8a,armeabi-v7a \
-            -Pandroid.injected.version.code=$((100 + GITHUB_RUN_NUMBER))
+            -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
           mkdir -p "$RUNNER_TEMP/out"
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/out/mench-$SIGNED.apk"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/out/mench-$SIGNED.aab"

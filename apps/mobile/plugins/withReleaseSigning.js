@@ -26,6 +26,11 @@ module.exports = function withReleaseSigning(config) {
       /(release \{\n(?:\s*\/\/.*\n)*\s*)signingConfig signingConfigs\.debug/,
       '$1signingConfig System.getenv("MENCH_UPLOAD_STORE_FILE") ? signingConfigs.release : signingConfigs.debug',
     );
+    // CI passes a growing number so every store upload has a new versionCode.
+    source = source.replace(
+      /versionCode (\d+)/,
+      'versionCode Integer.parseInt(System.getenv("MENCH_VERSION_CODE") ?: "$1")',
+    );
     if (!source.includes("signingConfigs.release"))
       throw new Error("withReleaseSigning: build.gradle layout changed");
     gradle.modResults.contents = source;
