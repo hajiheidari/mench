@@ -33,8 +33,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
-      - uses: android-actions/setup-android@v3
+          java-version: "21"
       - run: npm ci
       - run: npx expo prebuild --platform android --no-install
         working-directory: apps/mobile
@@ -68,6 +67,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/out"
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/out/mench-$SIGNED.apk"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/out/mench-$SIGNED.aab"
+      - name: Signature
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          "$apksigner" verify --print-certs "$RUNNER_TEMP/out/mench-$SIGNED.apk" | grep -E "DN|SHA-256"
       - name: Bundle contains the production server
         run: unzip -p "$RUNNER_TEMP/out/mench-$SIGNED.apk" assets/index.android.bundle | grep -q "mench.espadna.com"
       - uses: actions/upload-artifact@v4
