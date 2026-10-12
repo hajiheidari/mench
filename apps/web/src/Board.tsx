@@ -11,11 +11,27 @@ import {
   pawnLocation,
   boardSvg,
   pawnSvg,
+  type BoardThemeId,
+  type PawnSetId,
 } from "@mench/board-geometry";
-const boardArt = `data:image/svg+xml,${encodeURIComponent(boardSvg())}`;
-const pawnArt = [0, 1, 2, 3].map(
-  (seat) => `data:image/svg+xml,${encodeURIComponent(pawnSvg(seat))}`,
-);
+import { useContext } from "react";
+import { Appearance } from "./coins";
+const dataUri = (svg: string) =>
+  `data:image/svg+xml,${encodeURIComponent(svg)}`;
+const boardCache = new Map<BoardThemeId, string>();
+const pawnCache = new Map<PawnSetId, string[]>();
+export function boardArt(theme: BoardThemeId): string {
+  if (!boardCache.has(theme)) boardCache.set(theme, dataUri(boardSvg(theme)));
+  return boardCache.get(theme)!;
+}
+export function pawnArt(set: PawnSetId): string[] {
+  if (!pawnCache.has(set))
+    pawnCache.set(
+      set,
+      [0, 1, 2, 3].map((seat) => dataUri(pawnSvg(seat, set))),
+    );
+  return pawnCache.get(set)!;
+}
 export { colors } from "@mench/board-geometry";
 export function Board({
   state,
@@ -29,10 +45,12 @@ export function Board({
   interactive?: boolean;
 }) {
   const moves = interactive ? legalMoves(state) : [];
+  const look = useContext(Appearance);
+  const pawnImages = pawnArt(look.pawns);
   return (
     <div className="board" dir="ltr">
       <svg viewBox="0 0 15 15" role="img" aria-label={t.rules}>
-        <image href={boardArt} width="15" height="15" />
+        <image href={boardArt(look.board)} width="15" height="15" />
         {bases.map(
           ([x, y], seat) =>
             state.players[state.turn]?.seat === seat &&
@@ -93,7 +111,7 @@ export function Board({
             >
               <img
                 key={position}
-                src={pawnArt[player.seat]}
+                src={pawnImages[player.seat]}
                 alt=""
                 draggable={false}
               />

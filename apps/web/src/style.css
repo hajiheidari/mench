@@ -1083,3 +1083,98 @@ main.home h1 {
     display: none;
   }
 }
+
+/* ---------- Coins and shop ---------- */
+.coin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: 1px solid #f3c35f;
+  background: #3c235f;
+  color: #ffe7a0;
+  font-size: 16px;
+  box-shadow: 0 3px #211437;
+}
+dialog.daily {
+  text-align: center;
+}
+.daily-coin {
+  font-size: 64px;
+  line-height: 1;
+}
+dialog.daily button {
+  width: 100%;
+}
+.shop {
+  overflow-y: auto;
+}
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.shop-tabs button {
+  flex: 1;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid #ad7acc;
+  background: #3c235f;
+  color: #fff3d5;
+  font: inherit;
+}
+.shop-tabs button.selected {
+  background: #ffd36b;
+  color: #3b2463;
+  border-color: #ffd36b;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.shop-item {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 10px;
+  border-radius: 18px;
+  background: linear-gradient(155deg, #604084f2, #35224fee);
+  border: 1px solid #b281cb;
+}
+.shop-item.in-use {
+  border: 2px solid #ffd36b;
+}
+.shop-item h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.shop-item button {
+  width: 100%;
+}
+.shop-board {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+.shop-pawns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 10px;
+  background: #eee7f5;
+}
+.shop-pawns img {
+  width: 56%;
+}
+.in-use-label {
+  color: #ffe7a0;
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+}

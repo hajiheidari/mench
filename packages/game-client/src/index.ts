@@ -191,3 +191,11 @@ export {
 export { readAdmin, sendAdmin } from "./admin";
 
 export { readHistory, readTranscript } from "./history";
+export {
+  WalletClient,
+  WalletRequestError,
+  type WalletView,
+  type WalletItem,
+  type WalletStore,
+  type WalletCredentials,
+} from "./wallet";
