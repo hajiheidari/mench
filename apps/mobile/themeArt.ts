@@ -1,0 +1,55 @@
+/* Generated from scripts/build-game-art.mjs designs: one image per board theme and pawn set. */
+import type { ImageSourcePropType } from "react-native";
+import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import board from "./assets/game/board.png";
+import board_wood from "./assets/game/board-wood.png";
+import board_night from "./assets/game/board-night.png";
+import board_firoozeh from "./assets/game/board-firoozeh.png";
+import board_kashi from "./assets/game/board-kashi.png";
+import board_khatam from "./assets/game/board-khatam.png";
+import pawn0 from "./assets/game/pawn-0.png";
+import pawn1 from "./assets/game/pawn-1.png";
+import pawn2 from "./assets/game/pawn-2.png";
+import pawn3 from "./assets/game/pawn-3.png";
+import pawn_wood_0 from "./assets/game/pawn-wood-0.png";
+import pawn_wood_1 from "./assets/game/pawn-wood-1.png";
+import pawn_wood_2 from "./assets/game/pawn-wood-2.png";
+import pawn_wood_3 from "./assets/game/pawn-wood-3.png";
+import pawn_crystal_0 from "./assets/game/pawn-crystal-0.png";
+import pawn_crystal_1 from "./assets/game/pawn-crystal-1.png";
+import pawn_crystal_2 from "./assets/game/pawn-crystal-2.png";
+import pawn_crystal_3 from "./assets/game/pawn-crystal-3.png";
+import pawn_copper_0 from "./assets/game/pawn-copper-0.png";
+import pawn_copper_1 from "./assets/game/pawn-copper-1.png";
+import pawn_copper_2 from "./assets/game/pawn-copper-2.png";
+import pawn_copper_3 from "./assets/game/pawn-copper-3.png";
+import pawn_firoozeh_0 from "./assets/game/pawn-firoozeh-0.png";
+import pawn_firoozeh_1 from "./assets/game/pawn-firoozeh-1.png";
+import pawn_firoozeh_2 from "./assets/game/pawn-firoozeh-2.png";
+import pawn_firoozeh_3 from "./assets/game/pawn-firoozeh-3.png";
+import pawn_gold_0 from "./assets/game/pawn-gold-0.png";
+import pawn_gold_1 from "./assets/game/pawn-gold-1.png";
+import pawn_gold_2 from "./assets/game/pawn-gold-2.png";
+import pawn_gold_3 from "./assets/game/pawn-gold-3.png";
+
+export const BOARD_ART: Record<BoardThemeId, ImageSourcePropType> = {
+  classic: board,
+  wood: board_wood,
+  night: board_night,
+  firoozeh: board_firoozeh,
+  kashi: board_kashi,
+  khatam: board_khatam,
+};
+export const PAWN_ART: Record<PawnSetId, ImageSourcePropType[]> = {
+  classic: [pawn0, pawn1, pawn2, pawn3],
+  wood: [pawn_wood_0, pawn_wood_1, pawn_wood_2, pawn_wood_3],
+  crystal: [pawn_crystal_0, pawn_crystal_1, pawn_crystal_2, pawn_crystal_3],
+  copper: [pawn_copper_0, pawn_copper_1, pawn_copper_2, pawn_copper_3],
+  firoozeh: [
+    pawn_firoozeh_0,
+    pawn_firoozeh_1,
+    pawn_firoozeh_2,
+    pawn_firoozeh_3,
+  ],
+  gold: [pawn_gold_0, pawn_gold_1, pawn_gold_2, pawn_gold_3],
+};

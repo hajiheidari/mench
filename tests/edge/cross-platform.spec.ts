@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // The Expo client runs the same App.tsx as the Android/iOS apps (react-native-web here).
 const MOBILE = "http://127.0.0.1:3200";

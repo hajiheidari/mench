@@ -41,6 +41,9 @@ import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
 import { ResultModal } from "./ResultModal";
 import { DemoBoard } from "./DemoBoard";
+import { Appearance, useWallet } from "./coins";
+import { CoinChip, DailyModal, Shop } from "./Shop";
+import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
 import Constants from "expo-constants";
 import {
   DEFAULT_SERVER,
@@ -711,7 +714,7 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-type Mode = "home" | "random" | "online" | "practice" | "account";
+type Mode = "home" | "random" | "online" | "practice" | "account" | "shop";
 function Root() {
   const [fontsLoaded, fontError] = useFonts({
     Samim: regularFont,
@@ -719,6 +722,11 @@ function Root() {
   });
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState<Mode>("home");
+  const wallet = useWallet();
+  const look = {
+    board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
+    pawns: (wallet.wallet?.equipped.pawns ?? "classic") as PawnSetId,
+  };
   const [menu, setMenu] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [server, setServer] = useState(DEFAULT_SERVER);
@@ -754,111 +762,127 @@ function Root() {
       : [["account", "👤", t.signIn, ""] as [Mode, string, string, string]]),
   ];
   return (
-    <ImageBackground
-      source={backdropArt}
-      style={{ flex: 1, overflow: "hidden" }}
-      resizeMode="cover"
-    >
-      <StatusBar barStyle="light-content" />
-      <View
-        style={[
-          styles.root,
-          {
-            paddingTop: insets.top + 6,
-            paddingBottom: Math.max(insets.bottom, 10),
-            paddingLeft: insets.left,
-            paddingRight: insets.right,
-            direction: rtl ? "rtl" : "ltr",
-          },
-          theme && {
-            backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
-          },
-        ]}
+    <Appearance.Provider value={look}>
+      <ImageBackground
+        source={backdropArt}
+        style={{ flex: 1, overflow: "hidden" }}
+        resizeMode="cover"
       >
-        {mode === "home" ? (
-          <View style={styles.home}>
-            <View style={styles.header}>
-              <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-                {t.brand} ✦
-              </Text>
-              <IconButton
-                label={t.menu}
-                icon="☰"
-                onPress={() => setMenu(true)}
+        <StatusBar barStyle="light-content" />
+        <View
+          style={[
+            styles.root,
+            {
+              paddingTop: insets.top + 6,
+              paddingBottom: Math.max(insets.bottom, 10),
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+              direction: rtl ? "rtl" : "ltr",
+            },
+            theme && {
+              backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
+            },
+          ]}
+        >
+          {mode === "home" ? (
+            <View style={styles.home}>
+              <View style={styles.header}>
+                <Text
+                  style={styles.title}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {t.brand} ✦
+                </Text>
+                {wallet.enabled && (
+                  <CoinChip
+                    t={t}
+                    coins={wallet.wallet?.coins ?? null}
+                    onPress={() => setMode("shop")}
+                  />
+                )}
+                <IconButton
+                  label={t.menu}
+                  icon="☰"
+                  onPress={() => setMenu(true)}
+                />
+              </View>
+              <Text style={styles.fine}>{t.tagline}</Text>
+              {modes.map(([key, icon, title, hint]) => (
+                <Pressable
+                  key={key}
+                  accessibilityRole="button"
+                  accessibilityLabel={title}
+                  onPress={() => setMode(key)}
+                  style={[styles.mode, key === "random" && styles.modeRandom]}
+                >
+                  <Text style={styles.modeIcon}>{icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modeTitle}>{title}</Text>
+                    {hint ? <Text style={styles.modeHint}>{hint}</Text> : null}
+                  </View>
+                </Pressable>
+              ))}
+              {storageError && <Text>{t.secureStorage}</Text>}
+              <DemoBoard t={t} />
+              {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
+              <Menu
+                t={t}
+                visible={menu}
+                onClose={() => setMenu(false)}
+                onLanguage={() => setLocale(rtl ? "en" : "fa")}
               />
             </View>
-            <Text style={styles.fine}>{t.tagline}</Text>
-            {modes.map(([key, icon, title, hint]) => (
-              <Pressable
-                key={key}
-                accessibilityRole="button"
-                accessibilityLabel={title}
-                onPress={() => setMode(key)}
-                style={[styles.mode, key === "random" && styles.modeRandom]}
-              >
-                <Text style={styles.modeIcon}>{icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.modeTitle}>{title}</Text>
-                  {hint ? <Text style={styles.modeHint}>{hint}</Text> : null}
-                </View>
-              </Pressable>
-            ))}
-            {storageError && <Text>{t.secureStorage}</Text>}
-            <DemoBoard t={t} />
-            <Menu
+          ) : mode === "practice" ? (
+            <Practice t={t} rtl={rtl} onBack={home} />
+          ) : mode === "random" ? (
+            <RandomMatch
               t={t}
-              visible={menu}
-              onClose={() => setMenu(false)}
-              onLanguage={() => setLocale(rtl ? "en" : "fa")}
+              rtl={rtl}
+              onBack={home}
+              server={server}
+              token={token}
             />
-          </View>
-        ) : mode === "practice" ? (
-          <Practice t={t} rtl={rtl} onBack={home} />
-        ) : mode === "random" ? (
-          <RandomMatch
-            t={t}
-            rtl={rtl}
-            onBack={home}
-            server={server}
-            token={token}
-          />
-        ) : mode === "online" ? (
-          <Online
-            t={t}
-            rtl={rtl}
-            onBack={home}
-            server={server}
-            token={token}
-            inviteCode={inviteCode}
-          />
-        ) : (
-          <View style={styles.page}>
-            <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
-            <ScrollView contentContainerStyle={styles.lobby}>
-              <Input label={t.server} value={draft} onChange={setDraft} />
-              <Button
-                title={t.reconnect}
-                onPress={() => {
-                  if (/^https?:\/\//.test(draft))
-                    setServer(draft.replace(/\/$/, ""));
-                }}
-              />
-              <Account
-                t={t}
-                server={server}
-                token={token}
-                onToken={setToken}
-                onTheme={setTheme}
-                onInvite={(code) => {
-                  setInviteCode(code);
-                  setMode("online");
-                }}
-              />
-            </ScrollView>
-          </View>
-        )}
-      </View>
-    </ImageBackground>
+          ) : mode === "shop" ? (
+            <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
+          ) : mode === "online" ? (
+            <Online
+              t={t}
+              rtl={rtl}
+              onBack={home}
+              server={server}
+              token={token}
+              inviteCode={inviteCode}
+            />
+          ) : (
+            <View style={styles.page}>
+              <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
+              <ScrollView contentContainerStyle={styles.lobby}>
+                <Input label={t.server} value={draft} onChange={setDraft} />
+                <Button
+                  title={t.reconnect}
+                  onPress={() => {
+                    if (/^https?:\/\//.test(draft))
+                      setServer(draft.replace(/\/$/, ""));
+                  }}
+                />
+                <Account
+                  t={t}
+                  server={server}
+                  token={token}
+                  onToken={setToken}
+                  onTheme={setTheme}
+                  onInvite={(code) => {
+                    setInviteCode(code);
+                    setMode("online");
+                  }}
+                />
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      </ImageBackground>
+    </Appearance.Provider>
   );
 }
 const styles = StyleSheet.create({

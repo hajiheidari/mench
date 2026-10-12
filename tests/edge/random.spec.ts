@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("quick online game: search, named opponent, full game, result and rematch on one screen", async ({
   page,

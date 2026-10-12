@@ -7,12 +7,9 @@ import {
 } from "@mench/game-engine";
 import { bases, track, pawnLocation } from "@mench/board-geometry";
 import type { Messages } from "@mench/localization";
-import boardArt from "./assets/game/board.png";
-import pawn0 from "./assets/game/pawn-0.png";
-import pawn1 from "./assets/game/pawn-1.png";
-import pawn2 from "./assets/game/pawn-2.png";
-import pawn3 from "./assets/game/pawn-3.png";
-const pawnArt = [pawn0, pawn1, pawn2, pawn3];
+import { useContext } from "react";
+import { Appearance } from "./appearance";
+import { BOARD_ART, PAWN_ART } from "./themeArt";
 export function Board({
   state,
   width,
@@ -26,6 +23,8 @@ export function Board({
   t: Messages;
   interactive: boolean;
 }) {
+  const look = useContext(Appearance);
+  const pawnArt = PAWN_ART[look.pawns] ?? PAWN_ART.classic;
   const size = width - 6;
   const scale = size / 15;
   const moves = interactive ? legalMoves(state) : [];
@@ -44,7 +43,7 @@ export function Board({
         }}
       >
         <Image
-          source={boardArt}
+          source={BOARD_ART[look.board] ?? BOARD_ART.classic}
           accessibilityIgnoresInvertColors
           style={{ width: size, height: size, borderRadius: 13 }}
         />

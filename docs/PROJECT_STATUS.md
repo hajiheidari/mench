@@ -2,6 +2,13 @@
 
 - 2026-10-11: product name is **Ludo Dosti** (App Store name "Ludo Dosti: Play with Friends", home-screen name "Ludo Dosti"). "VIP Ludo" was dropped (casino connotation); "Yalla Ludo" is an existing Yalla Technology trademark. Bundle id stays com.espadna.mench, domain mench.espadna.com.
 
+## 2026-10-12: coins and shop
+
+- Daily coins (50 per Tehran calendar day), shop with six boards (classic, wood, desert night, turquoise inlay, Isfahan tiles, khatam) and six pawn sets (classic, wood, crystal, copper, turquoise, gold); every design keeps the four player colours. Coins buy looks only; dice and rules are untouched.
+- Server: anonymous `Wallet` Durable Object per wallet (`/api/wallet/{create,daily,buy,equip}`), device-made id + secret, only the secret's SHA-256 stored; CORS for the .ir copy. Web and app share `WalletClient` (game-client).
+- Not yet: buying coins (Bazaar in-app payment) and a rewarded ad for free coins (Adivery) — they need the owner's Bazaar product ids/key and Adivery ids.
+- Tests: wallet unit tests, edge E2E incl. the shop (9/9).
+
 ## 2026-10-11 (night): TestFlight build 9 feedback
 
 - Bug: the quick online game resumed a saved friends' room (same stored session), showing a stalled private game. Quick matches now keep their own session slot (web sessionStorage / app SecureStore); an edge test reproduces the old behaviour and passes with the fix. A failed resume of an expired room no longer shows "invalid session".
