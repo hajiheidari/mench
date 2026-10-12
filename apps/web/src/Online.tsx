@@ -6,6 +6,7 @@ import type { Messages } from "./messages";
 import { useOnline } from "./useOnline";
 import { GameScreen, TopBar } from "./GameScreen";
 import { ResultDialog } from "./ResultDialog";
+import { useWinCoins } from "./coins";
 import { Board } from "./Board";
 import { EDGE } from "./backend";
 import { saveName, savedName } from "./nickname";
@@ -285,6 +286,16 @@ export function OnlineGame({
     );
   }
   const state = room?.state;
+  const seat = online.session();
+  const reward = useWinCoins(
+    t,
+    state?.phase === "finished" && room?.matchId
+      ? `online:${room.matchId}`
+      : null,
+    state?.winner && state.winner === playerId && seat
+      ? { kind: "online", room: seat.code, token: seat.token }
+      : null,
+  );
   if (!room || !state) return null;
   const mine = currentPlayer(state).id === playerId && connected && !busy;
   // Guests often keep the default nickname; colour and "(you)" keep players apart.
@@ -374,6 +385,7 @@ export function OnlineGame({
           t={t}
           winnerName={label(active.id)}
           won={state.winner === playerId}
+          reward={reward}
           {...(onPlayAgain ? { onPlayAgain } : {})}
         />
       )}

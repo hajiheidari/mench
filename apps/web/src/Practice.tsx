@@ -7,6 +7,7 @@ import {
   FINISH,
 } from "@mench/game-engine";
 import { ResultDialog } from "./ResultDialog";
+import { newGameId, useWinCoins } from "./coins";
 import { Board, colors } from "./Board";
 import { GameScreen, randomDie } from "./GameScreen";
 import type { Messages } from "./messages";
@@ -17,12 +18,20 @@ export function Practice({ t, onBack }: { t: Messages; onBack: () => void }) {
   const [bots, setBots] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const settings = useRef<HTMLDialogElement>(null);
+  // Coins only when the bot played every other seat for the whole game.
+  const [game, setGame] = useState(() => ({ id: newGameId(), bots: false }));
   const winner = state.players.find((player) => player.id === state.winner);
   const count = state.players.length;
+  const reward = useWinCoins(
+    t,
+    state.phase === "finished" ? game.id : null,
+    bots && game.bots && state.winner === "0" ? { kind: "bot" } : null,
+  );
   function newGame(playerCount = count) {
     setState(
       createGame(Array.from({ length: playerCount }, (_, i) => String(i))),
     );
+    setGame({ id: newGameId(), bots });
     setLast(null);
   }
   const botTurn =
@@ -129,6 +138,7 @@ export function Practice({ t, onBack }: { t: Messages; onBack: () => void }) {
               : t.names[winner.seat]!
           }
           won={bots ? winner.id === "0" : undefined}
+          reward={reward}
           onPlayAgain={() => newGame()}
         />
       )}
@@ -150,7 +160,14 @@ export function Practice({ t, onBack }: { t: Messages; onBack: () => void }) {
           <input
             type="checkbox"
             checked={bots}
-            onChange={(e) => setBots(e.target.checked)}
+            onChange={(e) => {
+              setBots(e.target.checked);
+              // Turning the bot on counts only before the first roll.
+              setGame((g) => ({
+                ...g,
+                bots: e.target.checked && state.version === 0,
+              }));
+            }}
           />
           <span>{t.bot}</span>
         </label>

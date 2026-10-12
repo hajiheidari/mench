@@ -43,7 +43,14 @@ import { Tournaments } from "./Tournaments";
 import { Admin } from "./Admin";
 import { ResultModal } from "./ResultModal";
 import { DemoBoard } from "./DemoBoard";
-import { Appearance, useWallet, type Wallet as WalletState } from "./coins";
+import {
+  Appearance,
+  WalletContext,
+  newGameId,
+  useWallet,
+  useWinCoins,
+  type Wallet as WalletState,
+} from "./coins";
 import { CoinChip, DailyModal, Shop } from "./Shop";
 import type {
   BoardThemeId,
@@ -51,6 +58,7 @@ import type {
   PawnSetId,
 } from "@mench/board-geometry";
 import Constants from "expo-constants";
+import * as Network from "expo-network";
 import {
   DEFAULT_SERVER,
   EDGE,
@@ -280,15 +288,23 @@ function Practice({
   const [round, setRound] = useState(0);
   const [settings, setSettings] = useState(false);
   const dir = useDirection();
+  // Coins only when the bot played every other seat for the whole game.
+  const [game, setGame] = useState(() => ({ id: newGameId(), bots: false }));
   const count = state.players.length;
   const finished = state.phase === "finished";
   const winner = state.winner
     ? state.players.find((p) => p.id === state.winner)
     : undefined;
+  const reward = useWinCoins(
+    t,
+    finished ? game.id : null,
+    bots && game.bots && state.winner === "0" ? { kind: "bot" } : null,
+  );
   function newGame(playerCount = count) {
     setState(
       createGame(Array.from({ length: playerCount }, (_, i) => String(i))),
     );
+    setGame({ id: newGameId(), bots });
     setLast(null);
     setRound((r) => r + 1);
   }
@@ -394,6 +410,7 @@ function Practice({
               : t.names[winner.seat]!
           }
           won={bots ? winner.id === "0" : undefined}
+          reward={reward}
           onPlayAgain={() => newGame()}
         />
       )}
@@ -418,7 +435,11 @@ function Practice({
             </View>
             <Button
               title={`${bots ? "✓ " : ""}${t.bot}`}
-              onPress={() => setBots(!bots)}
+              onPress={() => {
+                setBots(!bots);
+                // Turning the bot on counts only before the first roll.
+                setGame((g) => ({ ...g, bots: !bots && state.version === 0 }));
+              }}
             />
             {bots && (
               <>
@@ -799,6 +820,18 @@ function Root() {
   const [locale, setLocale] = useState<"fa" | "en">("fa");
   const [mode, setMode] = useState<Mode>("home");
   const wallet = useWallet();
+  // Online modes need the network; say so instead of a screen that never connects.
+  const network = Network.useNetworkState();
+  const offline =
+    network.isConnected === false || network.isInternetReachable === false;
+  const [noInternet, setNoInternet] = useState(false);
+  useEffect(() => {
+    if (!offline) setNoInternet(false);
+  }, [offline]);
+  const openMode = (key: Mode) => {
+    if ((key === "random" || key === "online") && offline) setNoInternet(true);
+    else setMode(key);
+  };
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
     pawns: (wallet.wallet?.equipped.pawns ?? "classic") as PawnSetId,
@@ -840,140 +873,155 @@ function Root() {
   ];
   return (
     <Direction.Provider value={rtl ? "rtl" : "ltr"}>
-      <Appearance.Provider value={look}>
-        <ImageBackground
-          source={backdropArt}
-          style={{ flex: 1, overflow: "hidden" }}
-          resizeMode="cover"
-        >
-          <StatusBar barStyle="light-content" />
-          <View
-            style={[
-              styles.root,
-              {
-                paddingTop: insets.top + 6,
-                paddingBottom: Math.max(insets.bottom, 10),
-                paddingLeft: insets.left,
-                paddingRight: insets.right,
-                direction: rtl ? "rtl" : "ltr",
-              },
-              theme && {
-                backgroundColor: theme === "aurora" ? "#173344cc" : "#482446cc",
-              },
-            ]}
+      <WalletContext.Provider value={wallet.enabled ? wallet : null}>
+        <Appearance.Provider value={look}>
+          <ImageBackground
+            source={backdropArt}
+            style={{ flex: 1, overflow: "hidden" }}
+            resizeMode="cover"
           >
-            {mode === "home" ? (
-              <View style={styles.home}>
-                <View style={styles.header}>
-                  <View style={styles.brand}>
-                    <Image
-                      source={brandPawn}
-                      style={styles.brandPawn}
-                      accessibilityIgnoresInvertColors
+            <StatusBar barStyle="light-content" />
+            <View
+              style={[
+                styles.root,
+                {
+                  paddingTop: insets.top + 6,
+                  paddingBottom: Math.max(insets.bottom, 10),
+                  paddingLeft: insets.left,
+                  paddingRight: insets.right,
+                  direction: rtl ? "rtl" : "ltr",
+                },
+                theme && {
+                  backgroundColor:
+                    theme === "aurora" ? "#173344cc" : "#482446cc",
+                },
+              ]}
+            >
+              {mode === "home" ? (
+                <View style={styles.home}>
+                  <View style={styles.header}>
+                    <View style={styles.brand}>
+                      <Image
+                        source={brandPawn}
+                        style={styles.brandPawn}
+                        accessibilityIgnoresInvertColors
+                      />
+                      <Text
+                        style={styles.title}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
+                        {t.brand}
+                      </Text>
+                    </View>
+                    {wallet.enabled && (
+                      <CoinChip
+                        t={t}
+                        coins={wallet.wallet?.coins ?? null}
+                        onPress={() => setMode("shop")}
+                      />
+                    )}
+                    <IconButton
+                      label={t.menu}
+                      icon="☰"
+                      onPress={() => setMenu(true)}
                     />
-                    <Text
-                      style={styles.title}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                    >
-                      {t.brand}
-                    </Text>
                   </View>
-                  {wallet.enabled && (
-                    <CoinChip
-                      t={t}
-                      coins={wallet.wallet?.coins ?? null}
-                      onPress={() => setMode("shop")}
-                    />
+                  <Text style={styles.fine}>{t.tagline}</Text>
+                  {modes.map(([key, icon, title, hint]) => (
+                    <Pressable
+                      key={key}
+                      accessibilityRole="button"
+                      accessibilityLabel={title}
+                      onPress={() => openMode(key)}
+                      style={[
+                        styles.mode,
+                        key === "random" && styles.modeRandom,
+                        offline &&
+                          (key === "random" || key === "online") && {
+                            opacity: 0.55,
+                          },
+                      ]}
+                    >
+                      <Text style={styles.modeIcon}>{icon}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.modeTitle}>{title}</Text>
+                        {hint ? (
+                          <Text style={styles.modeHint}>{hint}</Text>
+                        ) : null}
+                      </View>
+                    </Pressable>
+                  ))}
+                  {noInternet && (
+                    <Text style={styles.noInternet} accessibilityRole="alert">
+                      {t.noInternet}
+                    </Text>
                   )}
-                  <IconButton
-                    label={t.menu}
-                    icon="☰"
-                    onPress={() => setMenu(true)}
+                  {storageError && <Text>{t.secureStorage}</Text>}
+                  <DemoBoard t={t} />
+                  {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
+                  <Menu
+                    t={t}
+                    visible={menu}
+                    onClose={() => setMenu(false)}
+                    onLanguage={() => setLocale(rtl ? "en" : "fa")}
+                    {...(wallet.enabled ? { wallet } : {})}
                   />
                 </View>
-                <Text style={styles.fine}>{t.tagline}</Text>
-                {modes.map(([key, icon, title, hint]) => (
-                  <Pressable
-                    key={key}
-                    accessibilityRole="button"
-                    accessibilityLabel={title}
-                    onPress={() => setMode(key)}
-                    style={[styles.mode, key === "random" && styles.modeRandom]}
-                  >
-                    <Text style={styles.modeIcon}>{icon}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.modeTitle}>{title}</Text>
-                      {hint ? (
-                        <Text style={styles.modeHint}>{hint}</Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                ))}
-                {storageError && <Text>{t.secureStorage}</Text>}
-                <DemoBoard t={t} />
-                {wallet.enabled && <DailyModal t={t} wallet={wallet} />}
-                <Menu
+              ) : mode === "practice" ? (
+                <Practice t={t} rtl={rtl} onBack={home} />
+              ) : mode === "random" ? (
+                <RandomMatch
                   t={t}
-                  visible={menu}
-                  onClose={() => setMenu(false)}
-                  onLanguage={() => setLocale(rtl ? "en" : "fa")}
-                  {...(wallet.enabled ? { wallet } : {})}
+                  rtl={rtl}
+                  onBack={home}
+                  server={server}
+                  token={token}
                 />
-              </View>
-            ) : mode === "practice" ? (
-              <Practice t={t} rtl={rtl} onBack={home} />
-            ) : mode === "random" ? (
-              <RandomMatch
-                t={t}
-                rtl={rtl}
-                onBack={home}
-                server={server}
-                token={token}
-              />
-            ) : mode === "shop" ? (
-              <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
-            ) : mode === "online" ? (
-              <Online
-                t={t}
-                rtl={rtl}
-                onBack={home}
-                server={server}
-                token={token}
-                inviteCode={inviteCode}
-              />
-            ) : (
-              <View style={styles.page}>
-                <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.lobby}
-                >
-                  <Input label={t.server} value={draft} onChange={setDraft} />
-                  <Button
-                    title={t.reconnect}
-                    onPress={() => {
-                      if (/^https?:\/\//.test(draft))
-                        setServer(draft.replace(/\/$/, ""));
-                    }}
-                  />
-                  <Account
-                    t={t}
-                    server={server}
-                    token={token}
-                    onToken={setToken}
-                    onTheme={setTheme}
-                    onInvite={(code) => {
-                      setInviteCode(code);
-                      setMode("online");
-                    }}
-                  />
-                </ScrollView>
-              </View>
-            )}
-          </View>
-        </ImageBackground>
-      </Appearance.Provider>
+              ) : mode === "shop" ? (
+                <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
+              ) : mode === "online" ? (
+                <Online
+                  t={t}
+                  rtl={rtl}
+                  onBack={home}
+                  server={server}
+                  token={token}
+                  inviteCode={inviteCode}
+                />
+              ) : (
+                <View style={styles.page}>
+                  <TopBar t={t} title={t.signIn} onBack={home} rtl={rtl} />
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.lobby}
+                  >
+                    <Input label={t.server} value={draft} onChange={setDraft} />
+                    <Button
+                      title={t.reconnect}
+                      onPress={() => {
+                        if (/^https?:\/\//.test(draft))
+                          setServer(draft.replace(/\/$/, ""));
+                      }}
+                    />
+                    <Account
+                      t={t}
+                      server={server}
+                      token={token}
+                      onToken={setToken}
+                      onTheme={setTheme}
+                      onInvite={(code) => {
+                        setInviteCode(code);
+                        setMode("online");
+                      }}
+                    />
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+          </ImageBackground>
+        </Appearance.Provider>
+      </WalletContext.Provider>
     </Direction.Provider>
   );
 }
@@ -1050,6 +1098,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   step: { fontSize: 14, lineHeight: 24, color: "#f4e9ff" },
+  noInternet: {
+    color: "#ffe7a0",
+    backgroundColor: "#2c1a48",
+    borderRadius: 14,
+    padding: 12,
+    textAlign: "center",
+  },
   recoveryCode: {
     fontSize: 20,
     letterSpacing: 1,

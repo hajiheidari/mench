@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import type { Messages } from "@mench/localization";
 import * as Crypto from "expo-crypto";
 import {
   WalletClient,
@@ -136,6 +144,63 @@ export function useWallet() {
     recover: (code: string) => run((c) => c.recover(code)),
     buy: (sku: string) => run((c) => c.buy(sku)),
     equip: (sku: string) => run((c) => c.equip(sku)),
+    /** Coins for a won game; resolves "OK" or the server's reason. */
+    win: async (claim: WinClaim): Promise<string> => {
+      if (!client.current) return "OFFLINE";
+      try {
+        adopt((await client.current.win(claim)).wallet);
+        return "OK";
+      } catch (e) {
+        if (!(e instanceof WalletRequestError)) return "OFFLINE";
+        if (e.wallet) adopt(e.wallet);
+        return e.code;
+      }
+    },
   };
 }
 export type Wallet = ReturnType<typeof useWallet>;
+export type WinClaim =
+  { kind: "bot" } | { kind: "online"; room: string; token: string };
+
+/** The wallet, for screens deep in the tree (game results). */
+export const WalletContext = createContext<Wallet | null>(null);
+
+/** A fresh id for one game, so its win is claimed once. */
+export const newGameId = () => Math.random().toString(36).slice(2);
+
+const claimed = new Set<string>();
+/**
+ * Asks once for the coins of a won game (key: one id per game) and returns
+ * the line for the result popup.
+ */
+export function useWinCoins(
+  t: Messages,
+  key: string | null,
+  claim: WinClaim | null,
+): string {
+  const wallet = useContext(WalletContext);
+  const [text, setText] = useState<{ key: string; line: string } | null>(null);
+  const kind = claim?.kind;
+  const room = claim?.kind === "online" ? claim.room : "";
+  const token = claim?.kind === "online" ? claim.token : "";
+  useEffect(() => {
+    if (!key || !kind || !wallet?.enabled || claimed.has(key)) return;
+    claimed.add(key);
+    const coins =
+      kind === "online" ? wallet.wallet?.winCoins : wallet.wallet?.botWinCoins;
+    void wallet
+      .win(kind === "online" ? { kind, room, token } : { kind })
+      .then((result) =>
+        setText({
+          key,
+          line:
+            result === "OK"
+              ? t.winReward.replace("{n}", String(coins ?? ""))
+              : result === "WIN_LIMIT"
+                ? t.winLimit
+                : "",
+        }),
+      );
+  }, [key, kind, room, token, wallet, t]);
+  return text && text.key === key ? text.line : "";
+}

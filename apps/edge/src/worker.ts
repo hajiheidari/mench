@@ -9,7 +9,9 @@ import {
   equip,
   newWallet,
   rewardAd,
+  rewardWin,
   upgrade,
+  winsLeft,
   sameHash,
   sha256Hex,
   view,
@@ -139,6 +141,28 @@ export class GameHub extends DurableObject<Env> {
     await this.schedule();
   }
 
+  /**
+   * Called by a Wallet: true once per finished match, for the seat token that
+   * won it. Claims are kept two days (rooms live at most one).
+   */
+  async claimWin(code: string, token: string): Promise<boolean> {
+    await this.ready;
+    const won = this.hub.rooms.wonBy(code, token);
+    if (!won) return false;
+    const key = `claimed:${won.matchId}`;
+    if (await this.ctx.storage.get(key)) return false;
+    const now = Date.now();
+    await this.ctx.storage.put(key, now);
+    const old = await this.ctx.storage.list<number>({
+      prefix: "claimed:",
+      limit: 200,
+    });
+    const stale = [...old].filter(([, at]) => now - at > 2 * 86_400_000);
+    if (stale.length)
+      await this.ctx.storage.delete(stale.map(([staleKey]) => staleKey));
+    return true;
+  }
+
   private async schedule() {
     const now = Date.now();
     let next = this.hub.nextWake(now);
@@ -181,11 +205,32 @@ export class Wallet extends DurableObject<Env> {
     try {
       const body =
         request.method === "POST"
-          ? ((await request.json().catch(() => ({}))) as { sku?: unknown })
+          ? ((await request.json().catch(() => ({}))) as {
+              sku?: unknown;
+              kind?: unknown;
+              room?: unknown;
+              token?: unknown;
+            })
           : {};
       if (action === "daily") granted = claimDaily(state, now);
       else if (action === "ad") granted = rewardAd(state, now);
-      else if (action === "buy") buy(state, body.sku);
+      else if (action === "win") {
+        const kind = body.kind === "online" ? "online" : "bot";
+        if (winsLeft(state, now, kind) === 0)
+          throw new WalletError("WIN_LIMIT");
+        if (kind === "online") {
+          const room = typeof body.room === "string" ? body.room : "";
+          const seat = typeof body.token === "string" ? body.token : "";
+          if (!room || !seat || room.length > 32 || seat.length > 128)
+            throw new WalletError("NOT_A_WIN");
+          const hub = this.env.GAME_HUB.get(
+            this.env.GAME_HUB.idFromName("global"),
+          );
+          if (!(await hub.claimWin(room, seat)))
+            throw new WalletError("NOT_A_WIN");
+        }
+        granted = rewardWin(state, now, kind);
+      } else if (action === "buy") buy(state, body.sku);
       else if (action === "equip") equip(state, body.sku);
       else if (action !== "wallet")
         return Response.json({ error: "NOT_FOUND" }, { status: 404 });
@@ -209,6 +254,7 @@ const WALLET_ACTIONS = new Set([
   "ad",
   "buy",
   "equip",
+  "win",
 ]);
 
 /**

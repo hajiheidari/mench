@@ -24,7 +24,10 @@ test("production PWA has manifest, activated worker and offline local gameplay",
   await page.reload();
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page
-    .getByRole("button", { name: "Play on one device", exact: true })
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
     .click();
   await page.getByRole("button", { name: "Roll dice", exact: true }).click();
   await expect(page.locator(".dice")).toContainText(/[1-6]/);

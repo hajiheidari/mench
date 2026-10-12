@@ -14,10 +14,13 @@ test("practice bot completes its legal turn automatically while human controls a
   await page.goto("/");
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page
-    .getByRole("button", { name: "Play on one device", exact: true })
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
     .click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByLabel("Practice with bot", { exact: true }).check();
+  await page.getByLabel("Play the bot", { exact: true }).check();
   await page.getByLabel("Bot difficulty", { exact: true }).selectOption("hard");
   await page.getByRole("button", { name: "Close", exact: true }).click();
   const roll = page.getByRole("button", { name: "Roll dice", exact: true });
@@ -36,7 +39,5 @@ test("practice bot completes its legal turn automatically while human controls a
   ).toBeVisible({ timeout: 10000 });
   await expect(roll).toBeEnabled();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(
-    page.getByLabel("Practice with bot", { exact: true }),
-  ).toBeChecked();
+  await expect(page.getByLabel("Play the bot", { exact: true })).toBeChecked();
 });

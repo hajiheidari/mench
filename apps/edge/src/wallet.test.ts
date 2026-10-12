@@ -5,6 +5,7 @@ import {
   equip,
   newWallet,
   rewardAd,
+  rewardWin,
   sameHash,
   upgrade,
   sha256Hex,
@@ -85,4 +86,24 @@ test("older wallets get the dice they did not have yet", () => {
     dice: "classic",
   });
   buy({ ...old, coins: 150 }, "dice:wood");
+});
+
+test("wins: 10 coins five times a day online, 5 coins three times against the bot", () => {
+  const w = newWallet("h", EVENING);
+  let t = EVENING - 30 * 60_000;
+  for (let i = 0; i < 5; i++) expect(rewardWin(w, t + i, "online")).toBe(10);
+  expect(() => rewardWin(w, t, "online")).toThrow("WIN_LIMIT");
+  expect(view(w, t).winsLeft).toBe(0);
+  for (let i = 0; i < 3; i++) {
+    expect(rewardWin(w, t, "bot")).toBe(5);
+    expect(() => rewardWin(w, t + 1000, "bot")).toThrow(
+      i < 2 ? "WIN_TOO_SOON" : "WIN_LIMIT",
+    );
+    t += 61_000;
+  }
+  expect(() => rewardWin(w, t, "bot")).toThrow("WIN_LIMIT");
+  expect(w.coins).toBe(65);
+  expect(view(w, AFTER_MIDNIGHT_TEHRAN).winsLeft).toBe(5);
+  expect(view(w, AFTER_MIDNIGHT_TEHRAN).botWinsLeft).toBe(3);
+  expect(rewardWin(w, AFTER_MIDNIGHT_TEHRAN, "online")).toBe(10);
 });

@@ -49,3 +49,28 @@ test("the recovery code brings the coins to another browser", async ({
   await expect(second.locator(".coin-chip")).toContainText("20");
   await expect(second.locator(".recovery-code")).toHaveText(code);
 });
+
+test("without internet the online modes say so; the offline game still opens", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?lang=en");
+  await context.setOffline(true);
+  await page
+    .getByRole("button", { name: "Quick online game", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("No internet connection");
+  await page
+    .getByRole("button", { name: "Play with friends", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("No internet connection");
+  await page
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByRole("button", { name: "Roll dice" })).toBeVisible();
+  await context.setOffline(false);
+});

@@ -2,17 +2,21 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import type { Messages } from "@mench/localization";
 import { Text, useDirection } from "./Theme";
+import { Coin } from "./Shop";
 
 /** Native counterpart of the web ResultDialog: who won, congratulations, play again. */
 export function ResultModal({
   t,
   winnerName,
   won,
+  reward,
   onPlayAgain,
 }: {
   t: Messages;
   winnerName: string;
   won?: boolean | undefined;
+  /** "+10 coins for this win", once the wallet confirms it. */
+  reward?: string;
   onPlayAgain?: () => void;
 }) {
   const [visible, setVisible] = useState(true);
@@ -45,6 +49,12 @@ export function ResultModal({
           <Text style={styles.body}>
             {t.winner}: <Text style={styles.winner}>{winnerName}</Text>
           </Text>
+          {reward ? (
+            <View style={styles.reward} accessibilityLiveRegion="polite">
+              <Coin size={22} />
+              <Text style={styles.rewardText}>{reward}</Text>
+            </View>
+          ) : null}
           <View style={styles.actions}>
             {onPlayAgain && (
               <Pressable
@@ -77,6 +87,13 @@ export function ResultModal({
 }
 
 const styles = StyleSheet.create({
+  reward: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  rewardText: { color: "#ffe7a0", fontWeight: "bold", fontSize: 16 },
   backdrop: {
     flex: 1,
     backgroundColor: "#160c26cc",

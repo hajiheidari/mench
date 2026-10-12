@@ -34,7 +34,10 @@ for (const humanWins of [true, false]) {
     await page.goto("/");
     await page.getByRole("button", { name: "English", exact: true }).click();
     await page
-      .getByRole("button", { name: "Play on one device", exact: true })
+      .getByRole("button", {
+        name: "Offline with friends or the bot",
+        exact: true,
+      })
       .click();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.getByRole("checkbox").check();

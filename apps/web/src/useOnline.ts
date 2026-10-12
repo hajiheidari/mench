@@ -62,6 +62,8 @@ export function useOnline(slot: SessionSlot = "friends") {
   return {
     ...state,
     send: (payload: Intent) => client.current?.send(payload),
+    /** This device's seat (room code and secret), for claiming win coins. */
+    session: () => client.current?.currentSession ?? null,
     commitments,
     nonces,
   };

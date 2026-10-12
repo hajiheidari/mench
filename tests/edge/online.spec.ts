@@ -153,6 +153,12 @@ test("a full online match ends with the same winner dialog on both screens", asy
     const name = /Alpha|Beta/.exec(winnerA)?.[0];
     expect(name).toBeTruthy();
     expect(winnerB).toContain(name!);
+    // The server confirms the win and the winner's wallet gets the coins once.
+    const [winner, loser] = (await won(a)) ? [a, b] : [b, a];
+    await expect(winner.locator(".result-reward")).toHaveText(
+      /\+10 coins for this win/,
+    );
+    await expect(loser.locator(".result-reward")).toHaveCount(0);
   } finally {
     await ca.close();
     await cb.close();

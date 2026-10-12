@@ -17,6 +17,7 @@ import {
   type GameState,
 } from "@mench/game-engine";
 import { ResultDialog } from "./ResultDialog";
+import { newGameId, useWinCoins } from "./coins";
 import { Board } from "./Board";
 import { GameScreen, TopBar, randomDie, randomFloat } from "./GameScreen";
 import type { Messages } from "./messages";
@@ -176,6 +177,7 @@ function BotMatch({
   onPlayAgain: () => void;
 }) {
   const [match, setMatch] = useState<Match>(() => newMatch(opponent));
+  const [gameId] = useState(newGameId);
   const [last, setLast] = useState<number | null>(null);
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(Date.now());
@@ -235,6 +237,11 @@ function BotMatch({
   const label = (id: string) => (id === ME ? t.you : opponentLabel);
   const mine = turnId === ME;
   const winner = state.winner;
+  const reward = useWinCoins(
+    t,
+    winner ? gameId : null,
+    winner === ME ? { kind: "bot" } : null,
+  );
   const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
   return (
     <GameScreen
@@ -307,6 +314,7 @@ function BotMatch({
           t={t}
           winnerName={label(winner)}
           won={winner === ME}
+          reward={reward}
           onPlayAgain={onPlayAgain}
         />
       )}

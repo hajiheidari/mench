@@ -112,7 +112,10 @@ test("app practice ends with the native result popup and restarts cleanly", asyn
     await app.getByRole("button", { name: "English", exact: true }).click();
     await app.getByRole("button", { name: "Close", exact: true }).click();
     await app
-      .getByRole("button", { name: "Play on one device", exact: true })
+      .getByRole("button", {
+        name: "Offline with friends or the bot",
+        exact: true,
+      })
       .click();
     const result = app.getByRole("alert", { name: /^Game over\. Winner: / });
     for (let i = 0; i < 20000 && !(await result.count()); i++)

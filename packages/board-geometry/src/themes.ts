@@ -156,6 +156,12 @@ export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
 };
 
 export const DAILY_COINS = 20;
+/** A won online game against people (checked by the server), a few a day. */
+export const WIN_COINS = 10;
+export const WIN_DAILY_LIMIT = 5;
+/** A won offline game against the bot (reported by the device), fewer and smaller. */
+export const BOT_WIN_COINS = 5;
+export const BOT_WIN_DAILY_LIMIT = 3;
 export const FREE_SKUS = [
   "board:classic",
   "pawns:classic",

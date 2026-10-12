@@ -256,6 +256,22 @@ export class Rooms {
       replaced: replaced !== socketId ? replaced : null,
     };
   }
+  /** The finished match this seat token won, if it did (for coin rewards). */
+  wonBy(
+    code: string,
+    token: string,
+  ): { matchId: string; playerId: string } | null {
+    const room = this.rooms.get(code);
+    const member = room?.members.find((m) => m.tokenHash === tokenHash(token));
+    if (
+      !room ||
+      !member ||
+      room.state?.phase !== "finished" ||
+      room.state.winner !== member.id
+    )
+      return null;
+    return { matchId: room.matchId, playerId: member.id };
+  }
   session(socketId: string) {
     const s = this.sessions.get(socketId);
     if (!s) throw new RoomError("NOT_JOINED");

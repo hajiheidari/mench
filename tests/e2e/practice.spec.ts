@@ -17,7 +17,10 @@ test("complete a local two-player game and switch RTL/language", async ({
   await page.getByRole("button", { name: "English", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page
-    .getByRole("button", { name: "Play on one device", exact: true })
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
     .click();
   for (let i = 0; i < 5000; i++) {
     if (await page.locator(".roll-turn", { hasText: /Winner:/ }).count()) break;
@@ -52,7 +55,10 @@ test("four-player setup works at mobile viewport without horizontal overflow", a
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page
-    .getByRole("button", { name: "Play on one device", exact: true })
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
     .click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Players", { exact: true }).selectOption("4");
@@ -73,7 +79,10 @@ test("player count immediately resets the board and all selected colors", async 
   await page.goto("/");
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page
-    .getByRole("button", { name: "Play on one device", exact: true })
+    .getByRole("button", {
+      name: "Offline with friends or the bot",
+      exact: true,
+    })
     .click();
   await page.getByRole("button", { name: "Roll dice", exact: true }).click();
   for (const count of [3, 4, 2, 4]) {

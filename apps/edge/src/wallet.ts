@@ -1,6 +1,10 @@
 import {
   AD_COINS,
   AD_DAILY_LIMIT,
+  BOT_WIN_COINS,
+  BOT_WIN_DAILY_LIMIT,
+  WIN_COINS,
+  WIN_DAILY_LIMIT,
   CATALOG,
   DAILY_COINS,
   FREE_SKUS,
@@ -23,6 +27,11 @@ export interface WalletState {
   adDay?: string;
   adCount?: number;
   adAt?: number;
+  /** Rewarded wins on winDay: online (server-checked) and against the bot. */
+  winDay?: string;
+  wins?: number;
+  botWins?: number;
+  botWinAt?: number;
   created: number;
 }
 
@@ -34,6 +43,10 @@ export interface WalletView {
   daily: number;
   adCoins: number;
   adsLeft: number;
+  winCoins: number;
+  winsLeft: number;
+  botWinCoins: number;
+  botWinsLeft: number;
   catalog: readonly CatalogItem[];
 }
 
@@ -88,6 +101,10 @@ export function view(state: WalletState, now: number): WalletView {
     daily: DAILY_COINS,
     adCoins: AD_COINS,
     adsLeft: adsLeft(state, now),
+    winCoins: WIN_COINS,
+    winsLeft: winsLeft(state, now, "online"),
+    botWinCoins: BOT_WIN_COINS,
+    botWinsLeft: winsLeft(state, now, "bot"),
     catalog: CATALOG,
   };
 }
@@ -107,6 +124,40 @@ export function rewardAd(state: WalletState, now: number): number {
   state.adAt = now;
   state.coins += AD_COINS;
   return AD_COINS;
+}
+
+export type WinKind = "online" | "bot";
+
+export function winsLeft(state: WalletState, now: number, kind: WinKind) {
+  const today = state.winDay === tehranDay(now);
+  return kind === "online"
+    ? Math.max(0, WIN_DAILY_LIMIT - (today ? (state.wins ?? 0) : 0))
+    : Math.max(0, BOT_WIN_DAILY_LIMIT - (today ? (state.botWins ?? 0) : 0));
+}
+
+/**
+ * Coins for a won game. Online wins are checked with the game server before
+ * this is called; bot wins are only the device's word, so they pay less, fewer
+ * times a day, and at most once a minute (a real game takes longer).
+ */
+export function rewardWin(state: WalletState, now: number, kind: WinKind) {
+  if (winsLeft(state, now, kind) === 0) throw new WalletError("WIN_LIMIT");
+  if (kind === "bot" && state.botWinAt && now - state.botWinAt < 60_000)
+    throw new WalletError("WIN_TOO_SOON");
+  const today = tehranDay(now);
+  if (state.winDay !== today) {
+    state.winDay = today;
+    state.wins = 0;
+    state.botWins = 0;
+  }
+  const coins = kind === "online" ? WIN_COINS : BOT_WIN_COINS;
+  if (kind === "online") state.wins = (state.wins ?? 0) + 1;
+  else {
+    state.botWins = (state.botWins ?? 0) + 1;
+    state.botWinAt = now;
+  }
+  state.coins += coins;
+  return coins;
 }
 
 /** Grants the daily coins once per Tehran day; returns the coins granted. */

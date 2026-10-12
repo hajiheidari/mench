@@ -1,7 +1,7 @@
 import { DemoBoard } from "./DemoBoard";
 import { Menu } from "./Menu";
 import { pawnArt } from "./Board";
-import { Appearance, useWallet } from "./coins";
+import { Appearance, WalletContext, useWallet } from "./coins";
 import { CoinChip, DailyDialog, Shop } from "./Shop";
 import type {
   BoardThemeId,
@@ -36,6 +36,25 @@ function App() {
         : "home",
   );
   const wallet = useWallet();
+  // Online modes need the network; say so instead of a screen that never connects.
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const [noInternet, setNoInternet] = useState(false);
+  useEffect(() => {
+    const update = () => {
+      setOnline(navigator.onLine);
+      if (navigator.onLine) setNoInternet(false);
+    };
+    addEventListener("online", update);
+    addEventListener("offline", update);
+    return () => {
+      removeEventListener("online", update);
+      removeEventListener("offline", update);
+    };
+  }, []);
+  const openOnline = (next: "random" | "online") => {
+    if (navigator.onLine) setMode(next);
+    else setNoInternet(true);
+  };
   const look = {
     board: (wallet.wallet?.equipped.board ?? "classic") as BoardThemeId,
     pawns: (wallet.wallet?.equipped.pawns ?? "classic") as PawnSetId,
@@ -71,117 +90,126 @@ function App() {
     </button>
   );
   return (
-    <Appearance.Provider value={look}>
-      <LanguageToggle.Provider
-        value={{
-          label: t.language,
-          toggle: () => setLocale(locale === "fa" ? "en" : "fa"),
-        }}
-      >
-        <main
-          dir={locale === "fa" ? "rtl" : "ltr"}
-          lang={locale}
-          className={mode === "home" ? "home" : "playing"}
+    <WalletContext.Provider value={wallet.enabled ? wallet : null}>
+      <Appearance.Provider value={look}>
+        <LanguageToggle.Provider
+          value={{
+            label: t.language,
+            toggle: () => setLocale(locale === "fa" ? "en" : "fa"),
+          }}
         >
-          {mode === "home" ? (
-            <>
-              <header>
-                <div>
-                  <h1>
-                    <img
-                      className="brand-pawn"
-                      src={pawnArt("classic")[0]}
-                      alt=""
-                    />
-                    {t.brand}
-                  </h1>
-                  <p>{t.tagline}</p>
-                </div>
-                <div className="header-actions">
-                  {wallet.enabled && (
-                    <CoinChip
+          <main
+            dir={locale === "fa" ? "rtl" : "ltr"}
+            lang={locale}
+            className={mode === "home" ? "home" : "playing"}
+          >
+            {mode === "home" ? (
+              <>
+                <header>
+                  <div>
+                    <h1>
+                      <img
+                        className="brand-pawn"
+                        src={pawnArt("classic")[0]}
+                        alt=""
+                      />
+                      {t.brand}
+                    </h1>
+                    <p>{t.tagline}</p>
+                  </div>
+                  <div className="header-actions">
+                    {wallet.enabled && (
+                      <CoinChip
+                        t={t}
+                        coins={wallet.wallet?.coins ?? null}
+                        onClick={() => setMode("shop")}
+                      />
+                    )}
+                    {languageButton}
+                    <Menu
                       t={t}
-                      coins={wallet.wallet?.coins ?? null}
-                      onClick={() => setMode("shop")}
+                      rtl={locale === "fa"}
+                      onLanguage={() =>
+                        setLocale(locale === "fa" ? "en" : "fa")
+                      }
+                      {...(wallet.enabled ? { wallet } : {})}
                     />
-                  )}
-                  {languageButton}
-                  <Menu
-                    t={t}
-                    rtl={locale === "fa"}
-                    onLanguage={() => setLocale(locale === "fa" ? "en" : "fa")}
-                    {...(wallet.enabled ? { wallet } : {})}
-                  />
-                </div>
-              </header>
-              <nav className="modes">
-                <button
-                  className="mode random"
-                  aria-label={t.random}
-                  onClick={() => setMode("random")}
-                >
-                  <span className="mode-icon" aria-hidden="true">
-                    🌍
-                  </span>
-                  <strong>{t.random}</strong>
-                  <small>{t.randomHint}</small>
-                </button>
-                <button
-                  className="mode friends"
-                  aria-label={t.online}
-                  onClick={() => setMode("online")}
-                >
-                  <span className="mode-icon" aria-hidden="true">
-                    🔗
-                  </span>
-                  <strong>{t.online}</strong>
-                  <small>{t.friendsHint}</small>
-                </button>
-                <button
-                  className="mode local"
-                  aria-label={t.practice}
-                  onClick={() => setMode("practice")}
-                >
-                  <span className="mode-icon" aria-hidden="true">
-                    🎲
-                  </span>
-                  <strong>{t.practice}</strong>
-                  <small>{t.practiceHint}</small>
-                </button>
-                {!EDGE && (
+                  </div>
+                </header>
+                <nav className="modes">
                   <button
-                    className="mode"
-                    aria-label={t.signIn}
-                    onClick={() => setMode("account")}
+                    className={online ? "mode random" : "mode random offline"}
+                    aria-label={t.random}
+                    onClick={() => openOnline("random")}
                   >
                     <span className="mode-icon" aria-hidden="true">
-                      👤
+                      🌍
                     </span>
-                    <strong>{t.signIn}</strong>
+                    <strong>{t.random}</strong>
+                    <small>{t.randomHint}</small>
                   </button>
+                  <button
+                    className={online ? "mode friends" : "mode friends offline"}
+                    aria-label={t.online}
+                    onClick={() => openOnline("online")}
+                  >
+                    <span className="mode-icon" aria-hidden="true">
+                      🔗
+                    </span>
+                    <strong>{t.online}</strong>
+                    <small>{t.friendsHint}</small>
+                  </button>
+                  <button
+                    className="mode local"
+                    aria-label={t.practice}
+                    onClick={() => setMode("practice")}
+                  >
+                    <span className="mode-icon" aria-hidden="true">
+                      🎲
+                    </span>
+                    <strong>{t.practice}</strong>
+                    <small>{t.practiceHint}</small>
+                  </button>
+                  {!EDGE && (
+                    <button
+                      className="mode"
+                      aria-label={t.signIn}
+                      onClick={() => setMode("account")}
+                    >
+                      <span className="mode-icon" aria-hidden="true">
+                        👤
+                      </span>
+                      <strong>{t.signIn}</strong>
+                    </button>
+                  )}
+                </nav>
+                {noInternet && (
+                  <p className="notification" role="alert">
+                    {t.noInternet}
+                  </p>
                 )}
-              </nav>
-              <DemoBoard t={t} />
-              <footer>{t.rules}</footer>
-              {wallet.enabled && <DailyDialog t={t} wallet={wallet} />}
-            </>
-          ) : mode === "practice" ? (
-            <Practice t={t} onBack={home} />
-          ) : mode === "random" ? (
-            <RandomMatch t={t} onBack={home} />
-          ) : mode === "online" ? (
-            <Online t={t} onBack={home} />
-          ) : mode === "shop" ? (
-            <Shop t={t} locale={locale} wallet={wallet} onBack={home} />
-          ) : (
-            <div className="game-screen scrollable">
-              <TopBar t={t} title={t.signIn} onBack={home} />
-              <Account t={t} />
-            </div>
-          )}
-        </main>
-      </LanguageToggle.Provider>
-    </Appearance.Provider>
+                <DemoBoard t={t} />
+                <footer>{t.rules}</footer>
+                {wallet.enabled && <DailyDialog t={t} wallet={wallet} />}
+              </>
+            ) : mode === "practice" ? (
+              <Practice t={t} onBack={home} />
+            ) : mode === "random" ? (
+              <RandomMatch t={t} onBack={home} />
+            ) : mode === "online" ? (
+              <Online t={t} onBack={home} />
+            ) : mode === "shop" ? (
+              <Shop t={t} locale={locale} wallet={wallet} onBack={home} />
+            ) : (
+              <div className="game-screen scrollable">
+                <TopBar t={t} title={t.signIn} onBack={home} />
+                <Account t={t} />
+              </div>
+            )}
+          </main>
+        </LanguageToggle.Provider>
+      </Appearance.Provider>
+    </WalletContext.Provider>
   );
 }
 const root = document.getElementById("root");

@@ -47,6 +47,10 @@ export class GameClient {
   private readonly listeners = new Set<(state: ClientState) => void>();
   private readonly socket: Transport;
   private session: Session | null;
+  /** The seat this device holds (room code and its secret token). */
+  get currentSession(): Session | null {
+    return this.session;
+  }
   constructor(private readonly options: ClientOptions) {
     this.session = options.session ?? null;
     const handlers = {

@@ -14,6 +14,10 @@ export interface WalletView {
   daily: number;
   adCoins: number;
   adsLeft: number;
+  winCoins: number;
+  winsLeft: number;
+  botWinCoins: number;
+  botWinsLeft: number;
   catalog: WalletItem[];
 }
 /** Where the recovery code is kept on the device (and its cloud backups). */
@@ -158,6 +162,10 @@ export class WalletClient {
   }
   ad() {
     return this.call("ad");
+  }
+  /** Coins for a won game: online ones are checked against the game server. */
+  win(body: { kind: "bot" } | { kind: "online"; room: string; token: string }) {
+    return this.call("win", body);
   }
   async buy(sku: string) {
     return (await this.call("buy", { sku })).wallet;

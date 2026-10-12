@@ -4,11 +4,14 @@ export function ResultDialog({
   t,
   winnerName,
   won,
+  reward,
   onPlayAgain,
 }: {
   t: Messages;
   winnerName: string;
   won?: boolean | undefined;
+  /** "+10 coins for this win", once the wallet confirms it. */
+  reward?: string;
   onPlayAgain?: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -39,6 +42,11 @@ export function ResultDialog({
       <p id={descriptionId}>
         {t.winner}: <strong>{winnerName}</strong>
       </p>
+      {reward ? (
+        <p className="result-reward" role="status">
+          <span className="coin" aria-hidden="true" /> {reward}
+        </p>
+      ) : null}
       <div className="result-actions">
         {onPlayAgain && (
           <button className="primary" onClick={onPlayAgain}>

@@ -82,3 +82,20 @@ test("host transfer and full-room checks", () => {
   service.leave("a");
   expect(service.session("b").room.hostId).toBe(service.session("b").member.id);
 });
+test("wonBy names only the winning seat of a finished match", () => {
+  const service = new Rooms();
+  const host = service.create("a", "Alpha", 2);
+  if (!host.ok || !host.token || !host.room) throw Error();
+  const guest = service.join("b", "Beta", host.room.code);
+  if (!guest.ok || !guest.token) throw Error();
+  service.start("a");
+  const room = service.rooms.get(host.room.code)!;
+  expect(service.wonBy(room.code, host.token)).toBeNull();
+  room.state = { ...room.state!, phase: "finished", winner: guest.playerId! };
+  expect(service.wonBy(room.code, host.token)).toBeNull();
+  expect(service.wonBy(room.code, guest.token)).toEqual({
+    matchId: room.matchId,
+    playerId: guest.playerId,
+  });
+  expect(service.wonBy("NOPE", guest.token)).toBeNull();
+});

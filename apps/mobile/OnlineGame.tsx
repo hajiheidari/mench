@@ -7,6 +7,7 @@ import { verifyProof } from "@mench/fair-dice/portable";
 import { Board } from "./Board";
 import { GameScreen, IconButton } from "./GameScreen";
 import { ResultModal } from "./ResultModal";
+import { useWinCoins } from "./coins";
 import { getStored, setStored } from "./storage";
 import { Text } from "./Theme";
 
@@ -128,6 +129,16 @@ export function OnlineGame({
     return () => clearInterval(id);
   }, []);
   const state = room?.state;
+  const seat = client.current?.currentSession ?? null;
+  const reward = useWinCoins(
+    t,
+    state?.phase === "finished" && room?.matchId
+      ? `online:${room.matchId}`
+      : null,
+    state?.winner && state.winner === playerId && seat
+      ? { kind: "online", room: seat.code, token: seat.token }
+      : null,
+  );
   if (!room || !state) return null;
   const mine =
     state.phase !== "finished" &&
@@ -248,6 +259,7 @@ export function OnlineGame({
           t={t}
           winnerName={label(winner.id)}
           won={state.winner === playerId}
+          reward={reward}
           {...(onPlayAgain ? { onPlayAgain } : {})}
         />
       )}

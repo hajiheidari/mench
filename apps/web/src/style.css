@@ -1228,3 +1228,10 @@ dialog.daily button {
   display: grid;
   gap: 10px;
 }
+.result-reward {
+  color: #ffe7a0;
+  font-weight: bold;
+}
+.mode.offline {
+  opacity: 0.55;
+}

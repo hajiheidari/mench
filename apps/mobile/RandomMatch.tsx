@@ -21,6 +21,7 @@ import type { Messages } from "@mench/localization";
 import { Board } from "./Board";
 import { GameScreen, Searching } from "./GameScreen";
 import { ResultModal } from "./ResultModal";
+import { newGameId, useWinCoins } from "./coins";
 import { Text } from "./Theme";
 import { OnlineGame, loadName, useGameClient } from "./OnlineGame";
 
@@ -181,6 +182,7 @@ function BotMatch({
   onPlayAgain: () => void;
 }) {
   const [match, setMatch] = useState<Match>(() => newMatch(opponent));
+  const [gameId] = useState(newGameId);
   const [last, setLast] = useState<number | null>(null);
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(Date.now());
@@ -236,6 +238,11 @@ function BotMatch({
   const label = (id: string) => (id === ME ? t.you : opponentLabel);
   const mine = turnId === ME;
   const winner = state.winner;
+  const reward = useWinCoins(
+    t,
+    winner ? gameId : null,
+    winner === ME ? { kind: "bot" } : null,
+  );
   const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
   return (
     <GameScreen
@@ -310,6 +317,7 @@ function BotMatch({
           t={t}
           winnerName={label(winner)}
           won={winner === ME}
+          reward={reward}
           onPlayAgain={onPlayAgain}
         />
       )}
