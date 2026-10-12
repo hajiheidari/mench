@@ -16,9 +16,15 @@
     "run_worker_first": true,
   },
   "durable_objects": {
-    "bindings": [{ "name": "GAME_HUB", "class_name": "GameHub" }],
+    "bindings": [
+      { "name": "GAME_HUB", "class_name": "GameHub" },
+      { "name": "WALLET", "class_name": "Wallet" },
+    ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameHub"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["GameHub"] },
+    { "tag": "v2", "new_sqlite_classes": ["Wallet"] },
+  ],
   "vars": {
     "ALLOWED_ORIGINS": "https://mench.espadna.com,https://espadna.com,https://mench.espadna.ir",
   },
