@@ -116,8 +116,10 @@ jobs:
       - name: App ID capabilities (iCloud for the coin wallet backup)
         if: env.HAVE_SECRETS == 'true'
         run: |
-          python3 -m pip install --quiet --break-system-packages pyjwt==2.10.1 cryptography==45.0.7 requests==2.32.5
-          ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" python3 infra/scripts/asc_capabilities.py
+          # A venv: Homebrew's Python packages cannot be replaced in place.
+          python3 -m venv "$RUNNER_TEMP/asc"
+          "$RUNNER_TEMP/asc/bin/pip" install --quiet pyjwt==2.10.1 cryptography==45.0.7 requests==2.32.5
+          ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" "$RUNNER_TEMP/asc/bin/python" infra/scripts/asc_capabilities.py
       - name: Export and upload
         if: env.HAVE_SECRETS == 'true'
         run: |
