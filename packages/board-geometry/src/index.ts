@@ -97,3 +97,4 @@ export {
   dicePips,
   depths,
 } from "./art";
+export * from "./themes";

@@ -11,8 +11,15 @@ await build({
   platform: "node",
   outfile: "/tmp/mench-game-art.mjs",
 });
-const { boardSvg, pawnSvg, backdropSvg, avatarSvg, iconSvg } =
-  await import("file:///tmp/mench-game-art.mjs");
+const {
+  boardSvg,
+  pawnSvg,
+  backdropSvg,
+  avatarSvg,
+  iconSvg,
+  BOARD_THEMES,
+  PAWN_SETS,
+} = await import("file:///tmp/mench-game-art.mjs");
 const target = resolve(root, "apps/mobile/assets/game");
 await mkdir(target, { recursive: true });
 const systemBrowser = await access("/usr/bin/chromium").then(
@@ -28,6 +35,21 @@ try {
     ["board", boardSvg(), 1200, 1200],
     ["backdrop", backdropSvg(), 900, 1600],
     ...[0, 1, 2, 3].map((seat) => [`pawn-${seat}`, pawnSvg(seat), 160, 200]),
+    // Shop designs (the classic ones above keep their original names).
+    ...BOARD_THEMES.filter((t) => t !== "classic").map((t) => [
+      `board-${t}`,
+      boardSvg(t),
+      1200,
+      1200,
+    ]),
+    ...PAWN_SETS.filter((s) => s !== "classic").flatMap((set) =>
+      [0, 1, 2, 3].map((seat) => [
+        `pawn-${set}-${seat}`,
+        pawnSvg(seat, set),
+        160,
+        200,
+      ]),
+    ),
     ...[0, 1, 2, 3].map((seat) => [
       `avatar-${seat}`,
       avatarSvg(seat),
