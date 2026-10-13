@@ -16,7 +16,9 @@ export type DiceSkinId =
   | "night"
   | "copper"
   | "firoozeh"
-  | "gold";
+  | "gold"
+  | "travertine"
+  | "lapis";
 
 export interface CatalogItem {
   sku: string;
@@ -79,13 +81,15 @@ export const CATALOG: readonly CatalogItem[] = [
   pawns("firoozeh", 500, "فیروزه‌کوبی", "Turquoise inlay"),
   pawns("gold", 700, "طلایی", "Gold"),
   dice("classic", 0, "کلاسیک", "Classic"),
-  dice("wood", 150, "چوبی", "Wooden"),
-  dice("marble", 200, "مرمر", "Marble"),
+  dice("wood", 150, "چوب گردو", "Walnut"),
+  dice("travertine", 200, "تراورتن", "Travertine"),
+  dice("marble", 250, "مرمر سبز", "Green marble"),
   dice("anar", 250, "اناری", "Pomegranate"),
-  dice("night", 250, "شب کویر", "Desert night"),
-  dice("copper", 300, "مسی", "Copper"),
-  dice("firoozeh", 400, "فیروزه‌ای", "Turquoise"),
-  dice("gold", 500, "طلایی", "Gold"),
+  dice("copper", 300, "مس چکشی", "Hammered copper"),
+  dice("firoozeh", 400, "فیروزهٔ نیشابور", "Nishapur turquoise"),
+  dice("lapis", 500, "لاجورد", "Lapis lazuli"),
+  dice("gold", 600, "طلای حکاکی", "Engraved gold"),
+  dice("night", 700, "کهکشان", "Galaxy"),
 ];
 
 /** How each die looks: face gradient, rim, edge shadow and pip colour. */
@@ -95,8 +99,6 @@ export interface DiceStyle {
   rim: string;
   edge: string;
   pip: string;
-  /** Stone veins across the face (marble). */
-  veins?: string;
 }
 export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
   classic: {
@@ -107,20 +109,25 @@ export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
     pip: "#473060",
   },
   wood: {
-    faceTop: "#ecc690",
-    faceBottom: "#c48b52",
-    rim: "#f6dcae",
-    edge: "#6e3f1c",
-    pip: "#3f220c",
+    faceTop: "#9a5a2b",
+    faceBottom: "#6a3a1a",
+    rim: "#c08a55",
+    edge: "#3b1e0b",
+    pip: "#f3dfbd",
   },
-  // Green marble with pale veins (drawn by the Dice components).
+  travertine: {
+    faceTop: "#f1e3c8",
+    faceBottom: "#d9c29b",
+    rim: "#fff4dc",
+    edge: "#a88a5e",
+    pip: "#5a4128",
+  },
   marble: {
-    faceTop: "#2f6b5a",
-    faceBottom: "#173f35",
+    faceTop: "#2f7a63",
+    faceBottom: "#0f3a2f",
     rim: "#8fc7b3",
     edge: "#0c2620",
     pip: "#f4efe2",
-    veins: "#cfeee0",
   },
   anar: {
     faceTop: "#f0505d",
@@ -129,33 +136,40 @@ export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
     edge: "#5e0d16",
     pip: "#fff2e8",
   },
-  night: {
-    faceTop: "#2f3473",
-    faceBottom: "#141836",
-    rim: "#8c84d6",
-    edge: "#070a1c",
-    pip: "#fff3b0",
-  },
   copper: {
     faceTop: "#f2a86c",
     faceBottom: "#b4642a",
     rim: "#ffd2a1",
     edge: "#5a2a0e",
-    pip: "#fff3e2",
+    pip: "#4a1d06",
   },
   firoozeh: {
     faceTop: "#52d0ca",
     faceBottom: "#1b8a8d",
     rim: "#bdf4ef",
     edge: "#0b5558",
-    pip: "#f6d27a",
+    pip: "#2c1d0c",
+  },
+  lapis: {
+    faceTop: "#2d4fc4",
+    faceBottom: "#0d1a52",
+    rim: "#8aa2ff",
+    edge: "#08113a",
+    pip: "#f2cf63",
   },
   gold: {
     faceTop: "#fff0b0",
     faceBottom: "#d4a02a",
     rim: "#fff6cf",
     edge: "#7a5410",
-    pip: "#8e1b1b",
+    pip: "#9b1c1c",
+  },
+  night: {
+    faceTop: "#1b1446",
+    faceBottom: "#05040f",
+    rim: "#8c84d6",
+    edge: "#05040f",
+    pip: "#ffffff",
   },
 };
 

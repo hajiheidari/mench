@@ -1,12 +1,25 @@
 /* Generated from scripts/build-game-art.mjs designs: one image per board theme and pawn set. */
 import type { ImageSourcePropType } from "react-native";
-import type { BoardThemeId, PawnSetId } from "@mench/board-geometry";
+import type {
+  BoardThemeId,
+  DiceSkinId,
+  PawnSetId,
+} from "@mench/board-geometry";
 import board from "./assets/game/board.png";
 import board_wood from "./assets/game/board-wood.png";
 import board_night from "./assets/game/board-night.png";
 import board_firoozeh from "./assets/game/board-firoozeh.png";
 import board_kashi from "./assets/game/board-kashi.png";
 import board_khatam from "./assets/game/board-khatam.png";
+import dice_wood from "./assets/game/dice-wood.png";
+import dice_travertine from "./assets/game/dice-travertine.png";
+import dice_marble from "./assets/game/dice-marble.png";
+import dice_anar from "./assets/game/dice-anar.png";
+import dice_copper from "./assets/game/dice-copper.png";
+import dice_firoozeh from "./assets/game/dice-firoozeh.png";
+import dice_lapis from "./assets/game/dice-lapis.png";
+import dice_gold from "./assets/game/dice-gold.png";
+import dice_night from "./assets/game/dice-night.png";
 import pawn0 from "./assets/game/pawn-0.png";
 import pawn1 from "./assets/game/pawn-1.png";
 import pawn2 from "./assets/game/pawn-2.png";
@@ -52,4 +65,17 @@ export const PAWN_ART: Record<PawnSetId, ImageSourcePropType[]> = {
     pawn_firoozeh_3,
   ],
   gold: [pawn_gold_0, pawn_gold_1, pawn_gold_2, pawn_gold_3],
+};
+
+/** Die face textures (scripts/build-dice-art.mjs); the classic die is plain. */
+export const DICE_ART: Partial<Record<DiceSkinId, ImageSourcePropType>> = {
+  wood: dice_wood,
+  travertine: dice_travertine,
+  marble: dice_marble,
+  anar: dice_anar,
+  copper: dice_copper,
+  firoozeh: dice_firoozeh,
+  lapis: dice_lapis,
+  gold: dice_gold,
+  night: dice_night,
 };

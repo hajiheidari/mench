@@ -1244,26 +1244,6 @@ dialog.daily button {
   background: #a8323acc;
   border: 1px solid #ff8d8d;
 }
-/* Marble: pale veins across the face. */
-.dice.veined {
-  --vein: color-mix(in srgb, var(--dice-veins) 65%, transparent);
-  background:
-    linear-gradient(28deg, transparent 30%, var(--vein) 31%, transparent 33%),
-    linear-gradient(
-      -18deg,
-      transparent 55%,
-      var(--vein) 56%,
-      transparent 57.5%
-    ),
-    linear-gradient(12deg, transparent 72%, var(--vein) 73%, transparent 74%),
-    linear-gradient(
-      64deg,
-      transparent 46%,
-      var(--vein) 46.5%,
-      transparent 47.5%
-    ),
-    linear-gradient(135deg, var(--dice-top), var(--dice-bottom));
-}
 .free-button {
   width: 100%;
   min-height: 56px;

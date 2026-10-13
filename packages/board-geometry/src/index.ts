@@ -98,3 +98,4 @@ export {
   depths,
 } from "./art";
 export * from "./themes";
+export * from "./dice-art";
