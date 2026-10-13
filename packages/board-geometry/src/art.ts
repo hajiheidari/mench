@@ -52,7 +52,8 @@ const CHIPS = `<pattern id="chips" width=".5" height=".5" patternUnits="userSpac
 const KHATAM = `<pattern id="khatam" width=".5" height=".44" patternUnits="userSpaceOnUse"><path d="M0 0L.25 .43L.5 0Z" fill="#efe2c4"/><path d="M0 .44L.25 .01L.5 .44Z" fill="#b8892f"/><circle cx=".25" cy=".2" r=".035" fill="#3a2214"/></pattern>`;
 // Isfahan tile rosettes.
 const ROSETTE = `<pattern id="rosette" width=".75" height=".75" patternUnits="userSpaceOnUse"><circle cx=".375" cy=".375" r=".26" fill="#1d58b0" stroke="#e8f3ff" stroke-width=".035"/><path d="M.375 .17L.43 .32L.58 .375L.43 .43L.375 .58L.32 .43L.17 .375L.32 .32Z" fill="#f4f1e6"/><circle cx=".375" cy=".375" r=".06" fill="#f2c14e"/><circle cx="0" cy="0" r=".07" fill="#45c4d6"/><circle cx=".75" cy="0" r=".07" fill="#45c4d6"/><circle cx="0" cy=".75" r=".07" fill="#45c4d6"/><circle cx=".75" cy=".75" r=".07" fill="#45c4d6"/></pattern>`;
-const GRAIN = `<pattern id="grain" width="15" height=".42" patternUnits="userSpaceOnUse"><path d="M0 .2Q3.7 .05 7.5 .22T15 .18" fill="none" stroke="#5e3519" stroke-opacity=".35" stroke-width=".03"/><path d="M0 .36Q4 .3 8 .38T15 .33" fill="none" stroke="#f0c48f" stroke-opacity=".18" stroke-width=".02"/></pattern>`;
+// Walnut planks: dark grain lines, a lighter streak and an occasional knot.
+const GRAIN = `<pattern id="grain" width="15" height=".6" patternUnits="userSpaceOnUse"><path d="M0 .12Q3.7 .02 7.5 .16T15 .11" fill="none" stroke="#24120a" stroke-opacity=".55" stroke-width=".035"/><path d="M0 .3Q4 .22 8 .32T15 .27" fill="none" stroke="#c98f5a" stroke-opacity=".35" stroke-width=".025"/><path d="M0 .47Q3 .55 7 .45T15 .5" fill="none" stroke="#24120a" stroke-opacity=".4" stroke-width=".025"/><ellipse cx="4.3" cy=".33" rx=".22" ry=".08" fill="none" stroke="#24120a" stroke-opacity=".45" stroke-width=".02"/></pattern>`;
 const STARS = `<pattern id="stars" width="1.6" height="1.6" patternUnits="userSpaceOnUse"><circle cx=".2" cy=".3" r=".035" fill="#fff"/><circle cx=".9" cy=".15" r=".02" fill="#fff" opacity=".7"/><circle cx="1.3" cy=".8" r=".04" fill="#fff6c8"/><circle cx=".55" cy="1.1" r=".02" fill="#fff" opacity=".6"/><circle cx="1.1" cy="1.4" r=".025" fill="#fff" opacity=".8"/></pattern>`;
 const overlayRect = (id: string, opacity = 1) =>
   `<rect width="15" height="15" rx=".7" fill="url(#${id})" opacity="${opacity}"/>`;
@@ -109,19 +110,19 @@ const STYLES: Record<BoardThemeId, BoardStyle> = {
   },
   wood: {
     frame: "url(#fr)",
-    defs: `<linearGradient id="fr" x2="1" y2=".2"><stop stop-color="#8a5530"/><stop offset=".3" stop-color="#a8693b"/><stop offset=".6" stop-color="#7c4a28"/><stop offset="1" stop-color="#9a6236"/></linearGradient>${GRAIN}`,
+    defs: `<linearGradient id="fr" x2="1" y2=".2"><stop stop-color="#4a2814"/><stop offset=".3" stop-color="#6b3b1d"/><stop offset=".6" stop-color="#3d2010"/><stop offset="1" stop-color="#5a311a"/></linearGradient>${GRAIN}`,
     overlay: overlayRect("grain"),
-    tileTop: "#f6e3c4",
-    tileBottom: "#e3c597",
-    tileStroke: "#a9784a",
-    tileShadow: "#5e3519",
-    homeStroke: "#5e3519",
+    tileTop: "#efdcc0",
+    tileBottom: "#cfae84",
+    tileStroke: "#5a311a",
+    tileShadow: "#24120a",
+    homeStroke: "#2e170b",
     homeStrokeWidth: 0.12,
     homeOverlay: "grain",
     circleFill: "#fff4e2",
     circleStroke: "#c79a63",
-    centerFill: "#6b3f1f",
-    centerStroke: "#f0c98a",
+    centerFill: "#3d2010",
+    centerStroke: "#e8c48f",
   },
   night: {
     frame: "url(#fr)",

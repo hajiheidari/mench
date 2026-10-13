@@ -18,9 +18,14 @@ export function Dice({
     "--dice-rim": look.rim,
     "--dice-edge": look.edge,
     "--dice-pip": look.pip,
+    ...(look.veins ? { "--dice-veins": look.veins } : {}),
   } as CSSProperties;
   return (
-    <div className="dice" aria-live="polite" style={style}>
+    <div
+      className={look.veins ? "dice veined" : "dice"}
+      aria-live="polite"
+      style={style}
+    >
       <span className="dice-value">{value ?? "✦"}</span>
       <div className="dice-face" key={value} aria-hidden="true">
         {value === null ? (

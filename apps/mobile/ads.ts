@@ -23,19 +23,24 @@ export interface RewardedAds {
 }
 
 const native = EDGE ? RewardedAdsNative : null;
+// Store screenshots come from the web build, which has no ad network; this
+// build-time flag shows the shop's ad button there (it never pays out).
+const screenshotOnly = process.env.EXPO_PUBLIC_STORE_SCREENSHOTS === "1";
 let started = false;
 
-export const rewardedAds: RewardedAds | null = native && {
-  prepare() {
-    if (started) return;
-    started = true;
-    native.initialize(IDS.app, IDS.placement);
-  },
-  async show() {
-    this.prepare();
-    // A tap right after the shop opens may beat the first ad; wait a little.
-    for (let i = 0; i < 20 && !native.isReady(); i++)
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    return native.show();
-  },
-};
+export const rewardedAds: RewardedAds | null = screenshotOnly
+  ? { prepare() {}, show: async () => false }
+  : native && {
+      prepare() {
+        if (started) return;
+        started = true;
+        native.initialize(IDS.app, IDS.placement);
+      },
+      async show() {
+        this.prepare();
+        // A tap right after the shop opens may beat the first ad; wait a little.
+        for (let i = 0; i < 20 && !native.isReady(); i++)
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        return native.show();
+      },
+    };

@@ -8,7 +8,11 @@ import {
   View,
 } from "react-native";
 import {
+  BOT_WIN_COINS,
+  BOT_WIN_DAILY_LIMIT,
   DAILY_COINS,
+  WIN_COINS,
+  WIN_DAILY_LIMIT,
   type BoardThemeId,
   type DiceSkinId,
   type PawnSetId,
@@ -160,6 +164,137 @@ export function DailyModal({ t, wallet }: { t: Messages; wallet: Wallet }) {
   );
 }
 
+/** The rewarded-ad button (shop and free-coins page): big, with today's count. */
+export function AdOffer({
+  t,
+  wallet,
+  onNotice,
+}: {
+  t: Messages;
+  wallet: Wallet;
+  onNotice: (text: string) => void;
+}) {
+  const [watching, setWatching] = useState(false);
+  const w = wallet.wallet;
+  useEffect(() => rewardedAds?.prepare(), []);
+  if (!w || !rewardedAds) return null;
+  const disabled = wallet.busy || watching || w.adsLeft === 0;
+  return (
+    <View style={styles.adRow}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t.watchAd.replace("{n}", String(w.adCoins))}
+        disabled={disabled}
+        style={[styles.adButton, disabled && { opacity: 0.5 }]}
+        onPress={() => {
+          setWatching(true);
+          onNotice("");
+          void rewardedAds!
+            .show()
+            .then((earned) => (earned ? wallet.adReward() : false))
+            .catch(() => false)
+            .then((ok) => {
+              setWatching(false);
+              onNotice(
+                ok ? t.adThanks.replace("{n}", String(w.adCoins)) : t.adFailed,
+              );
+            });
+        }}
+      >
+        <Coin size={26} />
+        <Text style={styles.adText}>
+          {t.watchAd.replace("{n}", String(w.adCoins))}
+        </Text>
+      </Pressable>
+      <Text style={styles.notice}>
+        {w.adsLeft > 0
+          ? t.adsLeft.replace("{n}", String(w.adsLeft))
+          : t.adsDone}
+      </Text>
+    </View>
+  );
+}
+
+/** Every way to earn coins: ads, the daily reward and won games. */
+export function FreeCoins({
+  t,
+  rtl,
+  wallet,
+  onBack,
+}: {
+  t: Messages;
+  rtl: boolean;
+  wallet: Wallet;
+  onBack: () => void;
+}) {
+  const [notice, setNotice] = useState("");
+  const w = wallet.wallet;
+  return (
+    <View style={{ flex: 1, width: "100%", paddingHorizontal: 12 }}>
+      <TopBar t={t} title={t.freeCoins} onBack={onBack} rtl={rtl} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.freeList}
+      >
+        <View style={styles.balance}>
+          <Text style={styles.balanceLabel}>{t.yourCoins}</Text>
+          <View style={styles.balanceRow}>
+            <Coin size={36} />
+            <Text style={styles.balanceValue}>{w?.coins ?? "…"}</Text>
+          </View>
+        </View>
+        {!w ? <Text style={styles.notice}>{t.shopOffline}</Text> : null}
+        <View style={styles.freeCard}>
+          <Text style={styles.freeTitle}>📺 {t.adCardTitle}</Text>
+          <Text style={styles.freeBody}>
+            {rewardedAds ? t.adCardBody : t.adsUnavailable}
+          </Text>
+          <AdOffer t={t} wallet={wallet} onNotice={setNotice} />
+          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+        </View>
+        <View style={styles.freeCard}>
+          <Text style={styles.freeTitle}>📅 {t.dailyCardTitle}</Text>
+          <Text style={styles.freeBody}>
+            {t.dailyCardBody.replace("{n}", String(w?.daily ?? DAILY_COINS))}
+          </Text>
+          {w?.dailyAvailable ? (
+            <ActionButton
+              title={`${t.collect} +${w.daily}`}
+              primary
+              disabled={wallet.busy}
+              onPress={() => void wallet.claim()}
+            />
+          ) : w ? (
+            <Text style={styles.taken}>{t.dailyTaken}</Text>
+          ) : null}
+        </View>
+        <View style={styles.freeCard}>
+          <Text style={styles.freeTitle}>🏆 {t.winsCardTitle}</Text>
+          <Text style={styles.freeBody}>{t.winsCardBody}</Text>
+          <View style={styles.pills}>
+            <View style={styles.pill}>
+              <Text style={styles.pillValue}>
+                {t.coinsN.replace("{n}", String(WIN_COINS))}
+              </Text>
+              <Text style={styles.pillText}>
+                {t.winOnlineLine.replace("{n}", String(WIN_DAILY_LIMIT))}
+              </Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillValue}>
+                {t.coinsN.replace("{n}", String(BOT_WIN_COINS))}
+              </Text>
+              <Text style={styles.pillText}>
+                {t.winBotLine.replace("{n}", String(BOT_WIN_DAILY_LIMIT))}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
 export function Shop({
   t,
   rtl,
@@ -173,9 +308,7 @@ export function Shop({
 }) {
   const [tab, setTab] = useState<"board" | "pawns" | "dice">("board");
   const [notice, setNotice] = useState("");
-  const [watching, setWatching] = useState(false);
   const w = wallet.wallet;
-  useEffect(() => rewardedAds?.prepare(), []);
   const locale = rtl ? "fa" : "en";
   const items = (w?.catalog ?? []).filter((i) => i.kind === tab);
   return (
@@ -209,36 +342,7 @@ export function Shop({
         ))}
       </View>
       {!w && <Text style={styles.notice}>{t.shopOffline}</Text>}
-      {w && rewardedAds && (
-        <View style={styles.adRow}>
-          <ActionButton
-            title={t.watchAd.replace("{n}", String(w.adCoins))}
-            primary
-            disabled={wallet.busy || watching || w.adsLeft === 0}
-            onPress={() => {
-              setWatching(true);
-              setNotice("");
-              void rewardedAds!
-                .show()
-                .then((earned) => (earned ? wallet.adReward() : false))
-                .catch(() => false)
-                .then((ok) => {
-                  setWatching(false);
-                  setNotice(
-                    ok
-                      ? t.adThanks.replace("{n}", String(w.adCoins))
-                      : t.adFailed,
-                  );
-                });
-            }}
-          />
-          <Text style={styles.notice}>
-            {w.adsLeft > 0
-              ? t.adsLeft.replace("{n}", String(w.adsLeft))
-              : t.adsDone}
-          </Text>
-        </View>
-      )}
+      <AdOffer t={t} wallet={wallet} onNotice={setNotice} />
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -396,7 +500,79 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  adRow: { gap: 4, marginBottom: 8 },
+  adRow: { gap: 6, marginBottom: 8 },
+  adButton: {
+    minHeight: 64,
+    borderRadius: 18,
+    backgroundColor: "#35be88",
+    borderWidth: 1,
+    borderColor: "#a8f8bf",
+    borderBottomWidth: 4,
+    borderBottomColor: "#1f7d58",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+  },
+  adText: {
+    color: "#20302a",
+    fontWeight: "bold",
+    fontSize: 18,
+    textAlign: "center",
+    flexShrink: 1,
+  },
+  freeList: { gap: 12, paddingBottom: 32 },
+  balance: {
+    backgroundColor: "#2c1a48",
+    borderRadius: 20,
+    padding: 14,
+    alignItems: "center",
+  },
+  balanceLabel: { color: "#dbc9ed", fontSize: 13, textAlign: "center" },
+  balanceRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  balanceValue: {
+    color: "#ffe7a0",
+    fontSize: 40,
+    fontWeight: "bold",
+    lineHeight: 56,
+  },
+  freeCard: {
+    gap: 8,
+    padding: 14,
+    borderRadius: 22,
+    backgroundColor: "#4a2f6c",
+    borderWidth: 1,
+    borderColor: "#b281cb",
+  },
+  freeTitle: { color: "#fff4df", fontSize: 18, fontWeight: "bold" },
+  freeBody: { color: "#e8dbf7", fontSize: 13, lineHeight: 22 },
+  taken: {
+    color: "#ffe7a0",
+    textAlign: "center",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#ad7acc",
+    backgroundColor: "#3c235f",
+    fontWeight: "bold",
+  },
+  pills: { flexDirection: "row", gap: 8 },
+  pill: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: "#2c1a48",
+    alignItems: "center",
+    gap: 2,
+  },
+  pillValue: {
+    color: "#ffe7a0",
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  pillText: { color: "#f1e5ff", fontSize: 12, textAlign: "center" },
   preview: {
     width: "100%",
     aspectRatio: 1,

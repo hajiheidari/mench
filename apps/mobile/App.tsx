@@ -52,7 +52,7 @@ import {
   useWinCoins,
   type Wallet as WalletState,
 } from "./coins";
-import { CoinChip, DailyModal, Shop } from "./Shop";
+import { CoinChip, DailyModal, FreeCoins, Shop } from "./Shop";
 import type {
   BoardThemeId,
   DiceSkinId,
@@ -823,7 +823,8 @@ export default function App() {
   );
 }
 const LOCALE_KEY = "mench-locale";
-type Mode = "home" | "random" | "online" | "practice" | "account" | "shop";
+type Mode =
+  "home" | "random" | "online" | "practice" | "account" | "shop" | "free";
 function Root() {
   const [fontsLoaded, fontError] = useFonts({
     Samim: regularFont,
@@ -979,9 +980,23 @@ function Root() {
                       onPress={() => setMenu(true)}
                     />
                   </View>
-                  <Text style={[styles.fine, wide && { fontSize: 15 }]}>
-                    {t.tagline}
-                  </Text>
+                  {wallet.enabled ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t.freeCoins}
+                      onPress={() => setMode("free")}
+                      style={[styles.freeButton, wide && { minHeight: 72 }]}
+                    >
+                      <Text style={styles.freeIcon}>🎁</Text>
+                      <Text style={[styles.freeText, wide && { fontSize: 24 }]}>
+                        {t.freeCoins}
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={[styles.fine, wide && { fontSize: 15 }]}>
+                      {t.tagline}
+                    </Text>
+                  )}
                   {modes.map(([key, icon, title, hint]) => (
                     <Pressable
                       key={key}
@@ -1050,6 +1065,8 @@ function Root() {
                 />
               ) : mode === "shop" ? (
                 <Shop t={t} rtl={rtl} wallet={wallet} onBack={home} />
+              ) : mode === "free" ? (
+                <FreeCoins t={t} rtl={rtl} wallet={wallet} onBack={home} />
               ) : mode === "online" ? (
                 <Online
                   t={t}
@@ -1105,6 +1122,19 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   homeWide: { maxWidth: 720, gap: 18 },
+  freeButton: {
+    minHeight: 58,
+    borderRadius: 18,
+    backgroundColor: "#f6c343",
+    borderBottomWidth: 4,
+    borderBottomColor: "#b9790b",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  freeIcon: { fontSize: 24, lineHeight: 32 },
+  freeText: { color: "#3b2463", fontSize: 19, fontWeight: "bold" },
   modeIconWide: { fontSize: 46, lineHeight: 58 },
   mode: {
     flexDirection: "row",

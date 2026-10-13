@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  BOT_WIN_COINS,
+  BOT_WIN_DAILY_LIMIT,
   DAILY_COINS,
+  WIN_COINS,
+  WIN_DAILY_LIMIT,
   type BoardThemeId,
   type DiceSkinId,
   type PawnSetId,
@@ -71,6 +75,64 @@ export function DailyDialog({ t, wallet }: { t: Messages; wallet: Wallet }) {
         {t.later}
       </button>
     </dialog>
+  );
+}
+
+/** Every way to earn coins. The website has no ads; the apps do. */
+export function FreeCoins({
+  t,
+  wallet,
+  onBack,
+}: {
+  t: Messages;
+  wallet: Wallet;
+  onBack: () => void;
+}) {
+  const w = wallet.wallet;
+  return (
+    <div className="game-screen scrollable free-coins">
+      <TopBar t={t} title={t.freeCoins} onBack={onBack} />
+      <div className="balance">
+        <small>{t.yourCoins}</small>
+        <strong>
+          <span className="coin" aria-hidden="true" /> {w?.coins ?? "…"}
+        </strong>
+      </div>
+      {!w && <p className="notification">{t.shopOffline}</p>}
+      <section className="free-card">
+        <h3>📺 {t.adCardTitle}</h3>
+        <p>{t.adsUnavailable}</p>
+      </section>
+      <section className="free-card">
+        <h3>📅 {t.dailyCardTitle}</h3>
+        <p>{t.dailyCardBody.replace("{n}", String(w?.daily ?? DAILY_COINS))}</p>
+        {w?.dailyAvailable ? (
+          <button
+            className="primary"
+            disabled={wallet.busy}
+            onClick={() => void wallet.claim()}
+          >
+            {t.collect} +{w.daily}
+          </button>
+        ) : w ? (
+          <p className="taken">{t.dailyTaken}</p>
+        ) : null}
+      </section>
+      <section className="free-card">
+        <h3>🏆 {t.winsCardTitle}</h3>
+        <p>{t.winsCardBody}</p>
+        <div className="pills">
+          <div>
+            <strong>{t.coinsN.replace("{n}", String(WIN_COINS))}</strong>
+            {t.winOnlineLine.replace("{n}", String(WIN_DAILY_LIMIT))}
+          </div>
+          <div>
+            <strong>{t.coinsN.replace("{n}", String(BOT_WIN_COINS))}</strong>
+            {t.winBotLine.replace("{n}", String(BOT_WIN_DAILY_LIMIT))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 

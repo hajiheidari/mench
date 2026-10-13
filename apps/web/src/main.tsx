@@ -2,7 +2,7 @@ import { DemoBoard } from "./DemoBoard";
 import { Menu } from "./Menu";
 import { pawnArt } from "./Board";
 import { Appearance, WalletContext, useWallet } from "./coins";
-import { CoinChip, DailyDialog, Shop } from "./Shop";
+import { CoinChip, DailyDialog, FreeCoins, Shop } from "./Shop";
 import type {
   BoardThemeId,
   DiceSkinId,
@@ -150,6 +150,14 @@ function App() {
                     />
                   </div>
                 </header>
+                {wallet.enabled && (
+                  <button
+                    className="free-button"
+                    onClick={() => setMode("free")}
+                  >
+                    <span aria-hidden="true">🎁</span> {t.freeCoins}
+                  </button>
+                )}
                 <nav className="modes">
                   <button
                     className={online ? "mode random" : "mode random offline"}
@@ -216,6 +224,8 @@ function App() {
               <RandomMatch t={t} onBack={home} />
             ) : mode === "online" ? (
               <Online t={t} onBack={home} />
+            ) : mode === "free" ? (
+              <FreeCoins t={t} wallet={wallet} onBack={home} />
             ) : mode === "shop" ? (
               <Shop t={t} locale={locale} wallet={wallet} onBack={home} />
             ) : (

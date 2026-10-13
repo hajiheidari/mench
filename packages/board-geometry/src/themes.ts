@@ -95,6 +95,8 @@ export interface DiceStyle {
   rim: string;
   edge: string;
   pip: string;
+  /** Stone veins across the face (marble). */
+  veins?: string;
 }
 export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
   classic: {
@@ -111,12 +113,14 @@ export const DICE_STYLES: Record<DiceSkinId, DiceStyle> = {
     edge: "#6e3f1c",
     pip: "#3f220c",
   },
+  // Green marble with pale veins (drawn by the Dice components).
   marble: {
-    faceTop: "#ffffff",
-    faceBottom: "#d6d8e4",
-    rim: "#f4f5fb",
-    edge: "#8d90a6",
-    pip: "#1f2a44",
+    faceTop: "#2f6b5a",
+    faceBottom: "#173f35",
+    rim: "#8fc7b3",
+    edge: "#0c2620",
+    pip: "#f4efe2",
+    veins: "#cfeee0",
   },
   anar: {
     faceTop: "#f0505d",

@@ -1,6 +1,7 @@
 // App Store screenshots (iPhone 6.9"/6.7" and iPad 13") from the Expo web
 // build of the app, framed with a headline.
-//   EXPO_PUBLIC_BACKEND=edge npx expo export --platform web --clear --output-dir <dir>
+//   EXPO_PUBLIC_BACKEND=edge EXPO_PUBLIC_STORE_SCREENSHOTS=1 \
+//     npx expo export --platform web --clear --output-dir <dir>
 //   python3 -m http.server 3411 -d <dir>
 //   node scripts/store-screenshots.mjs [chromium path]
 // Writes apps/mobile/store/screenshots/{iphone-67,ipad-13}-N.png.
@@ -26,7 +27,7 @@ const SHOTS = [
   ["Classic Ludo", "Four colors, one friendly game", "home"],
   ["Play offline", "With friends or the bot, even without internet", "offline"],
   ["Persian craft designs", "Boards, pawns and dice for your coins", "shop"],
-  ["Free coins every day", "Daily reward, won games and optional ads", "daily"],
+  ["Free coins every day", "Daily reward, won games and optional ads", "free"],
   ["Simple and fair", "Verifiable online dice, no sign-up", "menu"],
 ];
 
@@ -74,9 +75,9 @@ for (const device of DEVICES) {
     } else if (screen === "menu") {
       await page.getByLabel("Menu").first().click();
       await page.waitForTimeout(600);
-    } else if (screen === "daily") {
-      await page.reload();
-      await page.waitForTimeout(3000);
+    } else if (screen === "free") {
+      await page.getByLabel("Free coins").first().click();
+      await page.waitForTimeout(1000);
     }
     const file = join(work, `${device.name}-${index + 1}.png`);
     await page.screenshot({ path: file });

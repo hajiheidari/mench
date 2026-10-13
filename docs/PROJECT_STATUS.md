@@ -7,6 +7,7 @@
 - Game Center (iOS): local module `apps/mobile/modules/game-center` (GameKit sign-in, leaderboard score, achievements, dashboard from the menu). The score is the wallet's all-time server-verified online wins (`onlineWins`); achievements: first win, 10 and 50 online wins, first design. App Store Connect setup: `gamecenter` workflow (`infra/scripts/asc_gamecenter.py`, texts and images in `apps/mobile/store/gamecenter/`); `asc_capabilities.py` turns the capability on; `asc_prepare.py` attaches Game Center to the version.
 - iPad (`supportsTablet`, full screen, portrait) and the unfolded foldable iPhone: wider home column and larger type when the short side is 600 pt or more. iPad 13" screenshots and refreshed iPhone screenshots come from `scripts/store-screenshots.mjs` (web build of the app + `scripts/frame-screenshot.py`).
 - The app now remembers the chosen language.
+- "Free coins" (home button + page, app and web): balance, the rewarded ad (big button "each ad = 20 free coins", also in the shop), the daily reward and the win rewards. The web has no ads and says so. Marble dice are green with veins; the wooden board is dark walnut with grain.
 - Not yet on a device: Game Center sign-in and the iPad layout are checked only in the browser build and by the iOS CI compile.
 
 ## 2026-10-12: coins and shop
