@@ -9,11 +9,6 @@
           "name": "Online wins",
           "formatterSuffix": " wins",
           "formatterSuffixSingular": " win"
-        },
-        "fa": {
-          "name": "بردهای آنلاین",
-          "formatterSuffix": " برد",
-          "formatterSuffixSingular": " برد"
         }
       }
     }
@@ -29,11 +24,6 @@
           "name": "First win",
           "beforeEarnedDescription": "Win a game online or against the bot.",
           "afterEarnedDescription": "You won your first game."
-        },
-        "fa": {
-          "name": "اولین برد",
-          "beforeEarnedDescription": "یک بازی آنلاین یا مقابل ربات را ببر.",
-          "afterEarnedDescription": "اولین بازی‌ات را بردی."
         }
       }
     },
@@ -47,11 +37,6 @@
           "name": "Ten online wins",
           "beforeEarnedDescription": "Win 10 online games against people.",
           "afterEarnedDescription": "You won 10 online games."
-        },
-        "fa": {
-          "name": "ده برد آنلاین",
-          "beforeEarnedDescription": "۱۰ بازی آنلاین مقابل آدم‌ها را ببر.",
-          "afterEarnedDescription": "۱۰ بازی آنلاین را بردی."
         }
       }
     },
@@ -65,11 +50,6 @@
           "name": "Ludo champion",
           "beforeEarnedDescription": "Win 50 online games against people.",
           "afterEarnedDescription": "You won 50 online games."
-        },
-        "fa": {
-          "name": "قهرمان منچ",
-          "beforeEarnedDescription": "۵۰ بازی آنلاین مقابل آدم‌ها را ببر.",
-          "afterEarnedDescription": "۵۰ بازی آنلاین را بردی."
         }
       }
     },
@@ -83,13 +63,9 @@
           "name": "New look",
           "beforeEarnedDescription": "Buy a board, pawn or dice design in the shop.",
           "afterEarnedDescription": "You bought your first design."
-        },
-        "fa": {
-          "name": "ظاهر تازه",
-          "beforeEarnedDescription": "یک صفحه، مهره یا تاس از فروشگاه بخر.",
-          "afterEarnedDescription": "اولین طرحت را خریدی."
         }
       }
     }
-  ]
+  ],
+  "_note": "Game Center has no Persian localization (App Store Connect rejects fa); English only."
 }
