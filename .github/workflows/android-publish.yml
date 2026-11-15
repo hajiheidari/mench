@@ -1,0 +1,38 @@
+# Copies the current release-signed APK from the "android-test-build" pre-release
+# to the stable "android" release, which the landing pages link to as the direct
+# download (espadna.com/mench-app, English and Arabic). Run it by hand once a test
+# build is the one players should get (the same APK that went to Cafe Bazaar).
+name: android-publish
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download the test build
+        run: gh release download android-test-build --pattern mench-release.apk --dir "$RUNNER_TEMP"
+      - name: Check signature and version
+        run: |
+          tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/mench-release.apk" | grep -E "DN|SHA-256"
+          "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/mench-release.apk" \
+            | grep -q "f1683ae9999e33f6c12bdf912bd67d4c63c8e43724b18d27e10d9c23d24e5e63"
+          "$tools/aapt2" dump badging "$RUNNER_TEMP/mench-release.apk" | head -1 | tee "$RUNNER_TEMP/badging"
+          version=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" "$RUNNER_TEMP/badging")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          cp "$RUNNER_TEMP/mench-release.apk" "$RUNNER_TEMP/LudoDosti.apk"
+      - name: Publish on the android release
+        run: |
+          gh release view android >/dev/null 2>&1 || \
+            gh release create android --latest --title "Ludo Dosti for Android" \
+              --notes "Direct download of Ludo Dosti for Android. Iran: get it on Cafe Bazaar."
+          gh release edit android --title "Ludo Dosti for Android $VERSION"
+          gh release upload android "$RUNNER_TEMP/LudoDosti.apk" --clobber

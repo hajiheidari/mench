@@ -13,6 +13,10 @@ OUT = ROOT / "site" / "mench-app"
 FONT = ROOT.parent.parent / "packages" / "board-geometry" / "assets" / "fonts"
 GAME = "https://mench.espadna.com"
 PAGE = "https://espadna.com/mench-app"
+APP_STORE = "https://apps.apple.com/app/id6821560930"
+BAZAAR = "https://cafebazaar.ir/app/com.espadna.mench"
+# Stable release filled by .github/workflows/android-publish.yml.
+APK = "https://github.com/hajiheidari/mench/releases/download/android/LudoDosti.apk"
 
 TEXT = {
     "en": {
@@ -24,6 +28,10 @@ TEXT = {
         "tag": "The classic board game, now with your friends online 🎲",
         "play": "▶️ Play now",
         "play_small": "In your browser, nothing to install",
+        "stores": [
+            ("🍏", "App Store", "Download on the", APP_STORE),
+            ("🤖", "Android", "Direct download (APK)", APK),
+        ],
         "features": [
             ("🔗", "Invite friends with one link"),
             ("👥", "2, 3 or 4 players"),
@@ -41,7 +49,7 @@ TEXT = {
         "qa": [
             ("Is it free?", "Yes, with no purchases or sign-up. The only ads are optional ones in the app’s shop, watched for free coins."),
             ("Are the dice fair?", "In online games the server commits to each roll before you roll and your device adds its own random number, so every result can be checked under “Dice history”. The bot never changes the dice."),
-            ("Can I install it?", "On Android open the Chrome menu <b>⋮</b> and choose “Install app”; on iPhone tap <b>⬆️</b> in Safari and choose “Add to Home Screen”."),
+            ("Can I install it?", "Yes. On iPhone and iPad get it from the <a href=\"https://apps.apple.com/app/id6821560930\">App Store</a>. On Android download the <a href=\"https://github.com/hajiheidari/mench/releases/download/android/LudoDosti.apk\">APK</a>, open it and allow installing from your browser if asked."),
         ],
         "privacy": "Privacy",
         "studio": "Espadna",
@@ -59,6 +67,10 @@ TEXT = {
         "tag": "همان منچ قدیمی، این بار با دوستانت آنلاین 🎲",
         "play": "▶️ شروع بازی",
         "play_small": "بدون نصب، همین‌جا در مرورگر",
+        "stores": [
+            ("🍏", "اپ‌استور", "دریافت برای آیفون و آیپد از", APP_STORE),
+            ("🛍️", "کافه‌بازار", "دریافت برای اندروید از", BAZAAR),
+        ],
         "features": [
             ("🔗", "دعوت دوستان با یک لینک"),
             ("👥", "۲، ۳ یا ۴ نفره"),
@@ -76,7 +88,7 @@ TEXT = {
         "qa": [
             ("رایگان است؟", "بله؛ خرید و ثبت‌نام ندارد. تنها تبلیغ، تبلیغ اختیاری داخل فروشگاه برنامه است که با دیدنش سکهٔ رایگان می‌گیری."),
             ("تاس منصفانه است؟", "در بازی آنلاین، سرور پیش از هر پرتاب به نتیجه متعهد می‌شود و دستگاه خودت هم یک عدد تصادفی اضافه می‌کند؛ پس هر نتیجه را می‌توانی در «سابقهٔ تاس» بررسی کنی. ربات هیچ‌وقت تاس را تغییر نمی‌دهد."),
-            ("می‌شود نصبش کرد؟", "در اندروید منوی <b>⋮</b> کروم را بزن و «نصب برنامه» را انتخاب کن؛ در آیفون دکمهٔ <b>⬆️</b> سافاری و بعد «Add to Home Screen»."),
+            ("می‌شود نصبش کرد؟", "بله. برای اندروید از <a href=\"https://cafebazaar.ir/app/com.espadna.mench\">کافه‌بازار</a> و برای آیفون و آیپد از <a href=\"https://apps.apple.com/app/id6821560930\">اپ‌استور</a> نصبش کن."),
         ],
         "privacy": "حریم خصوصی",
         "studio": "اسپادنا",
@@ -94,6 +106,10 @@ TEXT = {
         "tag": "لعبة الطاولة الكلاسيكية، الآن مع أصدقائك عبر الإنترنت 🎲",
         "play": "▶️ ابدأ اللعب",
         "play_small": "في المتصفح مباشرة، بدون تثبيت",
+        "stores": [
+            ("🍏", "App Store", "حمّلها من", APP_STORE),
+            ("🤖", "أندرويد", "تنزيل مباشر (APK)", APK),
+        ],
         "features": [
             ("🔗", "ادعُ أصدقاءك برابط واحد"),
             ("👥", "لاعبان أو ثلاثة أو أربعة"),
@@ -109,9 +125,9 @@ TEXT = {
         ],
         "faq": "أسئلة",
         "qa": [
-            ("هل هي مجانية؟", "نعم، بلا إعلانات أو مشتريات أو تسجيل."),
+            ("هل هي مجانية؟", "نعم، بلا مشتريات أو تسجيل. الإعلانات الوحيدة اختيارية داخل متجر التطبيق، تشاهدها مقابل عملات مجانية."),
             ("هل النرد عادل؟", "في اللعب عبر الإنترنت يلتزم الخادم بكل رمية قبل حدوثها ويضيف جهازك رقمًا عشوائيًا خاصًا به، لذا يمكن التحقق من كل نتيجة. الروبوت لا يغيّر النرد أبدًا."),
-            ("هل يمكن تثبيتها؟", "على أندرويد افتح قائمة <b>⋮</b> في كروم واختر «تثبيت التطبيق»، وعلى آيفون اضغط <b>⬆️</b> في سفاري ثم «Add to Home Screen»."),
+            ("هل يمكن تثبيتها؟", "نعم. على آيفون وآيباد حمّلها من <a href=\"https://apps.apple.com/app/id6821560930\">App Store</a>، وعلى أندرويد نزّل ملف <a href=\"https://github.com/hajiheidari/mench/releases/download/android/LudoDosti.apk\">APK</a> وافتحه واسمح بالتثبيت من المتصفح إذا طُلب منك."),
         ],
         "privacy": "الخصوصية",
         "studio": "إسبادنا",
@@ -141,6 +157,11 @@ STYLE = """
       border-radius: 999px; box-shadow: 0 8px 0 var(--ink); transition: transform .1s, box-shadow .1s; }
     .play:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink); }
     .play small { display: block; font-size: 15px; font-weight: 700; opacity: .75; }
+    .stores { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 22px auto 0; max-width: 460px; }
+    .store { flex: 1 1 180px; display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--ink); color: #fff;
+      text-decoration: none; border: 2px solid rgba(255,255,255,.35); border-radius: 16px; line-height: 1.3; }
+    .store b { font-size: 26px; } .store span { display: flex; flex-direction: column; text-align: start; }
+    .store small { font-size: 12px; opacity: .8; } .store strong { font-size: 19px; }
     .dots { display: flex; direction: ltr; justify-content: center; gap: 10px; margin: 18px 0 0; }
     .dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 40px 0; }
@@ -189,6 +210,11 @@ def page(code: str) -> str:
         f"    <details>\n      <summary>{escape(q)}</summary>\n      <p>{a}</p>\n    </details>"
         for q, a in t["qa"]
     )
+    stores = "\n".join(
+        f'      <a class="store" href="{href}"><b aria-hidden="true">{icon}</b>'
+        f"<span><small>{escape(small)}</small><strong>{escape(name)}</strong></span></a>"
+        for icon, name, small, href in t["stores"]
+    )
     dots = "".join(
         f'<i style="background:var(--{c})"></i>' for c in ("red", "green", "yellow", "blue")
     )
@@ -236,6 +262,9 @@ def page(code: str) -> str:
     <h1>{escape(t['name'])}</h1>
     <p class="tag">{escape(t['tag'])}</p>
     <a class="play" href="{game}">{t['play']}<small>{escape(t['play_small'])}</small></a>
+    <nav class="stores">
+{stores}
+    </nav>
     <div class="dots" aria-hidden="true">{dots}</div>
   </section>
 
