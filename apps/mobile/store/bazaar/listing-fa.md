@@ -52,4 +52,4 @@
 **Website:** https://espadna.com/mench-app/fa/
 **Support email:** espadna.support@gmail.com
 
-Screenshots: `bazaar-1.png` … `bazaar-6.png` (1080×2160) and the clip `ludo-dosti-promo.mp4` (1080×1920, 28 s), made with `scripts/promo/` (capture.mjs, compose.py, video.py). The plain app screenshots from `STORE=bazaar node scripts/store-screenshots.mjs` are the older style. Icon: `icon-512.png`.
+Screenshots: `bazaar-1.png` … `bazaar-7.png` (1080×2160; 7 = Android and iPhone together) and the clip `ludo-dosti-promo.mp4` (1080×1920, 28 s), made with `scripts/promo/` (capture.mjs, compose.py, video.py). The plain app screenshots from `STORE=bazaar node scripts/store-screenshots.mjs` are the older style. Icon: `icon-512.png`.

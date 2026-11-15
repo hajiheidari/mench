@@ -223,12 +223,73 @@ def compose(raw, out, spec, index):
     img.convert("RGB").save(out / f"bazaar-{name}.png", optimize=True)
 
 
+def device(screen, width, kind):
+    """An Android phone (punch-hole camera) or an iPhone (Dynamic Island)."""
+    bezel = 16 if kind == "android" else 20
+    radius = 56 if kind == "android" else 92
+    raw = Image.open(screen).convert("RGB")
+    # A status bar above the app, as on a real phone, so the camera hides nothing.
+    bar = int(raw.width * (0.13 if kind == "iphone" else 0.07))
+    shot = Image.new("RGB", (raw.width, raw.height + bar), raw.getpixel((raw.width // 2, 2)))
+    shot.paste(raw, (0, bar))
+    h = int(shot.height * (width - 2 * bezel) / shot.width)
+    shot = shot.resize((width - 2 * bezel, h), Image.LANCZOS)
+    body = Image.new("RGBA", (width, h + 2 * bezel), (0, 0, 0, 0))
+    d = ImageDraw.Draw(body)
+    frame = (58, 62, 70) if kind == "android" else (196, 170, 140)
+    d.rounded_rectangle((0, 0, width - 1, h + 2 * bezel - 1), radius=radius, fill=frame)
+    d.rounded_rectangle((5, 5, width - 6, h + 2 * bezel - 6), radius=radius - 5, fill=(12, 10, 18))
+    mask = Image.new("L", shot.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, shot.width - 1, shot.height - 1), radius=radius - bezel, fill=255)
+    body.paste(shot, (bezel, bezel), mask)
+    cx = width // 2
+    if kind == "android":
+        d.ellipse((cx - 13, bezel + 14, cx + 13, bezel + 40), fill=(8, 8, 12))
+    else:
+        d.rounded_rectangle((cx - 100, bezel + 14, cx + 100, bezel + 70), radius=28, fill=(8, 8, 12))
+    return body
+
+
+def platforms(raw, out):
+    """Both phones in one game: Android and iPhone play together."""
+    img = background(42).convert("RGBA")
+    d = ImageDraw.Draw(img)
+    y = 90
+    for line in ["هم اندروید", "هم آیفون!"]:
+        text_center(d, y, line, 112, GOLD, stroke=3)
+        y += 136
+    d.text((W / 2, y + 14), "دوستات هر گوشی‌ای داشته باشن، با هم بازی می‌کنید", font=font(42), fill=(255, 244, 223), anchor="mt")
+    y += 100
+    pills(d, y, ["اندروید", "آیفون و آیپد", "مرورگر"])
+    y += 130
+    left = device(raw / "shots" / "home.png", 600, "iphone").rotate(5, expand=True, resample=Image.BICUBIC)
+    right = device(raw / "shots" / "game.png", 600, "android").rotate(-5, expand=True, resample=Image.BICUBIC)
+    shadowed(img, left, (-50, y + 150), blur=30, offset=(0, 26), alpha=200)
+    shadowed(img, right, (W - right.width + 50, y + 70), blur=30, offset=(0, 26), alpha=200)
+    # The link between the two phones, and their names.
+    cy = y + 790
+    d = ImageDraw.Draw(img)
+    d.ellipse((W / 2 - 100, cy - 94, W / 2 + 100, cy + 108), fill=INK)
+    d.ellipse((W / 2 - 100, cy - 100, W / 2 + 100, cy + 100), fill=(53, 190, 136), outline=INK, width=6)
+    d.text((W / 2, cy - 24), "با هم", font=font(50), fill=INK, anchor="mm")
+    d.text((W / 2, cy + 34), "بازی کنید", font=font(36), fill=INK, anchor="mm")
+    for x, ly, label in ((290, min(H - 120, y + 150 + left.height - 40), "آیفون"), (W - 290, y + 70 + right.height - 40, "اندروید")):
+        f = font(50)
+        w = d.textlength(label, font=f) + 80
+        d.rounded_rectangle((x - w / 2, ly + 8, x + w / 2, ly + 96), radius=44, fill=INK)
+        d.rounded_rectangle((x - w / 2, ly, x + w / 2, ly + 88), radius=44, fill=(255, 244, 223), outline=INK, width=4)
+        d.text((x, ly + 44), label, font=f, fill=INK, anchor="mm")
+    img.convert("RGB").save(out / "bazaar-7.png", optimize=True)
+
+
 def main():
     raw, out = Path(sys.argv[1]), Path(sys.argv[2])
     out.mkdir(parents=True, exist_ok=True)
     for i, spec in enumerate(SHOTS):
         compose(raw, out, spec, i)
         print("bazaar-" + spec[0])
+    platforms(raw, out)
+    print("bazaar-7")
 
 
 if __name__ == "__main__":
