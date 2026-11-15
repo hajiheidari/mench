@@ -34,6 +34,17 @@ SHOTS = [
 ]
 
 
+LIMIT = 950_000  # Cafe Bazaar takes screenshots under 1 MB
+
+
+def save(img, path):
+    img = img.convert("RGB")
+    img.save(path, optimize=True)
+    if path.stat().st_size > LIMIT:
+        # Fall back to a 256-colour palette with dithering; it keeps the look.
+        img.quantize(256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.FLOYDSTEINBERG).save(path, optimize=True)
+
+
 def font(size):
     return ImageFont.truetype(FONT, size)
 
@@ -220,7 +231,7 @@ def compose(raw, out, spec, index):
         shadowed(img, sprite, (sx, sy + 40))
     if name == "2":
         bubble(img, px + 40, py + 1020)
-    img.convert("RGB").save(out / f"bazaar-{name}.png", optimize=True)
+    save(img, out / f"bazaar-{name}.png")
 
 
 def device(screen, width, kind):
@@ -279,7 +290,7 @@ def platforms(raw, out):
         d.rounded_rectangle((x - w / 2, ly + 8, x + w / 2, ly + 96), radius=44, fill=INK)
         d.rounded_rectangle((x - w / 2, ly, x + w / 2, ly + 88), radius=44, fill=(255, 244, 223), outline=INK, width=4)
         d.text((x, ly + 44), label, font=f, fill=INK, anchor="mm")
-    img.convert("RGB").save(out / "bazaar-7.png", optimize=True)
+    save(img, out / "bazaar-7.png")
 
 
 def main():
