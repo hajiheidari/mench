@@ -11,3 +11,4 @@ playwright-report/
 apps/mobile/android/
 apps/mobile/ios/
 .wrangler/
+__pycache__/
